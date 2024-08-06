@@ -154,6 +154,6 @@ ParaComment: '/*' .*? '*/' -> skip;
 Non_s : ~[$] | Escape;
 
 formatStr: // to the first $
-     (Fstring_l expr (Fstring_m expr )*  Fstring_lst) | FstringConst | ()
+     (Fstring_l expr (Fstring_m expr )*  Fstring_lst) | FstringConst
 ;
 
