@@ -35,42 +35,43 @@ primary
     | This
     ;
 stmt
-    : block
-    | varDef ';'
-    | If '(' expr ')' thenStmt = stmt
-        (Else elseStmt = stmt)?
-    | While '(' expr ')' stmt
-    | For '(' initStmt = stmt  condExpr = expr? ';' stepexpr = expr ')'
-    | Return  expr? ';'
-    | Break ';'
-    | Continue ';'
-    | expr ';'
-    | ';'
+    : block #blockStmt
+    | varDef ';' #vardefStmt
+    | If '(' expr ')' thenStmt = stmt 
+        (Else elseStmt = stmt)? #ifStmt
+    | While '(' expr ')' stmt #whileStmt
+    | For '(' initStmt = stmt  condExpr = expr? ';' stepexpr = expr ')' stmt #forStmt
+    | Return  expr? ';' #returnStmt
+    | Break ';' #breakStmt
+    | Continue ';' #continueStmt
+    | expr ';' #exprStmt
+    | ';' #emptyStmt
 ;
 
+
 expr
-   : New typename ('[' expr? ']') + (arrayConst?)
-   | New typename ('(' ')')?
-   | expr '(' (expr (Comma expr)*)? ')'
-   | expr '[' expr ']'
-   | expr op=Member Identifier
-   | expr op= (Increment | Decrement)
-   | <assoc = right> op= (Not | LogicNot | Minus | Plus) expr
-   | <assoc = right> op= (Increment | Decrement) expr
-   | expr op= (Mul | Div | Mod) expr
-   | expr op= (Plus | Minus) expr
-   | expr op= (LeftShift | RightShift) expr
-   | expr op= (Greater | GreaterEqual | Less | LessEqual) expr
-   | expr op= (Equal | UnEqual) expr
-   | expr op= And expr
-   | expr op= Xor expr
-   | expr op= Or expr
-   | expr op= LogicAnd expr
-   | expr op= LogicOr expr
-   | <assoc = right> expr '?' expr ':' expr
-   | <assoc = right> expr op=Assign expr
-   | '(' expr ')'
-   | primary
+   : New typename ('[' expr? ']') + (arrayConst?) #newArrayExpr
+   | New typename ('(' ')')? #newVarExpr
+   | expr '(' (expr (Comma expr)*)? ')' #callExpr
+   | expr '[' expr ']' #arrayExpr
+   | expr op=Member Identifier #memberExpr
+   | expr op= (Increment | Decrement) #unaryExpr
+   | <assoc = right> op= (Not | LogicNot | Minus | Plus) expr #unaryExpr
+   | <assoc = right> op= (Increment | Decrement) expr #preSelfExpr
+   | expr op= (Mul | Div | Mod) expr #binaryExpr
+   | expr op= (Plus | Minus) expr #binaryExpr
+   | expr op= (LeftShift | RightShift) expr #binaryExpr
+   | expr op= (Greater | GreaterEqual | Less | LessEqual) expr #binaryExpr
+   | expr op= (Equal | UnEqual) expr #binaryExpr
+   | expr op= And expr #binaryExpr
+   | expr op= Xor expr #binaryExpr
+   | expr op= Or expr #binaryExpr
+   | expr op= LogicAnd expr #binaryExpr
+   | expr op= LogicOr expr #binaryExpr
+   | <assoc = right> expr '?' expr ':' expr #conditionalExpr
+   | <assoc = right> expr op=Assign expr #assignExpr
+   | '(' expr ')' #parenExpr
+   | primary #atomExpr
 ;
 
 Void : 'void';
@@ -141,19 +142,18 @@ Escape: '\\\\' | '\\n' | '\\"';
 IntegerConst: '0' | [1-9][0-9]*;
 
 FstringConst: 'f'(Quote (~[$"] | '$$')*? Quote);
-
 Fstring_l : 'f' Quote ((~[$"]|('$$'))*) '$';
 Fstring_m : '$' (~[$"]|('$$'))* '$';
 StringConst: (Quote (Escape | .)*? Quote);
 Fstring_lst : '$' ((~[$"]|('$$'))*) Quote;
-
+formatStr: // to the first $
+     (Fstring_l expr (Fstring_m expr )*  Fstring_lst) | FstringConst
+;
 
 WhiteSpace: [\t\r\n ]+ -> skip;
 LineComment: '//' ~[\r\n]* -> skip;
 ParaComment: '/*' .*? '*/' -> skip;
 Non_s : ~[$] | Escape;
 
-formatStr: // to the first $
-     (Fstring_l expr (Fstring_m expr )*  Fstring_lst) | FstringConst
-;
+
 
