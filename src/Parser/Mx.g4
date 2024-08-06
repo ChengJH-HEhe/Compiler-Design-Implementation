@@ -140,19 +140,20 @@ Quote: '"';
 Escape: '\\\\' | '\\n' | '\\"';
 IntegerConst: '0' | [1-9][0-9]*;
 
+FstringConst: 'f'(Quote (~[$"] | '$$')*? Quote);
 
-Fstring_l : 'f' Quote ((Non_s|('$''$'))*) '$';
+Fstring_l : 'f' Quote ((~[$"]|('$$'))*) '$';
+Fstring_m : '$' (~[$"]|('$$'))* '$';
 StringConst: (Quote (Escape | .)*? Quote);
-Fstring_lst : '$' ((~[$"]|('$''$'))*) Quote;
+Fstring_lst : '$' ((~[$"]|('$$'))*) Quote;
 
-FstringConst: 'f'(Quote (Escape | ~[$] | '$''$')*? Quote);
 
 WhiteSpace: [\t\r\n ]+ -> skip;
 LineComment: '//' ~[\r\n]* -> skip;
 ParaComment: '/*' .*? '*/' -> skip;
-Non_s : ~[$];
+Non_s : ~[$] | Escape;
 
 formatStr: // to the first $
-     (Fstring_l expr ('$' (Non_s|('$''$'))* '$' expr )*  Fstring_lst) | FstringConst
+     (Fstring_l expr (Fstring_m expr )*  Fstring_lst) | FstringConst | ()
 ;
 
