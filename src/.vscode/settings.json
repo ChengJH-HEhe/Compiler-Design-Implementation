@@ -1,0 +1,6 @@
+{
+  "java.project.referencedLibraries": [
+    "./lib/*.jar",
+    "/usr/share/java/antlr-runtime-4.13.1-complete.jar"
+  ]
+}
