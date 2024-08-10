@@ -5,7 +5,6 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import ast.RootNode;
 import ast.node.astRoot;
 
 // import Assembly.AsmFn;
@@ -21,6 +20,7 @@ import frontend.*;
 import parser.*;
 
 import util.*;
+import util.error.error;
 
 
 public class Main {
@@ -45,8 +45,8 @@ public class Main {
 
             ASTRoot = (astRoot)astBuilder.visit(parseTreeRoot);
             
-            new SymbolCollector(gScope).visit(ASTRoot);
-            new SemanticChecker(gScope).visit(ASTRoot);
+            // new SymbolCollector(gScope).visit(ASTRoot);
+            // new SemanticChecker(gScope).visit(ASTRoot);
 
             // mainFn f = new mainFn();
             // new IRBuilder(f, gScope).visit(ASTRoot);

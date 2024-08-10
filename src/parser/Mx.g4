@@ -22,12 +22,12 @@ block: '{' stmt* '}';
 
 // 不允许无限递归自身
 arrayConst:
-    ( '{' (((literal Comma)* literal) | ()) '}');
+    ( '{' ((((literal) Comma)* literal) | ()) '}');
 
 //
 
 
-literal : True | False | IntegerConst | StringConst | Null | arrayConst | formatStr;
+literal : True | False | IntegerConst | StringConst | Null | arrayConst;
 
 primary
     : Identifier
@@ -72,6 +72,7 @@ expr
    | <assoc = right> expr op=Assign expr #assignExpr
    | '(' expr ')' #parenExpr
    | primary #atomExpr
+   | formatStr #fStrExpr
 ;
 
 Void : 'void';
