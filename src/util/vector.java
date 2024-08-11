@@ -9,9 +9,9 @@ public class vector<E> extends ArrayList<E> {
   }
 
   public vector(vector<E> tags) {
-    super(tags);
+    super((ArrayList<E>)tags);
   }
-
+  
   public vector(List<E> tags) {
     super(tags);
   }
@@ -20,7 +20,7 @@ public class vector<E> extends ArrayList<E> {
     super();
     add(tag);
   }
-
+  
   @SafeVarargs
   public vector(E tag, E... vectag) {
     super();

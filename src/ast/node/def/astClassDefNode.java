@@ -1,4 +1,5 @@
 package ast.node.def;
+import ast.node.stmt.astConstrNode;
 import ast.node.stmt.scopeStmt;
 import frontend.astVisitor;
 import util.Scope;
@@ -11,7 +12,7 @@ import util.error.error;
 public class astClassDefNode extends astDefNode implements scopeStmt{
   private Scope FuncScope;
   private Scope VarScope;
-  private final astFuncDefNode constructor;
+  private final astConstrNode constructor;
   private final vector<astFuncDefNode> methods;
   private final vector<astVarDefNode> fields;
   @Override

@@ -2,12 +2,14 @@ package ast.node;
 import ast.node.def.astDefNode;
 import frontend.astVisitor;
 import util.globalScope;
+import util.position;
 import util.vector;
 import util.error.error;
 
 @lombok.experimental.SuperBuilder
 @lombok.Getter
 @lombok.Setter
+
 public class astRoot extends astNode{
   private globalScope gScope;
   private final vector<astDefNode> defs;
@@ -24,4 +26,12 @@ public class astRoot extends astNode{
   public <T> T accept(astVisitor<T> visitor) throws error {
     return visitor.visit(this);
   }
+
+public class builder {
+
+    public position parent(Object object) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'parent'");
+    }
+}
 }

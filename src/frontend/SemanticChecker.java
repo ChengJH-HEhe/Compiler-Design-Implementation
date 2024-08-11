@@ -1,8 +1,35 @@
 package frontend;
 
 import ast.*;
+import ast.node.astNode;
+import ast.node.astRoot;
+import ast.node.def.astClassDefNode;
+import ast.node.def.astFuncDefNode;
+import ast.node.def.astVarDefNode;
+import ast.node.expr.astArrayConstExpr;
+import ast.node.expr.astArrayExprNode;
+import ast.node.expr.astAssignExprNode;
+import ast.node.expr.astAtomExprNode;
+import ast.node.expr.astBinaryExprNode;
+import ast.node.expr.astCallExprNode;
+import ast.node.expr.astConditionalExprNode;
+import ast.node.expr.astMemberExprNode;
+import ast.node.expr.astNewArrayExprNode;
+import ast.node.expr.astPreSelfExprNode;
+import ast.node.expr.astUnaryExprNode;
+import ast.node.stmt.astBlockStmtNode;
+import ast.node.stmt.astBreakStmtNode;
+import ast.node.stmt.astContinueStmtNode;
+import ast.node.stmt.astEmptyStmtNode;
+import ast.node.stmt.astExprStmtNode;
+import ast.node.stmt.astForStmtNode;
+import ast.node.stmt.astIfStmtNode;
+import ast.node.stmt.astReturnStmtNode;
+import ast.node.stmt.astVarDefStmtNode;
+import ast.node.stmt.astWhileStmtNode;
 import util.Scope;
 import util.Type;
+import util.error.error;
 import util.error.semanticError;
 import util.globalScope;
 
@@ -16,118 +43,160 @@ public class SemanticChecker implements astVisitor {
     }
 
     @Override
-    public void visit(RootNode it) {
-        it.strDefs.forEach(sd -> sd.accept(this));
-        // we SHOULD check struct definitions first
-        it.fn.accept(this);
+    public Object visit(astNode node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public void visit(structDefNode it) {
-        currentStruct = gScope.getTypeFromName(it.name, it.pos);
-        it.varDefs.forEach(vd -> vd.accept(this));
-        currentStruct = null;
+    public Object visit(astRoot node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public void visit(FnRootNode it) {
-        currentScope = new Scope(currentScope);
-        for (StmtNode stmt : it.stmts) stmt.accept(this);
+    public Object visit(astFuncDefNode node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public void visit(varDefStmtNode it) {
-        if (currentStruct != null) {
-            assert (currentStruct.members != null);
-            if (currentStruct.members.containsKey(it.name))
-                throw new semanticError("redefinition of member " + it.name, it.pos);
-            currentStruct.members.put(it.name, gScope.getTypeFromName(it.typeName, it.pos));
-            if (it.init != null)
-                throw new semanticError("Mx does not support default init of members",
-                            it.init.pos);
-        }
-
-        if (it.init != null) {
-            it.init.accept(this);
-            if (!it.init.type.isInt)
-                throw new semanticError("Semantic Error: type not match. It should be int",
-                            it.init.pos);
-        }
-        currentScope.defineVariable(it.name, gScope.getTypeFromName(it.typeName, it.pos), it.pos);
+    public Object visit(astClassDefNode node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public void visit(returnStmtNode it) {
-        if (it.value != null) {
-            it.value.accept(this);
-            if (!it.value.type.isInt)
-                throw new semanticError("Semantic Error: type not match. It should be int",
-                        it.value.pos);
-        }
+    public Object visit(astVarDefNode node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public void visit(blockStmtNode it) {
-        if (!it.stmts.isEmpty()) {
-            currentScope = new Scope(currentScope);
-            for (StmtNode stmt : it.stmts) stmt.accept(this);
-            currentScope = currentScope.parentScope();
-        }
+    public Object visit(astNewArrayExprNode node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public void visit(exprStmtNode it) {
-        it.expr.accept(this);
+    public Object visit(astCallExprNode node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public void visit(ifStmtNode it) {
-        it.condition.accept(this);
-        if (!it.condition.type.isBool)
-            throw new semanticError("Semantic Error: type not match. It should be bool",
-                    it.condition.pos);
-        it.thenStmt.accept(this);
-        if (it.elseStmt != null) it.elseStmt.accept(this);
+    public Object visit(astArrayExprNode node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public void visit(assignExprNode it) {
-        it.rhs.accept(this);
-        it.lhs.accept(this);
-        if (it.rhs.type != it.lhs.type)
-            throw new semanticError("Semantic Error: type not match. ", it.pos);
-        if (!it.lhs.isAssignable())
-            throw new semanticError("Semantic Error: not assignable", it.lhs.pos);
-        it.type = it.rhs.type;
+    public Object visit(astArrayConstExpr node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public void visit(binaryExprNode it) {
-        it.lhs.accept(this);
-        it.rhs.accept(this);
-        if (!it.lhs.type.isInt)
-            throw new semanticError("Semantic error: type not match. It should be int",
-                    it.lhs.pos);
-        if (!it.rhs.type.isInt)
-            throw new semanticError("Semantic error: type not match. It should be int",
-                    it.rhs.pos);
+    public Object visit(astMemberExprNode node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public void visit(constExprNode it) {}
-
-    @Override
-    public void visit(cmpExprNode it) {
-        it.lhs.accept(this);
-        it.rhs.accept(this);
-        if (it.rhs.type != it.lhs.type)
-            throw new semanticError("Semantic Error: type not match. ", it.pos);
+    public Object visit(astUnaryExprNode node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public void visit(varExprNode it) {
-        if (!currentScope.containsVariable(it.name, true))
-            throw new semanticError("Semantic Error: variable not defined. ", it.pos);
-        it.type = currentScope.getType(it.name, true);
+    public Object visit(astPreSelfExprNode node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
+
+    @Override
+    public Object visit(astBinaryExprNode node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    }
+
+    @Override
+    public Object visit(astConditionalExprNode node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    }
+
+    @Override
+    public Object visit(astAssignExprNode node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    }
+
+    @Override
+    public Object visit(astAtomExprNode node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    }
+
+    @Override
+    public Object visit(astBlockStmtNode node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    }
+
+    @Override
+    public Object visit(astIfStmtNode node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    }
+
+    @Override
+    public Object visit(astForStmtNode node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    }
+
+    @Override
+    public Object visit(astWhileStmtNode node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    }
+
+    @Override
+    public Object visit(astContinueStmtNode node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    }
+
+    @Override
+    public Object visit(astBreakStmtNode node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    }
+
+    @Override
+    public Object visit(astReturnStmtNode node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    }
+
+    @Override
+    public Object visit(astExprStmtNode node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    }
+
+    @Override
+    public Object visit(astVarDefStmtNode node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    }
+
+    @Override
+    public Object visit(astEmptyStmtNode node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    }
+
+    
 }

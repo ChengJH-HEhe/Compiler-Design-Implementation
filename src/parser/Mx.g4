@@ -40,7 +40,7 @@ stmt
     | If '(' expr ')' thenStmt = stmt 
         (Else elseStmt = stmt)? #ifStmt
     | While '(' expr ')' stmt #whileStmt
-    | For '(' initStmt = stmt  condExpr = expr? ';' stepexpr = expr ')' stmt #forStmt
+    | For '(' initStmt = stmt  condExpr = expr? ';' stepexpr = expr ')' bodystmt = stmt #forStmt
     | Return  expr? ';' #returnStmt
     | Break ';' #breakStmt
     | Continue ';' #continueStmt

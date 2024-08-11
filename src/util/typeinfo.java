@@ -1,5 +1,6 @@
 package util;
 
+@lombok.experimental.SuperBuilder
 @lombok.Getter
 @lombok.Setter
 abstract public class typeinfo {

@@ -8,7 +8,7 @@ import util.error.error;
 @lombok.Setter
 public class astAssignExprNode extends astExprNode implements repExpr{
     private astExprNode lhs, rhs;
-    private final String op;
+    private final String op="=";
 
     @Override
     public String toString() {

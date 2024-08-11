@@ -2,6 +2,7 @@ package ast.node.def;
 
 import ast.node.expr.astExprNode;
 import ast.node.expr.repExpr;
+import ast.node.type.astTypeNode;
 import util.error.error;
 
 @lombok.experimental.SuperBuilder
@@ -9,6 +10,7 @@ import util.error.error;
 @lombok.Setter
 public class astVarDefNode extends astDefNode implements repExpr{
     private astExprNode unit;
+    private astTypeNode type;
     @Override
     public String toString() {
         return super.toString() + (unit != null ? unit.toString() : "") + ";";

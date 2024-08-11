@@ -1063,6 +1063,7 @@ public class MxParser extends Parser {
 		public StmtContext initStmt;
 		public ExprContext condExpr;
 		public ExprContext stepexpr;
+		public StmtContext bodystmt;
 		public TerminalNode For() { return getToken(MxParser.For, 0); }
 		public TerminalNode LParen() { return getToken(MxParser.LParen, 0); }
 		public TerminalNode Semi() { return getToken(MxParser.Semi, 0); }
@@ -1251,7 +1252,7 @@ public class MxParser extends Parser {
 				setState(185);
 				match(RParen);
 				setState(186);
-				stmt();
+				((ForStmtContext)_localctx).bodystmt = stmt();
 				}
 				break;
 			case 6:

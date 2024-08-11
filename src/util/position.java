@@ -11,7 +11,10 @@ public class position {
         this.row = row;
         this.column = col;
     }
-
+    public position(position rhs) {
+        this.row = rhs.row;
+        this.column = rhs.column;
+    }
     public position(Token token) {
         this.row = token.getLine();
         this.column = token.getCharPositionInLine();
@@ -32,4 +35,9 @@ public class position {
     }
 
     public String toString() { return row + "," + column; }
+
+    // public Object position(position position) {
+    //     // TODO Auto-generated method stub
+    //     throw new UnsupportedOperationException("Unimplemented method 'position'");
+    // }
 }
