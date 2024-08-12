@@ -30,7 +30,6 @@ public class Main {
         InputStream input = new FileInputStream(name);
 
         try {
-            astRoot ASTRoot;
             globalScope gScope = new globalScope(null);
 
             MxLexer lexer = new MxLexer(CharStreams.fromStream(input));
@@ -43,7 +42,7 @@ public class Main {
             ParseTree parseTreeRoot = parser.program();
             astBuilder astBuilder = new astBuilder(gScope);
 
-            ASTRoot = (astRoot)astBuilder.visit(parseTreeRoot);
+            var ASTRoot = (astRoot)astBuilder.visit(parseTreeRoot);
             
             // new SymbolCollector(gScope).visit(ASTRoot);
             // new SemanticChecker(gScope).visit(ASTRoot);

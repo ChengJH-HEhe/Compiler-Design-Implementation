@@ -6,10 +6,7 @@ import util.typeinfo;
 @lombok.Setter
 @lombok.EqualsAndHashCode(callSuper = false)
 public abstract class astExprNode extends astNode{
-  public static enum AtomType {
-    INT, BOOL, STRING, VOID, NULL, CUSTOM, THIS
-  }
   private typeinfo type;
-  private boolean isLValue;
+  private boolean isLValue = false;
   // add info below
 }

@@ -7,7 +7,6 @@ import util.error.error;
 @lombok.Value
 @lombok.EqualsAndHashCode(callSuper = true)
 public class astAtomExprNode extends astExprNode {
-    private AtomType atomtype;
     private String Value; // is value == 
     @Override
     public String toString() {

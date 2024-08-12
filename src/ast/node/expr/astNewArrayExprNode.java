@@ -10,6 +10,7 @@ import util.error.error;
 // 0维array即是普通变量
 public class astNewArrayExprNode extends astExprNode implements repExpr{
     private vector<astExprNode> lengths;
+    private astArrayConstExpr init;
     @Override
     public String toString() {
         StringBuilder s = new StringBuilder();

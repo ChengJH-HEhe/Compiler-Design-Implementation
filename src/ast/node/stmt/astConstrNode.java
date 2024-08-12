@@ -1,6 +1,5 @@
 package ast.node.stmt;
 
-import ast.node.expr.astExprNode;
 import frontend.astVisitor;
 import util.error.error;
 

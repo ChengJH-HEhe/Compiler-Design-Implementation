@@ -3,7 +3,7 @@ package util;
 @lombok.experimental.SuperBuilder
 @lombok.Getter
 @lombok.Setter
-abstract public class typeinfo {
+public class typeinfo {
   private String Name;
   private boolean isbuiltin;
   private int dim;

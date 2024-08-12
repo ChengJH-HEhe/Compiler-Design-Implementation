@@ -13,15 +13,16 @@ public interface astVisitor<T> {
   public T visit(astFuncDefNode node) throws error;
   public T visit(astClassDefNode node) throws error;
   public T visit(astVarDefNode node) throws error;
-  
-  // public T visit(astNewVarExprNode node) throws error;
-  public T visit(astNewArrayExprNode node) throws error;
+  public T visit(astConstrNode node) throws error;
 
+  public T visit(astNewArrayExprNode node) throws error;
   public T visit(astCallExprNode node) throws error;
   public T visit(astArrayExprNode node) throws error;
   public T visit(astArrayConstExpr node) throws error;
   public T visit(astMemberExprNode node) throws error;
   
+
+  public T visit(astFStrExpr node) throws error;
   public T visit(astUnaryExprNode node) throws error;
   public T visit(astPreSelfExprNode node) throws error;
   public T visit(astBinaryExprNode node) throws error;
@@ -35,6 +36,7 @@ public interface astVisitor<T> {
   public T visit(astWhileStmtNode node) throws error;
   public T visit(astContinueStmtNode node) throws error;
   public T visit(astBreakStmtNode node) throws error;
+  public T visit(astPureExprNode node) throws error;
   public T visit(astReturnStmtNode node) throws error;
   public T visit(astExprStmtNode node) throws error;
   public T visit(astVarDefStmtNode node) throws error;

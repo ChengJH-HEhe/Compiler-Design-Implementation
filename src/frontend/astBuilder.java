@@ -1,12 +1,9 @@
 package frontend;
-
-import ast.*;
 import parser.MxBaseVisitor;
 import parser.MxParser;
 import util.*;
 import util.error.error;
 
-import org.antlr.v4.runtime.ParserRuleContext;
 // import ast.binaryExprNode.binaryOpType;
 // import ast.cmpExprNode.cmpOpType;
 import ast.node.astNode;
@@ -229,10 +226,12 @@ public class astBuilder extends MxBaseVisitor<astNode> {
       value.setParent(returnstmt);
     return returnstmt;
   }
+
   @Override
   public astNode visitBreakStmt(MxParser.BreakStmtContext ctx) {
     return astBreakStmtNode.builder().build();
   }
+
   @Override
   public astNode visitContinueStmt(MxParser.ContinueStmtContext ctx) {
     return astContinueStmtNode.builder().build();
@@ -249,36 +248,86 @@ public class astBuilder extends MxBaseVisitor<astNode> {
   public astNode visitEmptyStmt(MxParser.EmptyStmtContext ctx) {
     return null;
   }
+  // literal
+  @Override
+  public astNode visitLiteral(MxParser.LiteralContext ctx) {
+    if (ctx.IntegerConst() != null) {
+      return astAtomExprNode.builder()
+          .Value(ctx.IntegerConst().getText())
+          .type(new typeinfo("int", 0))
+          .build();
+    } else if (ctx.StringConst() != null) {
+      return astAtomExprNode.builder()
+          .Value(ctx.StringConst().getText())
+          .type(new typeinfo("string", 0))
+          .build();
+    } else if (ctx.Null() != null) {
+      return astAtomExprNode.builder()
+          .Value("null")
+          .type(new typeinfo("null", 0))
+          .build();
+    } else if (ctx.True() != null) {
+      return astAtomExprNode.builder()
+          .Value(ctx.True().getText())
+          .type(new typeinfo("bool", 0))
+          .build();
+    } else if (ctx.False() != null) {
+      return astAtomExprNode.builder()
+          .Value(ctx.False().getText())
+          .type(new typeinfo("bool", 0))
+          .build();
+    } else {
+      return null;
+    }
+  }
 
+  // atom
   @Override
   public astNode visitAtomExpr(MxParser.AtomExprContext ctx) {
-    return visit(ctx.primary());
+    var prim = ctx.primary();
+    if(prim.Identifier() != null) {
+      return astAtomExprNode.builder()
+          .Value(prim.Identifier().getText())
+          .type(new typeinfo("custom", 0))
+          .build();
+    } else if(prim.literal() != null) {
+      return visit(prim.literal());
+    } else {
+      assert(prim.This() != null);
+      return astAtomExprNode.builder()
+          .Value("this")
+          .type(new typeinfo("this", 0))
+          .build();
+    }
   }
+
   @Override
   public astNode visitParenExpr(MxParser.ParenExprContext ctx) {
     return visit(ctx.expr());
   }
+
   @Override
   public astNode visitConditionalExpr(MxParser.ConditionalExprContext ctx) {
-    var cond = (astExprNode)visit(ctx.expr(0));
-    var lhs = (astExprNode)visit(ctx.expr(1));
-    var rhs = (astExprNode)visit(ctx.expr(2));
+    var cond = (astExprNode) visit(ctx.expr(0));
+    var lhs = (astExprNode) visit(ctx.expr(1));
+    var rhs = (astExprNode) visit(ctx.expr(2));
 
     var condexpr = astConditionalExprNode.builder()
-    .cond(cond)
-    .lhs(lhs)
-    .rhs(rhs)
-    .build();
+        .cond(cond)
+        .lhs(lhs)
+        .rhs(rhs)
+        .build();
     lhs.setParent(condexpr);
     rhs.setParent(condexpr);
     cond.setParent(condexpr);
     return condexpr;
   }
+
   @Override
   public astNode visitBinaryExpr(MxParser.BinaryExprContext ctx) {
     astExprNode lhs = (astExprNode) visit(ctx.expr(0)),
         rhs = (astExprNode) visit(ctx.expr(1));
-    String biOp = null, cmpop = null;
+    String biOp = null;
     if (ctx.Mul() != null)
       biOp = "Mul";
     else if (ctx.Div() != null)
@@ -322,7 +371,8 @@ public class astBuilder extends MxBaseVisitor<astNode> {
     rhs.setParent(astBinaryExpr);
     return astBinaryExpr;
   }
-  //unary
+
+  // unary
   @Override
   public astNode visitUnaryExpr(MxParser.UnaryExprContext ctx) {
     astExprNode expr = (astExprNode) visit(ctx.expr());
@@ -342,8 +392,8 @@ public class astBuilder extends MxBaseVisitor<astNode> {
     expr.setParent(astUnaryExpr);
     return astUnaryExpr;
   }
-  
-  //preself
+
+  // preself
   @Override
   public astNode visitPreSelfExpr(MxParser.PreSelfExprContext ctx) {
     astExprNode expr = (astExprNode) visit(ctx.expr());
@@ -359,7 +409,7 @@ public class astBuilder extends MxBaseVisitor<astNode> {
     expr.setParent(astPreselfExpr);
     return astPreselfExpr;
   }
-  
+
   @Override
   public astNode visitAssignExpr(MxParser.AssignExprContext ctx) {
     astExprNode lhs = (astExprNode) visit(ctx.expr(0)),
@@ -371,32 +421,142 @@ public class astBuilder extends MxBaseVisitor<astNode> {
     rhs.setParent(AssignExprNode);
     return AssignExprNode;
   }
-  // primary
-  @Override
-  public astNode visitPrimary(MxParser.PrimaryContext ctx) {
-    if (ctx.expr() != null)
-      return visit(ctx.expr());
-    else if (ctx.literal() != null)
-      return visit(ctx.literal());
-    else
-      return new varExprNode(ctx.Identifier().toString(), new position(ctx.Identifier()));
-  }
-  // literal
-  @Override
-  public astNode visitLiteral(MxParser.LiteralContext ctx) {
-    return new constExprNode(Integer.parseInt(ctx.DecimalInteger().toString()),
-        intType, new position(ctx));
-  }
+
   // fstr
+  @Override
+  public astNode visitFStrExpr(MxParser.FStrExprContext ctx) {
+    var vecStr = new vector<String>();
+    var vecExpr = new vector<astExprNode>();
+    var fstr = ctx.formatStr();
+    if(fstr.FstringConst() != null) {
+      vecStr.add(astAtomExprNode.builder().
+      Value(fstr.FstringConst().getText()).build().toString());
+      return astFStrExpr.builder()
+          .vecStr(vecStr)
+          .vecExpr(vecExpr)
+          .build();
+    }
+    vecStr.add(astAtomExprNode.builder().
+      Value(fstr.Fstring_l().getText()).build().toString());
+    for(var fstr_m : fstr.Fstring_m())
+      vecStr.add(astAtomExprNode.builder().
+      Value(fstr_m.getText()).build().toString());
+    vecStr.add(astAtomExprNode.builder().
+      Value(fstr.Fstring_lst().getText()).build().toString());
+    for (var expr : fstr.expr()) {
+      vecExpr.add((astExprNode) visit(expr));
+    }
+
+    var Fstrnode = astFStrExpr.builder()
+        .vecStr(vecStr)
+        .vecExpr(vecExpr)
+        .build();
+    for (var expr : vecExpr)
+      expr.setParent(Fstrnode);
+
+    return Fstrnode;
+  }
+
+  // arrayConst
+  @Override
+  public astNode visitArrayConst(MxParser.ArrayConstContext ctx) {
+    var vec = new vector<astExprNode>();
+    for (var expr : ctx.literal()) {
+      vec.add((astExprNode) visit(expr));
+    }
+    var type = vec.get(0).getType();
+    for (var expr : vec) {
+      if (!expr.getType().equals(type))
+        throw new error("ArrayConst type not match");
+    }
+    var arrayConst = astArrayConstExpr.builder()
+        .vec(vec)
+        .constType(type)
+        .build();
+    for (var expr : vec)
+      expr.setParent(arrayConst);
+    return arrayConst;
+  }
 
   // newarray
+  @Override
+  public astNode visitNewArrayExpr(MxParser.NewArrayExprContext ctx) {
+    var lengths = new vector<astExprNode>();
+    var type = new typeinfo(ctx.typename().getText(), ctx.LBracket().size());
+    boolean inittrue = true;
+    for (int i = 0; i < ctx.LBracket().size(); ++i) {
+      if (ctx.expr(i) != null) {
+        if (!inittrue)
+          throw new error("\"" + ctx.getText() + "\"" + "init ends");
+        lengths.add((astExprNode) visit(ctx.expr(i)));
+      } else {
+        inittrue = false;
+        lengths.add(null);
+      }
+    }
+    var newarray = astNewArrayExprNode.builder()
+        .lengths(lengths)
+        .type(type)
+        .build();
+    for (var newExpr : lengths)
+      if (newExpr != null)
+        newExpr.setParent(newarray);
+    if (ctx.arrayConst() != null)
+      newarray.setInit((astArrayConstExpr) visit(ctx.arrayConst()));
+    return newarray;
+  }
 
   // newvar
+  @Override
+  public astNode visitNewVarExpr(MxParser.NewVarExprContext ctx) {
+    var type = new typeinfo(ctx.typename().getText(), 0);
+    var newarray = astNewArrayExprNode.builder()
+        .type(type)
+        .build();
+    return newarray;
+  }
 
   // call
+  @Override
+  public astNode visitCallExpr(MxParser.CallExprContext ctx) {
+    var func = (astExprNode) visit(ctx.expr(0));
+    var args = new vector<astExprNode>();
+    for (int i = 1; i < ctx.expr().size(); ++i) {
+      args.add((astExprNode) visit(ctx.expr(i)));
+    }
+    var astCallNode = astCallExprNode.builder()
+        .func(func)
+        .args(args)
+        .build();
+    for (int i = 0; i < args.size(); ++i)
+      args.get(i).setParent(astCallNode);
+    return astCallNode;
+  }
 
   // array
+  @Override
+  public astNode visitArrayExpr(MxParser.ArrayExprContext ctx) {
+    var array = (astExprNode) visit(ctx.expr(0));
+    var index = (astExprNode) visit(ctx.expr(1));
+    var arrayExpr = astArrayExprNode.builder()
+        .array(array)
+        .sub(index)
+        .build();
+    array.setParent(arrayExpr);
+    index.setParent(arrayExpr);
+    return arrayExpr;
+  }
 
   // member
-  
+  @Override
+  public astNode visitMemberExpr(MxParser.MemberExprContext ctx) {
+    var expr = (astExprNode) visit(ctx.expr());
+    var member = ctx.Identifier().getText();
+    var membernode = astMemberExprNode.builder()
+        .expr(expr)
+        .member(member)
+        .build();
+    expr.setParent(membernode);
+    return membernode;
+  }
 }
