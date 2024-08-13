@@ -41,11 +41,11 @@ public interface MxVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitArglist(MxParser.ArglistContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MxParser#varDef}.
+	 * Visit a parse tree produced by {@link MxParser#vardefstmt}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitVarDef(MxParser.VarDefContext ctx);
+	T visitVardefstmt(MxParser.VardefstmtContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link MxParser#varDefn}.
 	 * @param ctx the parse tree

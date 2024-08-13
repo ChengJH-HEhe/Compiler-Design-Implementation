@@ -1,5 +1,7 @@
 package util;
 
+import java.util.HashMap;
+
 @lombok.experimental.SuperBuilder
 @lombok.Getter
 @lombok.Setter
@@ -7,11 +9,12 @@ public class typeinfo {
   private String Name;
   private boolean isbuiltin;
   private int dim;
+  public HashMap<String, typeinfo> members = null;
 
   public typeinfo(String typeName, int arrayDepth) {
     this.Name = typeName;
     this.isbuiltin = typeName.equals("int") || typeName.equals("bool") || typeName.equals("string")
-        || typeName.equals("void") || typeName.equals("null");
+        || typeName.equals("void") || typeName.equals("null") || typeName.equals("this");
     this.dim = arrayDepth;
   }
 

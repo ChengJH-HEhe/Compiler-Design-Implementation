@@ -15,12 +15,6 @@ import ast.node.type.*;
 
 public class astBuilder extends MxBaseVisitor<astNode> {
 
-  private globalScope gScope;
-
-  public astBuilder(globalScope gScope) {
-    this.gScope = gScope;
-  }
-
   @Override
   public astNode visitProgram(MxParser.ProgramContext ctx) {
     //
@@ -28,8 +22,8 @@ public class astBuilder extends MxBaseVisitor<astNode> {
     for (var def : ctx.children) {
       if (def instanceof MxParser.ClassDefContext || def instanceof MxParser.FuncDefContext) {
         defs.add((astDefNode) visit(def));
-      } else if (def instanceof MxParser.VarDefContext) {
-        var varDef = (astVarDefStmtNode) visit(def);
+      } else if (def instanceof MxParser.VardefstmtContext) {
+        var varDef = (astVarDefStmtNode) visit(def); 
         for (var vartmp : varDef.getArray())
           defs.add(vartmp);
       }
@@ -49,8 +43,11 @@ public class astBuilder extends MxBaseVisitor<astNode> {
     for (var def : ctx.children) {
       if (def instanceof MxParser.FuncDefContext)
         methods.add((astFuncDefNode) visit(def));
-      else if (def instanceof MxParser.VarDefContext)
-        fields.add((astVarDefNode) visit(def));
+      else if (def instanceof MxParser.VardefstmtContext) {
+        var varDef = (astVarDefStmtNode) visit(def);
+        for (var vartmp : varDef.getArray())
+          fields.add(vartmp);  
+      }
       else if (def instanceof MxParser.ConstrContext) {
         if (constructor != null)
           throw new error("Class has another constructor" + constructor.toString());
@@ -123,13 +120,16 @@ public class astBuilder extends MxBaseVisitor<astNode> {
   @Override
   // VarDef
   public astNode visitVardefStmt(MxParser.VardefStmtContext ctx) {
+    return visit(ctx.vardefstmt());
+  }
+  public astNode visitVardefstmt(MxParser.VardefstmtContext ctx) {
     var vecvardef = new vector<astVarDefNode>();
     // name type unit; 1type&2vardefn
-    var type = (astTypeNode) visit(ctx.varDef().type());
+    var type = (astTypeNode) visit(ctx.type());
     var vardefStmt = astVarDefStmtNode.builder()
         .array(vecvardef)
         .build();
-    for (var vardef : ctx.varDef().varDefn()) {
+    for (var vardef : ctx.varDefn()) {
       var varDefNode = astVarDefNode.builder()
           .type(type)
           .name(vardef.Identifier().getText())
@@ -140,12 +140,6 @@ public class astBuilder extends MxBaseVisitor<astNode> {
       vecvardef.add(varDefNode);
     }
     return vardefStmt;
-  }
-
-  @Override
-  public astNode visitVarDef(MxParser.VarDefContext ctx) {
-    assert (false);
-    return new astNode();
   }
 
   @Override

@@ -14,10 +14,10 @@ import util.error.error;
 @lombok.Setter
 public class astFuncDefNode extends astDefNode implements scopeStmt{
   private FuncInfo info;
-  private Scope funcscope;
+  private Scope funcScope;
   private final vector<astVarDefNode> args;
   private final astBlockStmtNode block;
-  public String getRetType() {
+  public String getRet() {
     return getName();
   }
   public vector<astStmtNode> getBody() {

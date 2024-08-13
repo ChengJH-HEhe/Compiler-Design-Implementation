@@ -43,8 +43,7 @@ public class Main {
             astBuilder astBuilder = new astBuilder(gScope);
 
             var ASTRoot = (astRoot)astBuilder.visit(parseTreeRoot);
-            
-            // new SymbolCollector(gScope).visit(ASTRoot);
+            new SymbolCollector(gScope).visit(ASTRoot);
             // new SemanticChecker(gScope).visit(ASTRoot);
 
             // mainFn f = new mainFn();

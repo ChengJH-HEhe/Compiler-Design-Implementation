@@ -10,8 +10,7 @@ import util.error.error;
 @lombok.Getter
 @lombok.Setter
 public class astClassDefNode extends astDefNode implements scopeStmt{
-  private Scope FuncScope;
-  private Scope VarScope;
+  private Scope classScope;
   private final astConstrNode constructor;
   private final vector<astFuncDefNode> methods;
   private final vector<astVarDefNode> fields;

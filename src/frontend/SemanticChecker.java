@@ -3,41 +3,19 @@ package frontend;
 import ast.*;
 import ast.node.astNode;
 import ast.node.astRoot;
-import ast.node.def.astClassDefNode;
-import ast.node.def.astFuncDefNode;
-import ast.node.def.astVarDefNode;
-import ast.node.expr.astArrayConstExpr;
-import ast.node.expr.astArrayExprNode;
-import ast.node.expr.astAssignExprNode;
-import ast.node.expr.astAtomExprNode;
-import ast.node.expr.astBinaryExprNode;
-import ast.node.expr.astCallExprNode;
-import ast.node.expr.astConditionalExprNode;
-import ast.node.expr.astMemberExprNode;
-import ast.node.expr.astNewArrayExprNode;
-import ast.node.expr.astPreSelfExprNode;
-import ast.node.expr.astUnaryExprNode;
-import ast.node.stmt.astBlockStmtNode;
-import ast.node.stmt.astBreakStmtNode;
-import ast.node.stmt.astContinueStmtNode;
-import ast.node.stmt.astEmptyStmtNode;
-import ast.node.stmt.astExprStmtNode;
-import ast.node.stmt.astForStmtNode;
-import ast.node.stmt.astIfStmtNode;
-import ast.node.stmt.astReturnStmtNode;
-import ast.node.stmt.astVarDefStmtNode;
-import ast.node.stmt.astWhileStmtNode;
+import ast.node.def.*;
+import ast.node.expr.*;
+import ast.node.stmt.*;
 import util.Scope;
-import util.Type;
 import util.error.error;
 import util.error.semanticError;
 import util.globalScope;
+import util.typeinfo;
 
 public class SemanticChecker implements astVisitor {
     private Scope currentScope;
     private globalScope gScope;
-    private Type currentStruct = null;
-
+    private typeinfo currentStruct = null;
     public SemanticChecker(globalScope gScope) {
         currentScope = this.gScope = gScope;
     }
@@ -198,5 +176,21 @@ public class SemanticChecker implements astVisitor {
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
-    
+    @Override
+    public Object visit(astConstrNode node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    }
+
+    @Override
+    public Object visit(astFStrExpr node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    }
+
+    @Override
+    public Object visit(astPureExprNode node) throws error {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    }    
 }

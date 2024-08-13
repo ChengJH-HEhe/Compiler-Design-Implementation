@@ -1,16 +1,16 @@
 grammar Mx;
 @header {package parser;}
 
-program: (funcDef | classDef | (varDef ';'))* EOF;
+program: (funcDef | classDef | (vardefstmt))* EOF;
 
-classDef: Class Identifier '{' (varDef ';'| funcDef | constr)* '}' ';';
+classDef: Class Identifier '{' ( vardefstmt| funcDef | constr)* '}' ';';
 
 constr: Identifier '(' ')' block;
 
 funcDef: returnType Identifier '(' arglist? ')' block;
 arglist: type Identifier(Comma type Identifier)*;
 
-varDef: type varDefn (Comma varDefn)*;
+vardefstmt: type varDefn (Comma varDefn)* ';' ;
 varDefn: Identifier(Assign expr)?;
 
 returnType: Void | type;
@@ -36,7 +36,7 @@ primary
     ;
 stmt
     : block #blockStmt
-    | varDef ';' #vardefStmt
+    | vardefstmt #vardefStmt
     | If '(' expr ')' thenStmt = stmt 
         (Else elseStmt = stmt)? #ifStmt
     | While '(' expr ')' stmt #whileStmt

@@ -77,13 +77,13 @@ public class MxBaseListener implements MxListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterVarDef(MxParser.VarDefContext ctx) { }
+	@Override public void enterVardefstmt(MxParser.VardefstmtContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitVarDef(MxParser.VarDefContext ctx) { }
+	@Override public void exitVardefstmt(MxParser.VardefstmtContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
