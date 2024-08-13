@@ -40,6 +40,7 @@ public class astBuilder extends MxBaseVisitor<astNode> {
     astConstrNode constructor = null;
     vector<astFuncDefNode> methods = new vector<astFuncDefNode>();
     vector<astVarDefNode> fields = new vector<astVarDefNode>();
+    // METHODS, fields in info
     for (var def : ctx.children) {
       if (def instanceof MxParser.FuncDefContext)
         methods.add((astFuncDefNode) visit(def));
@@ -57,11 +58,13 @@ public class astBuilder extends MxBaseVisitor<astNode> {
               "Class name " + ctx.Identifier().getText() + "not constructor's " + constructor.getClassName());
       }
     }
+    String name = ctx.Identifier().getText();
     var ClassDef = astClassDefNode.builder()
-        .name(ctx.Identifier().getText())
+        .name(name)
         .constructor(constructor)
         .methods(methods)
         .fields(fields)
+        .info(new ClassInfo(name, fields, methods))
         .build();
     if (constructor != null)
       constructor.setParent(ClassDef);
@@ -86,27 +89,36 @@ public class astBuilder extends MxBaseVisitor<astNode> {
   // funcdef
   @Override
   public astNode visitFuncDef(MxParser.FuncDefContext ctx) {
-    FuncInfo info = new FuncInfo();
-    info.name = ctx.Identifier().getText();
-    if (ctx.returnType().Void() != null) {
-      info.retType = null;
-    } else {
-      info.retType = ((astTypeNode) visitType(ctx.returnType().type())).getInfo();
-    }
+    var retType = new typeinfo("",0);
     var arglist = ctx.arglist();
     var args = new vector<astVarDefNode>();
+
+    var info = FuncInfo.builder()
+    .name(ctx.Identifier().getText())
+    .retType(retType)
+    .argsType(new vector<typeinfo>())
+    .build();
+
+    if (ctx.returnType().Void() != null) {
+      retType = null;
+    } else {
+      retType = ((astTypeNode) visitType(ctx.returnType().type())).getInfo();
+    }    
     if (arglist != null) {
       // type identifier all vector
       var vectype = arglist.type();
       var vecname = arglist.Identifier();
       assert (arglist.type().size() == arglist.Identifier().size());
       for (int i = 0; i < arglist.type().size(); ++i) {
+        var typenode = (astTypeNode) visit(vectype.get(i));
+        info.argsType.add(typenode.getInfo());
         args.add(astVarDefNode.builder()
             .name(vecname.get(i).getText())
-            .type((astTypeNode) visit(vectype.get(i)))
+            .type(typenode)
             .build());
       }
     }
+    
     var blocknode = (astBlockStmtNode) (visit(ctx.block()));
     var Funcdef = astFuncDefNode.builder()
         .info(info)

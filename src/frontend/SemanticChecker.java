@@ -1,195 +1,193 @@
 package frontend;
 
-import ast.*;
 import ast.node.astNode;
 import ast.node.astRoot;
 import ast.node.def.*;
 import ast.node.expr.*;
 import ast.node.stmt.*;
+import util.ClassInfo;
 import util.Scope;
 import util.error.error;
-import util.error.semanticError;
 import util.globalScope;
 import util.typeinfo;
 
-public class SemanticChecker implements astVisitor {
-    private Scope currentScope;
+public class SemanticChecker implements astVisitor<String> {
+    private Scope curS;
     private globalScope gScope;
-    private typeinfo currentStruct = null;
+    private ClassInfo curC = null;
     public SemanticChecker(globalScope gScope) {
-        currentScope = this.gScope = gScope;
+        curS = this.gScope = gScope;
     }
 
     @Override
-    public Object visit(astNode node) throws error {
+    public String visit(astNode node) throws error {
+        throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    }
+
+    @Override
+    public String visit(astRoot node) throws error {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public Object visit(astRoot node) throws error {
+    public String visit(astFuncDefNode node) throws error {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public Object visit(astFuncDefNode node) throws error {
+    public String visit(astClassDefNode node) throws error {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public Object visit(astClassDefNode node) throws error {
+    public String visit(astVarDefNode node) throws error {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public Object visit(astVarDefNode node) throws error {
+    public String visit(astNewArrayExprNode node) throws error {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public Object visit(astNewArrayExprNode node) throws error {
+    public String visit(astCallExprNode node) throws error {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public Object visit(astCallExprNode node) throws error {
+    public String visit(astArrayExprNode node) throws error {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public Object visit(astArrayExprNode node) throws error {
+    public String visit(astArrayConstExpr node) throws error {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public Object visit(astArrayConstExpr node) throws error {
+    public String visit(astMemberExprNode node) throws error {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public Object visit(astMemberExprNode node) throws error {
+    public String visit(astUnaryExprNode node) throws error {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public Object visit(astUnaryExprNode node) throws error {
+    public String visit(astPreSelfExprNode node) throws error {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public Object visit(astPreSelfExprNode node) throws error {
+    public String visit(astBinaryExprNode node) throws error {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public Object visit(astBinaryExprNode node) throws error {
+    public String visit(astConditionalExprNode node) throws error {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public Object visit(astConditionalExprNode node) throws error {
+    public String visit(astAssignExprNode node) throws error {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public Object visit(astAssignExprNode node) throws error {
+    public String visit(astAtomExprNode node) throws error {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public Object visit(astAtomExprNode node) throws error {
+    public String visit(astBlockStmtNode node) throws error {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public Object visit(astBlockStmtNode node) throws error {
+    public String visit(astIfStmtNode node) throws error {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public Object visit(astIfStmtNode node) throws error {
+    public String visit(astForStmtNode node) throws error {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public Object visit(astForStmtNode node) throws error {
+    public String visit(astWhileStmtNode node) throws error {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public Object visit(astWhileStmtNode node) throws error {
+    public String visit(astContinueStmtNode node) throws error {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public Object visit(astContinueStmtNode node) throws error {
+    public String visit(astBreakStmtNode node) throws error {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public Object visit(astBreakStmtNode node) throws error {
+    public String visit(astReturnStmtNode node) throws error {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public Object visit(astReturnStmtNode node) throws error {
+    public String visit(astExprStmtNode node) throws error {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public Object visit(astExprStmtNode node) throws error {
+    public String visit(astVarDefStmtNode node) throws error {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public Object visit(astVarDefStmtNode node) throws error {
+    public String visit(astEmptyStmtNode node) throws error {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public Object visit(astEmptyStmtNode node) throws error {
+    public String visit(astConstrNode node) throws error {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public Object visit(astConstrNode node) throws error {
+    public String visit(astFStrExpr node) throws error {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }
 
     @Override
-    public Object visit(astFStrExpr node) throws error {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visit'");
-    }
-
-    @Override
-    public Object visit(astPureExprNode node) throws error {
+    public String visit(astPureExprNode node) throws error {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visit'");
     }    

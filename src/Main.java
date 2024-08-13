@@ -40,11 +40,11 @@ public class Main {
             parser.addErrorListener(new MxErrorListener());
 
             ParseTree parseTreeRoot = parser.program();
-            astBuilder astBuilder = new astBuilder(gScope);
+            astBuilder astBuilder = new astBuilder();
 
             var ASTRoot = (astRoot)astBuilder.visit(parseTreeRoot);
             new SymbolCollector(gScope).visit(ASTRoot);
-            // new SemanticChecker(gScope).visit(ASTRoot);
+            new SemanticChecker(gScope).visit(ASTRoot);
 
             // mainFn f = new mainFn();
             // new IRBuilder(f, gScope).visit(ASTRoot);

@@ -5,6 +5,8 @@ import ast.node.astRoot;
 import ast.node.def.*;
 import ast.node.expr.*;
 import ast.node.stmt.*;
+import util.ClassInfo;
+import util.FuncInfo;
 import util.Scope;
 import util.globalScope;
 import util.typeinfo;
@@ -36,25 +38,35 @@ public class SymbolCollector implements astVisitor<astNode> {
 
   @Override
     public astNode visit(astRoot node) throws error {
-        // TODO Auto-generated method stub
+        // program
         node.setGScope(gScope);
+        enter(gScope);
         for(var def : node.getDefs()) {
             if(def instanceof astClassDefNode) {
-
+              gScope.addType(def.getName(), 
+              (ClassInfo)(((astClassDefNode)def).getInfo()));
             } else if(def instanceof astFuncDefNode) {
-
-            } else {
-              assert(def instanceof astVarDefNode);
-
+              gScope.defineVariable(def.getName(), 
+              (((astFuncDefNode)def).getInfo()));
             }
         }
-        throw new UnsupportedOperationException("Unimplemented method 'visit'");
+        for(var def : node.getDefs()) {
+          if(def instanceof astClassDefNode || def instanceof astFuncDefNode)
+            def.accept(this);
+      }
+      var info = gScope.containsVariable("main", false);
+      if(info != null && ! (info instanceof FuncInfo)) {
+        throw new error("main func not found");
+      }
+      exit();
+      return node;
     }
-
   @Override
   public astNode visit(astFuncDefNode node) throws error {
     // name returntype 
-    if(node.getInfo().name.equals("main")) {
+    node.setFuncScope(new Scope(curS));
+    enter(node.getFuncScope());
+    if(node.getInfo().getName().equals("main")) {
       if(!node.getRet().equals("int"))
         throw new error("Main return " + node.getInfo().retType.getName());
       if(node.getArgs().size() > 0)
@@ -66,14 +78,26 @@ public class SymbolCollector implements astVisitor<astNode> {
     for(var arg : node.getArgs()) {
       visit(arg);
     } 
+    exit();
     return node;
   }
 
   @Override
   public astNode visit(astClassDefNode node) throws error {
-    // classname (member, fields)
-    
-    throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    // classname (member, fields) all together
+    node.setClassScope(new Scope(curS));
+    enter(node.getClassScope());
+    // forward reference
+    // funcinfo args.type saved
+    for(var func : node.getMethods()) {
+      func.accept(this);
+      curS.defineVariable(func.getName(), func.getInfo());
+    }
+    for(var vars : node.getFields()) {
+      curS.defineVariable(vars.getName(), vars.getType().getInfo());
+    }
+    exit();
+    return node;
   }
 
   @Override
