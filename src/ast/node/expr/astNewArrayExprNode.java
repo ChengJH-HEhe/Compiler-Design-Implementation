@@ -1,6 +1,7 @@
 package ast.node.expr;
 
 import frontend.astVisitor;
+import util.typeinfo;
 import util.vector;
 import util.error.error;
 
@@ -18,7 +19,7 @@ public class astNewArrayExprNode extends astExprNode implements repExpr{
         for (astExprNode length : lengths) {
             s.append("[" + length.toString() + "]");
         }
-        for(int i = lengths.size(); i < getType().getDim(); i++) {
+        for(int i = lengths.size(); i < ((typeinfo)getType()).getDim(); i++) {
             s.append("[]");
         }
         return s.toString();

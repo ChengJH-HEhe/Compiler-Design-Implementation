@@ -30,7 +30,7 @@ public class Main {
         InputStream input = new FileInputStream(name);
 
         try {
-            globalScope gScope = new globalScope(null);
+            globalScope gScope = new globalScope(null,null);
 
             MxLexer lexer = new MxLexer(CharStreams.fromStream(input));
             lexer.removeErrorListeners();

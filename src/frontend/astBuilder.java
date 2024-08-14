@@ -245,7 +245,7 @@ public class astBuilder extends MxBaseVisitor<astNode> {
 
   @Override
   public astNode visitExprStmt(MxParser.ExprStmtContext ctx) {
-    return astPureExprNode.builder()
+    return astExprStmtNode.builder()
         .expr((astExprNode) visit(ctx.expr()))
         .build();
   }
@@ -391,6 +391,10 @@ public class astBuilder extends MxBaseVisitor<astNode> {
       UOp = "Not";
     else if (ctx.LogicNot() != null)
       UOp = "LogicNot";
+    else if(ctx.Increment()!=null)
+      UOp = "Increment";
+    else if(ctx.Decrement() != null)
+      UOp = "Decrement";
     var astUnaryExpr = astUnaryExprNode.builder()
         .expr(expr)
         .op(UOp)
@@ -493,11 +497,10 @@ public class astBuilder extends MxBaseVisitor<astNode> {
     for (int i = 0; i < ctx.LBracket().size(); ++i) {
       if (ctx.expr(i) != null) {
         if (!inittrue)
-          throw new error("\"" + ctx.getText() + "\"" + "init ends");
+          throw new error(" \" " + ctx.getText() + " \" " + "init ends");
         lengths.add((astExprNode) visit(ctx.expr(i)));
       } else {
         inittrue = false;
-        lengths.add(null);
       }
     }
     var newarray = astNewArrayExprNode.builder()

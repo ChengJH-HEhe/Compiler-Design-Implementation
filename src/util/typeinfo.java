@@ -4,12 +4,12 @@ package util;
 @lombok.Getter
 @lombok.Setter
 public class typeinfo extends Info{
-  private boolean isbuiltin;
+  private boolean builtin;
   private int dim;
 
   public typeinfo(String typeName, int arrayDepth) {
     super(typeName);
-    this.isbuiltin = typeName.equals("int") || typeName.equals("bool") || typeName.equals("string")
+    this.builtin = typeName.equals("int") || typeName.equals("bool") || typeName.equals("string")
         || typeName.equals("void") || typeName.equals("null") || typeName.equals("this");
     this.dim = arrayDepth;
   }
@@ -20,10 +20,10 @@ public class typeinfo extends Info{
     }
     var other = (typeinfo) otherInfo;
     if (getName().equals("null")) {
-      return other.getName().equals("null") || other.dim > 0 || !other.isbuiltin;
+      return other.getName().equals("null") || other.dim > 0 || !other.builtin;
     }
     if (other.getName().equals("null")) {
-      return this.dim > 0 || !this.isbuiltin;
+      return this.dim > 0 || !this.builtin;
     }
     return this.getName().equals(other.getName()) && this.dim == other.dim;
   }

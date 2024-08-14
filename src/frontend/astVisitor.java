@@ -36,7 +36,6 @@ public interface astVisitor<T> {
   public T visit(astWhileStmtNode node) throws error;
   public T visit(astContinueStmtNode node) throws error;
   public T visit(astBreakStmtNode node) throws error;
-  public T visit(astPureExprNode node) throws error;
   public T visit(astReturnStmtNode node) throws error;
   public T visit(astExprStmtNode node) throws error;
   public T visit(astVarDefStmtNode node) throws error;

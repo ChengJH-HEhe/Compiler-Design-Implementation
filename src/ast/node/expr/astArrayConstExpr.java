@@ -1,7 +1,7 @@
 package ast.node.expr;
 
 import frontend.astVisitor;
-import util.typeinfo;
+import util.Info;
 import util.vector;
 import util.error.error;
 
@@ -9,7 +9,7 @@ import util.error.error;
 @lombok.Value
 @lombok.EqualsAndHashCode(callSuper = true)
 public class astArrayConstExpr extends astExprNode{
-    private typeinfo constType;
+    private Info constType;
     private vector<astExprNode> vec;
     @Override
     public <T> T accept(astVisitor<T> visitor) throws error {

@@ -5,14 +5,22 @@ import util.error.semanticError;
 import java.util.HashMap;
 
 public class Scope {
+  private Info info;
+  public enum ScopeType {
+    LOOP, BLOCK, FUNC, CLASS, GLOBAL;
+  }
+  private ScopeType type;
+  public boolean isexited;
 
   private HashMap<String, Info> members;
   public HashMap<String, register> entities = new HashMap<>();
   private Scope parentScope;
 
-  public Scope(Scope parentScope) {
+  public Scope(Scope parentScope,Info info, ScopeType type) {
     members = new HashMap<>();
     this.parentScope = parentScope;
+    this.info = info;
+    this.type = type;
   }
 
   public Scope parentScope() {

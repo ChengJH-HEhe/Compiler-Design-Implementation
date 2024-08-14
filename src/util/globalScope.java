@@ -6,8 +6,8 @@ import java.util.HashMap;
 
 public class globalScope extends Scope {
     private HashMap<String, Info> types = new HashMap<>();
-    public globalScope(Scope parentScope) {
-        super(parentScope);
+    public globalScope(Scope parentScope, Info info) {
+        super(parentScope, info, ScopeType.GLOBAL);
     }
     public void addType(String name, Info t) {
         if (types.containsKey(name))

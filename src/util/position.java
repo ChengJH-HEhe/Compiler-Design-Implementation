@@ -35,9 +35,4 @@ public class position {
     }
 
     public String toString() { return row + "," + column; }
-
-    // public Object position(position position) {
-    //     // TODO Auto-generated method stub
-    //     throw new UnsupportedOperationException("Unimplemented method 'position'");
-    // }
 }

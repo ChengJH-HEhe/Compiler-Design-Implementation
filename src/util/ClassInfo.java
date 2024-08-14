@@ -22,4 +22,12 @@ public class ClassInfo extends Info {
       this.funcs.put(func.getName(), (FuncInfo) func.getInfo());
     }
   }
+  public ClassInfo(String name, vector<FuncInfo> funcs) {
+    super(name);
+    this.vars = new HashMap<String, typeinfo>();
+    this.funcs = new HashMap<String, FuncInfo>();
+    for (var func : funcs) {
+      this.funcs.put(func.getName(), (FuncInfo) func);
+    }
+  }
 }
