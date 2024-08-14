@@ -15,7 +15,20 @@ public class Scope {
   private HashMap<String, Info> members;
   public HashMap<String, register> entities = new HashMap<>();
   private Scope parentScope;
-
+  public boolean findLOOP(){
+    if(type == ScopeType.LOOP)
+      return true;
+    if(parentScope == null)
+      return false;
+    return parentScope.findLOOP();
+  }
+  public Info findFunc(){
+    if(type == ScopeType.FUNC)
+      return info;
+    if(parentScope == null)
+      return null;
+    return parentScope.findFunc();
+  }
   public Scope(Scope parentScope,Info info, ScopeType type) {
     members = new HashMap<>();
     this.parentScope = parentScope;

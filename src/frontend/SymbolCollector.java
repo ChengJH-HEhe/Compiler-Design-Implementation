@@ -47,6 +47,9 @@ public class SymbolCollector implements astVisitor<astNode> {
               gScope.addType(def.getName(), 
               (ClassInfo)(((astClassDefNode)def).getInfo()));
             } else if(def instanceof astFuncDefNode) {
+              if(gScope.getTypeFromName(def.getName()) != null) {
+                throw new error("Function name " + def.getName() + "conflict with class name");
+              }
               gScope.defineVariable(def.getName(), 
               (((astFuncDefNode)def).getInfo()));
             }
@@ -203,12 +206,6 @@ public class SymbolCollector implements astVisitor<astNode> {
   public astNode visit(astBreakStmtNode node) throws error {
     throw new UnsupportedOperationException("Unimplemented method 'visit'");
   }
-
-  @Override
-  public astNode visit(astPureExprNode node) throws error {
-    throw new UnsupportedOperationException("Unimplemented method 'visit'");
-  }
-
   @Override
   public astNode visit(astReturnStmtNode node) throws error {
     throw new UnsupportedOperationException("Unimplemented method 'visit'");

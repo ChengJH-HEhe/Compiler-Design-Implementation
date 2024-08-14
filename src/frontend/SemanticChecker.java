@@ -14,6 +14,7 @@ import util.error.error;
 import util.globalScope;
 import util.typeinfo;
 import util.vector;
+import util.Scope.ScopeType;
 
 public class SemanticChecker implements astVisitor<String> {
   private Scope curS;
@@ -395,50 +396,110 @@ public class SemanticChecker implements astVisitor<String> {
 
   @Override
   public String visit(astAtomExprNode node) throws error {
-    // TODO Auto-generated method stub
+    // TODO Atom
     throw new UnsupportedOperationException("Unimplemented method 'visit'");
   }
 
   @Override
   public String visit(astBlockStmtNode node) throws error {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    node.setScope(new Scope(curS, null, ScopeType.BLOCK));
+    for(var stmt : node.getStmts()) {
+      stmt.accept(this);
+    }
+    exit();
+    return node.toString();
   }
 
   @Override
   public String visit(astIfStmtNode node) throws error {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    node.getCond().accept(this);
+    if(!(node.getCond().getType() instanceof typeinfo) || !node.getCond().getType().equals(boolType)) {
+      throw new error("invalid type " + node.getCond().getType().getName());
+    }
+    node.setThenscope(new Scope(curS, null, ScopeType.BLOCK));
+    curS = node.getThenscope();
+    node.getThenStmt().accept(this);
+    exit();
+    if(node.getElseStmt() == null) 
+      return node.toString();    
+    node.setElsescope(new Scope(curS, null, ScopeType.BLOCK));
+    curS = node.getElsescope();
+    node.getElseStmt().accept(this);
+    exit();
+    return node.toString();
   }
 
   @Override
   public String visit(astForStmtNode node) throws error {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    curS = new Scope(curS, null, ScopeType.LOOP);
+    node.getInit().accept(this);
+    node.getCond().accept(this);
+    if(!(node.getCond().getType() instanceof typeinfo) || !node.getCond().getType().equals(boolType)) {
+      throw new error("invalid type " + node.getCond().getType().getName());
+    }
+    node.getUpdate().accept(this);
+    if(node.getStmt() instanceof astBlockStmtNode)
+      for(var stmt : ((astBlockStmtNode) node.getStmt()).getStmts()) {
+        stmt.accept(this);
+      }
+    else 
+      node.getStmt().accept(this);
+    exit();
+    return node.toString();
   }
 
   @Override
   public String visit(astWhileStmtNode node) throws error {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    curS = new Scope(curS, null, ScopeType.LOOP);
+    node.getCond().accept(this);
+    if(!(node.getCond().getType() instanceof typeinfo) || !node.getCond().getType().equals(boolType)) {
+      throw new error("invalid type " + node.getCond().getType().getName());
+    }
+    if(node.getStmt() instanceof astBlockStmtNode)
+      for(var stmt : ((astBlockStmtNode) node.getStmt()).getStmts()) {
+        stmt.accept(this);
+      }
+    else 
+      node.getStmt().accept(this);
+    exit();
+    return node.toString();
   }
 
   @Override
   public String visit(astContinueStmtNode node) throws error {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    if(!curS.findLOOP()) {
+      throw new error("continue not in loop");
+    } 
+    return node.toString();
   }
 
   @Override
   public String visit(astBreakStmtNode node) throws error {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    if(!curS.findLOOP()) {
+      throw new error("continue not in loop");
+    } 
+    return node.toString();
   }
 
   @Override
   public String visit(astReturnStmtNode node) throws error {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    var funcinfo = curS.findFunc();
+    if(funcinfo == null){
+      throw new error("return not in function");
+    }
+    var type = (((FuncInfo)funcinfo).getRetType());
+    if(node.getExpr() == null) {
+      if(type != null) {
+        throw new error("return type mismatch");
+      }
+    } else {
+      node.getExpr().accept(this);
+      if(!node.getExpr().getType().equals(type)) {
+        throw new error("return type mismatch");
+      }
+    }
+    curS.isexited = true;
+    return node.toString();
   }
 
   @Override
@@ -461,14 +522,20 @@ public class SemanticChecker implements astVisitor<String> {
 
   @Override
   public String visit(astConstrNode node) throws error {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    curS = new Scope(curS, null, ScopeType.CLASS);
+    for(var stmt : node.getBlock().getStmts()) {
+      stmt.accept(this);
+    }
+    exit();
+    return node.toString(); 
   }
 
   @Override
   public String visit(astFStrExpr node) throws error {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'visit'");
-  
+    for(var expr : node.getVecExpr())
+      expr.accept(this);
+    node.setType(stringType);
+    node.setLValue(false);
+    return node.toString();
   }
 }

@@ -6,9 +6,10 @@ import util.error.error;
 
 @lombok.experimental.SuperBuilder
 @lombok.Getter
+@lombok.Setter
 @lombok.EqualsAndHashCode(callSuper = true)
 public class astIfStmtNode extends astStmtNode implements scopeStmt{
-    private Scope scope;
+    private Scope thenscope,elsescope;
     private astExprNode cond;
     private astStmtNode thenStmt, elseStmt;
     @Override

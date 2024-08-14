@@ -7,6 +7,7 @@ import util.error.error;
 
 @lombok.experimental.SuperBuilder
 @lombok.Getter
+@lombok.Setter
 @lombok.EqualsAndHashCode(callSuper = true)
 public class astBlockStmtNode extends astStmtNode implements scopeStmt{
     private Scope scope;
