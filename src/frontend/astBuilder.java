@@ -291,14 +291,19 @@ public class astBuilder extends MxBaseVisitor<astNode> {
   @Override
   public astNode visitAtomExpr(MxParser.AtomExprContext ctx) {
     var prim = ctx.primary();
+    
+    
+    // 3 type identifier -> only type; 
     if(prim.Identifier() != null) {
       return astAtomExprNode.builder()
           .Value(prim.Identifier().getText())
           .type(new typeinfo("custom", 0))
           .build();
     } else if(prim.literal() != null) {
+      // literal type defined
       return visit(prim.literal());
     } else {
+      // this -> class
       assert(prim.This() != null);
       return astAtomExprNode.builder()
           .Value("this")
@@ -474,14 +479,8 @@ public class astBuilder extends MxBaseVisitor<astNode> {
     for (var expr : ctx.literal()) {
       vec.add((astExprNode) visit(expr));
     }
-    var type = vec.get(0).getType();
-    for (var expr : vec) {
-      if (!expr.getType().equals(type))
-        throw new error("ArrayConst type not match");
-    }
     var arrayConst = astArrayConstExpr.builder()
         .vec(vec)
-        .constType(type)
         .build();
     for (var expr : vec)
       expr.setParent(arrayConst);

@@ -12,8 +12,6 @@ public class Info {
         if(obj instanceof Info){
             if(this instanceof typeinfo)
                 return ((typeinfo)this).equals(obj);
-            else if(this instanceof FuncInfo)
-                return ((FuncInfo)this).equals(obj);
             else return false;
         }
         return false;

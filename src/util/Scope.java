@@ -29,6 +29,13 @@ public class Scope {
       return null;
     return parentScope.findFunc();
   }
+  public Info findCLASS(){
+    if(type == ScopeType.CLASS)
+      return info;
+    if(parentScope == null)
+      return null;
+    return parentScope.findCLASS();
+  }
   public Scope(Scope parentScope,Info info, ScopeType type) {
     members = new HashMap<>();
     this.parentScope = parentScope;

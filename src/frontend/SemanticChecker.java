@@ -178,8 +178,24 @@ public class SemanticChecker implements astVisitor<String> {
 
   @Override
   public String visit(astArrayConstExpr node) throws error {
-    // TODO after literal this -> typeinfo changed
-    throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    for(var expr : node.getVec()) {
+      expr.accept(this);
+    }
+    if(node.getVec().size() == 0) {
+      node.setType(new typeinfo("null", 1));
+    } else {
+      Info type = node.getVec().get(0).getType();
+      if(!(type instanceof typeinfo)) {
+        throw new error("invalid type " + type.getName());
+      }
+      for(var expr : node.getVec()) {
+        if(!expr.getType().equals(type)) {
+          throw new error("type mismatch " + expr.getType().getName() + " " + type.getName());
+        }
+      }
+      node.setType(new typeinfo(type.getName(), ((typeinfo)type).getDim()+1, ((typeinfo)type).isDim_()));
+    }
+    return node.toString();
   }
 
   @Override
@@ -396,8 +412,31 @@ public class SemanticChecker implements astVisitor<String> {
 
   @Override
   public String visit(astAtomExprNode node) throws error {
-    // TODO Atom
-    throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    // Atom 
+    if(node.getType().equals(new typeinfo("custom", 0))) {
+      var info = curS.containsVariable(node.getValue(), true);
+      if(info == null) {
+        throw new error("variable " + node.getValue() + " not found");
+      }
+      if(info instanceof FuncInfo) {
+        node.setLValue(false);
+      } else if(info instanceof typeinfo) {
+        node.setLValue(true);
+      } else {
+        throw new error("invalid type " + info.getName());
+      }
+      node.setType(info);
+    } else if(node.getType().equals(new typeinfo("this", 0))) {
+      var info = curS.findCLASS();
+      if(info == null) {
+        throw new error(node.toString() + " not in class");
+      }
+      node.setType(info);
+      node.setLValue(false);
+    } else {
+      node.setLValue(false);
+    }
+    return node.toString();
   }
 
   @Override

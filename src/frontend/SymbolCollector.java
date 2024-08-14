@@ -89,7 +89,7 @@ public class SymbolCollector implements astVisitor<astNode> {
   @Override
   public astNode visit(astClassDefNode node) throws error {
     // classname (member, fields) all together
-    node.setClassScope(new Scope(curS, node.getInfo(), ScopeType.CLASS));
+    node.setClassScope(new Scope(curS, new typeinfo(node.getName(), 0), ScopeType.CLASS));
     enter(node.getClassScope());
     // forward reference
     // funcinfo args.type saved

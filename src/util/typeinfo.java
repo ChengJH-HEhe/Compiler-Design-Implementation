@@ -6,14 +6,21 @@ package util;
 public class typeinfo extends Info{
   private boolean builtin;
   private int dim;
-
+  private boolean dim_;
   public typeinfo(String typeName, int arrayDepth) {
     super(typeName);
     this.builtin = typeName.equals("int") || typeName.equals("bool") || typeName.equals("string")
         || typeName.equals("void") || typeName.equals("null") || typeName.equals("this");
     this.dim = arrayDepth;
+    this.dim_ = false;
   }
-
+  public typeinfo(String typeName, int arrayDepth, boolean dim_) {
+    super(typeName);
+    this.builtin = typeName.equals("int") || typeName.equals("bool") || typeName.equals("string")
+        || typeName.equals("void") || typeName.equals("null") || typeName.equals("this");
+    this.dim = arrayDepth;
+    this.dim_ = dim_;
+  }
   public boolean equals(Object otherInfo) {
     if (!(otherInfo instanceof typeinfo)) {
       return false;
@@ -25,6 +32,7 @@ public class typeinfo extends Info{
     if (other.getName().equals("null")) {
       return this.dim > 0 || !this.builtin;
     }
-    return this.getName().equals(other.getName()) && this.dim == other.dim;
+    return this.getName().equals(other.getName()) && (this.dim == other.dim || 
+    (this.dim_ && this.dim <= other.dim) || (other.dim_ && other.dim <= this.dim));
   }
 }
