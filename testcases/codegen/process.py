@@ -1,5 +1,5 @@
-import os
-import base64
+import juhuh.compiler.os
+import juhuh.compiler.base64
 base_path = '/Users/peterzheng/Documents/Projects/OldProject/Compiler/Compiler-2020-testcases/codegen'
 
 str_list = []

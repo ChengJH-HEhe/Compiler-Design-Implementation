@@ -1,4 +1,4 @@
-import numpy as np
+import juhuh.compiler.numpy as np
 
 
 INF = 2 ** 30

@@ -1,4 +1,4 @@
-import os
+import juhuh.compiler.os
 
 # testcases = [
 #     "sorting/bubble_sort.mx",

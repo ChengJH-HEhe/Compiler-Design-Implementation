@@ -7,9 +7,9 @@
 # //#output test.ans
 # //#dump ...
 
-import argparse
-import os
-import sys
+import juhuh.compiler.argparse
+import juhuh.compiler.os
+import juhuh.compiler.sys
 
 
 def include(line: str, kv=None):
