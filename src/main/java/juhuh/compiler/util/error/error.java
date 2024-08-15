@@ -15,6 +15,7 @@ public class error extends RuntimeException {
     }
 
     public String toString() {
-        return msg + ": " + (pos == null ? "":pos.toString());
+        return msg;
+        //+ ": " + (pos == null ? "":pos.toString());
     }
 }
