@@ -56,7 +56,7 @@ public class Main {
             // new RegAlloc(asmF).work();
             // new AsmPrinter(asmF, System.out).print();
         } catch (error er) {
-            System.err.println(er.toString());
+            System.out.println(er.toString());
             System.exit(1);
         }
         System.exit(0);
