@@ -19,7 +19,6 @@ public class globalScope extends Scope {
         throw new semanticError("no such type: " + name);
     }
     public Info getSafeTypeFromName(String name) {
-        System.err.println(type + name);
         if (types.containsKey(name)) return types.get(name);
         else return null;
         // throw new semanticError("no such type: " + name);

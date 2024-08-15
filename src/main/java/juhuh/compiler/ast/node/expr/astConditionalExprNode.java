@@ -10,6 +10,7 @@ public class astConditionalExprNode extends astExprNode implements repExpr{
     private astExprNode cond, lhs, rhs;
     @Override
     public String toString() {
+        if(cond == null || lhs == null || rhs == null) return "";
         return cond.toString() + "? " + lhs.toString() + " : " + rhs.toString();
     }
 

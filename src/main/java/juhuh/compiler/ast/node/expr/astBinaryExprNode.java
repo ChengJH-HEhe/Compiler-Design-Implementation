@@ -12,6 +12,7 @@ public class astBinaryExprNode extends astExprNode implements repExpr {
 
     @Override
     public String toString() {
+        if(lhs == null || rhs == null) return "";
         return lhs.toString() + " " + op + " " + rhs.toString();
     }
 

@@ -14,6 +14,7 @@ public class astForStmtNode extends astStmtNode implements scopeStmt{
     private astStmtNode stmt;
     @Override
     public String toString() {
+        if(stmt == null || init == null || cond == null || update == null) return "";
         return super.toString() + "for(" + init.toString() + ";" + cond.toString() + ";" + update.toString() + ")" + stmt.toString();
     }
     @Override

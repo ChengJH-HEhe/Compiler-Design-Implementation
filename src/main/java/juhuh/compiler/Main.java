@@ -42,11 +42,11 @@ public class Main {
             astBuilder astBuilder = new astBuilder();
 
             var ASTRoot = (astRoot)astBuilder.visit(parseTreeRoot);
-            System.err.println("AST built successfully");
+            //System.err.println("AST built successfully");
             new SymbolCollector(gScope).visit(ASTRoot);
-            System.err.println("Symbol collected successfully");
+            //System.err.println("Symbol collected successfully");
             new SemanticChecker(gScope).visit(ASTRoot);
-
+            //System.err.println("Sema successfully");
             // mainFn f = new mainFn();
             // new IRBuilder(f, gScope).visit(ASTRoot);
             // // new IRPrinter(System.out).visitFn(f);
@@ -57,7 +57,8 @@ public class Main {
             // new AsmPrinter(asmF, System.out).print();
         } catch (error er) {
             System.err.println(er.toString());
-            throw new RuntimeException();
+            System.exit(1);
         }
+        System.exit(0);
     }
 }

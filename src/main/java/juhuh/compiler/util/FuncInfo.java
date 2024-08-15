@@ -17,6 +17,11 @@ public class FuncInfo extends Info {
       this.argsType.add(param);
     }
   }
+  public FuncInfo(FuncInfo other) {
+    super(other.getName());
+    this.retType = other.getRetType();
+    this.argsType = other.getArgsType();
+  }
   @Override
   public String toString() {
     return super.toString() + "(" + argsType.stream().map(Object::toString).collect(Collectors.joining(", ")) + ")";

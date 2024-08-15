@@ -11,6 +11,7 @@ public class astExprStmtNode extends astStmtNode{
     private astExprNode expr;
     @Override
     public String toString() {
+        if(expr == null) return "";
         return super.toString() + expr.toString() + ";";
     }
     @Override

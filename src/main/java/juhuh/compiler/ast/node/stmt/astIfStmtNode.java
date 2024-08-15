@@ -14,6 +14,7 @@ public class astIfStmtNode extends astStmtNode implements scopeStmt{
     private astStmtNode thenStmt, elseStmt;
     @Override
     public String toString() {
+        if(cond == null || thenStmt == null || elseStmt == null) return "";
         return super.toString() + "if(" + cond.toString() + ")" + thenStmt.toString() + (elseStmt == null ? "" : "else" + elseStmt.toString());
     }
     @Override

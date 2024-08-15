@@ -29,6 +29,13 @@ public class Scope {
       return null;
     return parentScope.findFunc();
   }
+  public void setExit(){
+    if(type == ScopeType.FUNC) {
+      isexited = true;
+      return;
+    }
+    parentScope.setExit();
+  }
   public Info findCLASS(){
     if(type == ScopeType.CLASS)
       return info;
@@ -48,6 +55,7 @@ public class Scope {
   }
 
   public void defineVariable(String name, Info t) {
+      //System.err.println("defineVariable: " + name);
         if (members.containsKey(name)){
             if(t instanceof typeinfo)
                 throw new semanticError("Semantic Error: variable" + name +" redefine");

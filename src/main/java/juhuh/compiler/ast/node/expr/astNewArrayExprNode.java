@@ -14,6 +14,7 @@ public class astNewArrayExprNode extends astExprNode implements repExpr{
     private astArrayConstExpr init;
     @Override
     public String toString() {
+        if(lengths == null || getType() == null) return "";
         StringBuilder s = new StringBuilder();
         s.append("new" + getType().toString());
         for (astExprNode length : lengths) {

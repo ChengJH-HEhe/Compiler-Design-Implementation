@@ -1,4 +1,4 @@
-// Generated from //wsl.localhost/ubuntu-22.04/home/unix/github/Compiler-Design-Implementation/src/main/java/juhuh/compiler/parser/Mx.g4 by ANTLR 4.13.1
+// Generated from //wsl.localhost/ubuntu-22.04/home/unix/github/Compiler-Design-Implementation/antlr/Mx.g4 by ANTLR 4.13.1
 package juhuh.compiler.parser;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 

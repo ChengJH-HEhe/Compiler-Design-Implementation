@@ -12,6 +12,7 @@ public class astArrayExprNode extends astExprNode implements repExpr{
 
     @Override
     public String toString() {
+        if(array == null || sub == null) return "";
         return array.toString() + "[" + sub.toString() + "]";
       }
     @Override

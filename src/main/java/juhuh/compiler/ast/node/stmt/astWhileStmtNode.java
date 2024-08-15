@@ -13,6 +13,7 @@ public class astWhileStmtNode extends astStmtNode implements scopeStmt{
     private astStmtNode stmt;
     @Override
     public String toString() {
+        if(stmt == null || cond == null) return "";
         return super.toString() + "while(" + cond.toString() + ")" + stmt.toString();
     }
     @Override

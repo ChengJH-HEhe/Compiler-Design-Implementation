@@ -26,7 +26,7 @@ public class astFuncDefNode extends astDefNode implements scopeStmt{
 
   @Override
   public String toString() {
-    return getName() + "(" + args.toString() + ")" + block.toString();
+    return getName() + "(" + (args!=null?args.toString():"" )+ ")" + (block!=null?block.toString():"");
   }
   @Override
   public <T> T accept(astVisitor<T> visitor) throws error {

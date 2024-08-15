@@ -8,6 +8,9 @@ import juhuh.compiler.util.error.error;
 @lombok.EqualsAndHashCode(callSuper = true)
 
 public class astEmptyStmtNode extends astStmtNode{
+    public astEmptyStmtNode(){
+        super();
+    }
     @Override
     public String toString() {
         return super.toString() + ";";

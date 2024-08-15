@@ -7,15 +7,16 @@ import juhuh.compiler.util.error.error;
 @lombok.Getter
 @lombok.Setter
 @lombok.EqualsAndHashCode(callSuper = false)
-public abstract class astExprNode extends astNode{
+public class astExprNode extends astNode{
   private Info type;
   private boolean isLValue;
-  astExprNode(){
+  public astExprNode(){
     super();
     isLValue = false;
   }
   @Override
   public String toString() {
+      if(type == null) return "";
       return super.toString() + type.toString();
   }
   @Override

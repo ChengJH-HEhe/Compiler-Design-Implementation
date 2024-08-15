@@ -17,7 +17,6 @@ public class SymbolCollector implements astVisitor<astNode> {
   private globalScope gScope;
   private Scope curS;
   public void enter(Scope scope) {
-    if(gScope == null) gScope = (globalScope)scope;
     curS = scope;
   }
   public void exit() {
@@ -29,7 +28,7 @@ public class SymbolCollector implements astVisitor<astNode> {
     || gScope.getTypeFromName(type.getName()) != null;
   }
   public SymbolCollector(globalScope gScope) {
-    this.gScope = gScope;
+    this.gScope = gScope; curS = gScope;
     for(var tp : SemanticChecker.builtinTypes) {
       gScope.addType(tp.getName(), tp);
       // output the tp.getName
@@ -44,18 +43,16 @@ public class SymbolCollector implements astVisitor<astNode> {
   @Override
     public astNode visit(astRoot node) throws error {
         // program
-        node.setGScope(gScope);
-        enter(gScope);
         for(var def : node.getDefs()) {
             if(def instanceof astClassDefNode) {
               gScope.addType(def.getName(), 
               (ClassInfo)(((astClassDefNode)def).getInfo()));
             } else if(def instanceof astFuncDefNode) {
-              if(gScope.getSafeTypeFromName(def.getName()) != null) {
-                throw new error("Function name " + def.getName() + "conflict with class name");
+              var info = ((astFuncDefNode)def).getInfo();
+              if(gScope.getSafeTypeFromName(info.getName()) != null) {
+                throw new error("Function name " + info.getName() + "conflict with class name");
               }
-              gScope.defineVariable(def.getName(), 
-              (((astFuncDefNode)def).getInfo()));
+              gScope.defineVariable(info.getName(), info);
             }
         }
         for(var def : node.getDefs()) {
@@ -63,7 +60,7 @@ public class SymbolCollector implements astVisitor<astNode> {
             def.accept(this);
       }
       var info = gScope.containsVariable("main", false);
-      if(info != null && ! (info instanceof FuncInfo)) {
+      if(info == null || ! (info instanceof FuncInfo)) {
         throw new error("main func not found");
       }
       exit();
@@ -73,6 +70,7 @@ public class SymbolCollector implements astVisitor<astNode> {
   public astNode visit(astFuncDefNode node) throws error {
     // name returntype 
     node.setFuncScope(new Scope(curS, node.getInfo(), ScopeType.FUNC));
+    assert(node.getFuncScope().parentScope() != null);
     enter(node.getFuncScope());
     if(node.getInfo().getName().equals("main")) {
       if(!node.getInfo().retType.equals(SemanticChecker.intType))
@@ -80,7 +78,7 @@ public class SymbolCollector implements astVisitor<astNode> {
       if(node.getArgs().size() > 0)
         throw new error("Main have " + node.getArgs().size() + " args expected 0");
     }
-    if(!checkValidType(node.getInfo().retType) && node.getInfo().retType != null) {
+    if(node.getInfo().retType != null && !checkValidType(node.getInfo().retType)) {
       throw new error("Return type "+ node.getInfo().toString() + "is not defined");
     }
     for(var arg : node.getArgs()) {

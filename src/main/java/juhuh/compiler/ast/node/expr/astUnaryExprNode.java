@@ -11,6 +11,7 @@ public class astUnaryExprNode extends astExprNode implements repExpr{
     private astExprNode expr;
     @Override
     public String toString() {
+        if(expr == null) return "";
         return expr.toString() + " (" + op + ")";
     }
     @Override

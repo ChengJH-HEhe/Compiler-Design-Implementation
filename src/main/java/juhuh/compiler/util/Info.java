@@ -9,12 +9,11 @@ public class Info {
         this.name = name;
     }
     public boolean equals(Object obj){
-        if(obj instanceof Info){
-            if(this instanceof typeinfo)
-                return ((typeinfo)this).equals(obj);
-            else return false;
-        }
-        return false;
+        if(obj instanceof FuncInfo)
+            return ((FuncInfo)obj).getRetType().equals(this);
+        else if(obj instanceof typeinfo)
+            return ((typeinfo)obj).equals(this);
+        else  return false;
     }
     @Override
     public String toString(){

@@ -7,6 +7,12 @@ public class typeinfo extends Info{
   private boolean builtin;
   private int dim;
   private boolean dim_;
+  public typeinfo(typeinfo other){
+    super(other.getName());
+    this.builtin = other.builtin;
+    this.dim = other.dim;
+    this.dim_ = other.dim_;
+  }
   public typeinfo(String typeName, int arrayDepth) {
     super(typeName);
     this.builtin = typeName.equals("int") || typeName.equals("bool") || typeName.equals("string")
@@ -22,12 +28,14 @@ public class typeinfo extends Info{
     this.dim_ = dim_;
   }
   public boolean equals(Object otherInfo) {
+    if(otherInfo instanceof FuncInfo)
+      return equals(((FuncInfo)otherInfo).getRetType());
     if (!(otherInfo instanceof typeinfo)) {
       return false;
     }
     var other = (typeinfo) otherInfo;
-    // System.err.println("this = ("+ this.dim + ")" + this.getName());
-    // System.err.println("other = ("+ other.dim + ")" + other.getName());
+    // //System.err.println("this = ("+ this.dim + ")" + this.getName());
+    // //System.err.println("other = ("+ other.dim + ")" + other.getName());
     if (getName().equals("null")) {
       return other.getName().equals("null") || other.dim > 0 || !other.builtin;
     }
@@ -39,6 +47,6 @@ public class typeinfo extends Info{
   }
   @Override
   public String toString() {
-    return super.toString() + (dim_ ? "[]" : "");
+    return super.toString() + (dim>0 ? "[]" : "");
   }
 }

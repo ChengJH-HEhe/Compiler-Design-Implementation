@@ -10,6 +10,7 @@ public class astMemberExprNode extends astExprNode implements repExpr{
     private astExprNode expr;
     private String member;
     public String toString() {
+        if(expr == null) return "";
         return expr.toString() + ". " + member;
     }
 

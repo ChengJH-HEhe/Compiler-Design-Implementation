@@ -6,6 +6,9 @@ import juhuh.compiler.ast.node.astNode;
 @lombok.EqualsAndHashCode(callSuper = false)
 public class astStmtNode extends astNode{
   public static int indent = 0;
+  public astStmtNode(){
+    super();
+  }
   @Override
   public String toString() {
     return "  ".repeat(indent);

@@ -18,7 +18,9 @@ public class astClassDefNode extends astDefNode implements scopeStmt{
   private final ClassInfo info;
   @Override
   public String toString() {
-    return getName() + "{" + constructor.toString() + "\n" + methods.toString() + "\n" +fields.toString() + "}";
+
+    return getName() + "{" + (constructor!=null?constructor.toString():"") + "\n" + (methods!=null?methods.toString():"") + "\n" +
+    (fields!=null?fields.toString():"") + "}";
   }
   @Override
   public <T> T accept(astVisitor<T> visitor) throws error {

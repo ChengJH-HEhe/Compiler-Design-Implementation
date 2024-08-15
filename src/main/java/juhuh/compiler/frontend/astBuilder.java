@@ -53,7 +53,7 @@ public class astBuilder extends MxBaseVisitor<astNode> {
         if (constructor != null)
           throw new error("Class has another constructor" + constructor.toString());
         constructor = (astConstrNode) visit(def);
-        if (constructor.getClassName() != ctx.Identifier().getText())
+        if (!constructor.getClassName().equals(ctx.Identifier().getText()))
           throw new error(
               "Class name " + ctx.Identifier().getText() + "not constructor's " + constructor.getClassName());
       }
@@ -108,7 +108,7 @@ public class astBuilder extends MxBaseVisitor<astNode> {
     var arglist = ctx.arglist();
     var args = new vector<astVarDefNode>();
     if (ctx.returnType().Void() != null) {
-      retType = null;
+      retType = SemanticChecker.voidType;
     } else {
       retType = ((astTypeNode) visitType(ctx.returnType().type())).getInfo();
     }    
@@ -137,6 +137,7 @@ public class astBuilder extends MxBaseVisitor<astNode> {
         .info(info)
         .block(blocknode)
         .args(args)
+        .name(ctx.Identifier().getText())
         .build();
     Funcdef.getBlock().setParent(Funcdef);
     return Funcdef;
@@ -165,7 +166,7 @@ public class astBuilder extends MxBaseVisitor<astNode> {
     var vardefStmt = astVarDefStmtNode.builder()
         .array(vecvardef)
         .build();
-    System.err.println("vardefStmt size: " + vardefStmt.getArray().size());
+    // //System.err.println("vardefStmt size: " + vardefStmt.getArray().size());
     return vardefStmt;
   }
 
@@ -217,9 +218,11 @@ public class astBuilder extends MxBaseVisitor<astNode> {
 
   @Override
   public astNode visitForStmt(MxParser.ForStmtContext ctx) {
-
-    var cond = (astExprNode) visit(ctx.condExpr);
-    var step = (astExprNode) visit(ctx.stepexpr);
+    astExprNode cond = null, step = null;
+    if(ctx.condExpr != null)
+      cond = (astExprNode) visit(ctx.condExpr);
+    if(ctx.stepexpr != null)
+      step = (astExprNode) visit(ctx.stepexpr);
     var init = (astStmtNode) visit(ctx.initStmt);
     var stmt = (astStmtNode) visit(ctx.bodystmt);
     var ForStmt = astForStmtNode.builder()
@@ -228,8 +231,10 @@ public class astBuilder extends MxBaseVisitor<astNode> {
         .update(step)
         .stmt(stmt)
         .build();
-    ForStmt.getCond().setParent(ForStmt);
-    ForStmt.getUpdate().setParent(ForStmt);
+    if(cond != null)
+      ForStmt.getCond().setParent(ForStmt);
+    if(step != null)
+      ForStmt.getUpdate().setParent(ForStmt);
     ForStmt.getStmt().setParent(ForStmt);
     ForStmt.getInit().setParent(ForStmt);
     return ForStmt;
@@ -267,11 +272,13 @@ public class astBuilder extends MxBaseVisitor<astNode> {
 
   @Override
   public astNode visitEmptyStmt(MxParser.EmptyStmtContext ctx) {
-    return null;
+    return new astEmptyStmtNode();
   }
   // literal
   @Override
   public astNode visitLiteral(MxParser.LiteralContext ctx) {
+    // int string null bool ->type.getname
+    
     if (ctx.IntegerConst() != null) {
       return astAtomExprNode.builder()
           .Value(ctx.IntegerConst().getText())
@@ -297,7 +304,10 @@ public class astBuilder extends MxBaseVisitor<astNode> {
           .Value(ctx.False().getText())
           .type(new typeinfo("bool", 0))
           .build();
+    } else if (ctx.arrayConst() != null){
+      return (astArrayConstExpr)visit(ctx.arrayConst());
     } else {
+      assert(false);
       return null;
     }
   }
@@ -310,7 +320,7 @@ public class astBuilder extends MxBaseVisitor<astNode> {
     if(prim.Identifier() != null) {
       return astAtomExprNode.builder()
           .Value(prim.Identifier().getText())
-          .type(new typeinfo("custom", 0))
+          .type(new typeinfo("1custom", 0))
           .build();
     } else if(prim.literal() != null) {
       // literal type defined
@@ -509,10 +519,8 @@ public class astBuilder extends MxBaseVisitor<astNode> {
     for (int i = 0; i < ctx.arrayUnit().size(); ++i) {
       if (ctx.arrayUnit(i).expr() != null) {
         if (!inittrue)
-          throw new error(" \" " + ctx.getText() + " \" " + "init ends");
+          throw new error(" \" " + ctx.getText() + " \" " + "init unusual");
         lengths.add((astExprNode) visit(ctx.arrayUnit(i).expr()));
-        if(lengths.get(i).getType().getName() != "int")
-          throw new error("length of array" + ctx.getText() + "should be const int");
       } else {
         inittrue = false;
       }

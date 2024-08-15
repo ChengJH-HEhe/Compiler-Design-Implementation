@@ -19,6 +19,7 @@ public class astFStrExpr extends astExprNode {
   @Override
     public String toString() {
       String s = "";
+      if(vecExpr == null) return "";
       for(int i = 0; i < vecExpr.size(); ++i)
           s += vecStr.get(i).toString() + vecExpr.get(i).toString();
       s += vecStr.getlst().toString();

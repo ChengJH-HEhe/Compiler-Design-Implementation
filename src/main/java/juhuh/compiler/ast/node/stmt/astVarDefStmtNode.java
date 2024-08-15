@@ -12,6 +12,7 @@ public class astVarDefStmtNode extends astStmtNode{
     private vector<astVarDefNode> array;
     @Override
     public String toString() {
+        if(array == null) return "";
         return super.toString() + array.toString();
     }
     @Override

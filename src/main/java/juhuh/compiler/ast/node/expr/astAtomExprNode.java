@@ -4,10 +4,10 @@ import juhuh.compiler.frontend.astVisitor;
 import juhuh.compiler.util.error.error;
 
 @lombok.experimental.SuperBuilder
-@lombok.Value
+@lombok.Data
 @lombok.EqualsAndHashCode(callSuper = true)
 public class astAtomExprNode extends astExprNode {
-    private String Value; // is value == 
+    protected String Value; // is value == 
     @Override
     public String toString() {
         // replace \n -> '\' + 'n'

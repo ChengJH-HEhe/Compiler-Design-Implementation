@@ -12,6 +12,7 @@ public class astConstrNode extends astStmtNode {
 
   @Override
   public String toString() {
+    if(block == null) return "";
     return super.toString() + className + "(" + ")" + block.toString();
   }
 

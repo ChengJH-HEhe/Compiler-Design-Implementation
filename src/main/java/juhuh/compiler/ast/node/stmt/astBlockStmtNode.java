@@ -14,6 +14,7 @@ public class astBlockStmtNode extends astStmtNode implements scopeStmt{
     private final vector<astStmtNode> stmts;
     @Override
     public String toString() {
+        if(stmts == null) return "";
         StringBuilder string = new StringBuilder("{\n");
         indent++;
         for (astStmtNode stmt : stmts) {
