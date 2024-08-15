@@ -51,11 +51,10 @@ public class astBuilder extends MxBaseVisitor<astNode> {
       }
       else if (def instanceof MxParser.ConstrContext) {
         if (constructor != null)
-          throw new error("Class has another constructor" + constructor.toString());
+          throw new error("Multiple Definitions");
         constructor = (astConstrNode) visit(def);
         if (!constructor.getClassName().equals(ctx.Identifier().getText()))
-          throw new error(
-              "Class name " + ctx.Identifier().getText() + "not constructor's " + constructor.getClassName());
+          throw new error("Undefined Identifier");
       }
     }
     String name = ctx.Identifier().getText();
@@ -90,9 +89,9 @@ public class astBuilder extends MxBaseVisitor<astNode> {
   @Override 
   public astNode visitType(MxParser.TypeContext ctx) {
     if(ctx.arrayUnit() != null){
-      for(var emp : ctx.arrayUnit()) 
+      for(var emp : ctx.arrayUnit()) // 
         if(emp.expr() != null)
-            throw new error(ctx.getText() + "type [empty]");
+            throw new error("Invalid Identifier");
       return astTypeNode.builder()
           .info(new typeinfo(ctx.typename().getText(), ctx.arrayUnit().size()))
           .build();
@@ -519,7 +518,7 @@ public class astBuilder extends MxBaseVisitor<astNode> {
     for (int i = 0; i < ctx.arrayUnit().size(); ++i) {
       if (ctx.arrayUnit(i).expr() != null) {
         if (!inittrue)
-          throw new error(" \" " + ctx.getText() + " \" " + "init unusual");
+          throw new error("Invalid Identifier");
         lengths.add((astExprNode) visit(ctx.arrayUnit(i).expr()));
       } else {
         inittrue = false;
@@ -569,7 +568,7 @@ public class astBuilder extends MxBaseVisitor<astNode> {
   public astNode visitArrayExpr(MxParser.ArrayExprContext ctx) {
     var array = (astExprNode) visit(ctx.expr());
     if(ctx.arrayUnit().expr() == null)
-      throw new error("arrayexpr " + ctx.getText() + "should have index");
+      throw new error("Invalid Identifier");
     var index = (astExprNode) visit(ctx.arrayUnit().expr());
     var arrayExpr = astArrayExprNode.builder()
         .array(array)

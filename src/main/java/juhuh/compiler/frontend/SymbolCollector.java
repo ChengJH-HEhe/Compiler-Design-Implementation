@@ -50,7 +50,7 @@ public class SymbolCollector implements astVisitor<astNode> {
             } else if(def instanceof astFuncDefNode) {
               var info = ((astFuncDefNode)def).getInfo();
               if(gScope.getSafeTypeFromName(info.getName()) != null) {
-                throw new error("Function name " + info.getName() + "conflict with class name");
+                throw new error("Multiple Definitions");
               }
               gScope.defineVariable(info.getName(), info);
             }
@@ -74,12 +74,12 @@ public class SymbolCollector implements astVisitor<astNode> {
     enter(node.getFuncScope());
     if(node.getInfo().getName().equals("main")) {
       if(!node.getInfo().retType.equals(SemanticChecker.intType))
-        throw new error("Main return " + node.getInfo().retType.getName());
+        throw new error("Type Mismatch");
       if(node.getArgs().size() > 0)
-        throw new error("Main have " + node.getArgs().size() + " args expected 0");
+        throw new error("Undefined Identifier");
     }
     if(node.getInfo().retType != null && !checkValidType(node.getInfo().retType)) {
-      throw new error("Return type "+ node.getInfo().toString() + "is not defined");
+      throw new error("Invalid Type");
     }
     for(var arg : node.getArgs()) {
       visit(arg);
@@ -110,7 +110,7 @@ public class SymbolCollector implements astVisitor<astNode> {
   public astNode visit(astVarDefNode node) throws error {
     typeinfo type = node.getType().getInfo();
     if(!checkValidType(type))
-      throw new error("Type " + type.getName() + " Undefined");
+      throw new error("Invalid Type");
     curS.defineVariable(node.getName(), type);
     return node;
   }

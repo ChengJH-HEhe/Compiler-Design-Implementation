@@ -74,7 +74,7 @@ public class SemanticChecker implements astVisitor<String> {
 
   @Override
   public String visit(astNode node) throws error {
-    //System.err.println("Unimplemented method 'visit'" + node.toString());
+    // System.err.println("Unimplemented method 'visit'" + node.toString());
     throw new UnsupportedOperationException("Unimplemented method 'visit'");
   }
 
@@ -82,7 +82,7 @@ public class SemanticChecker implements astVisitor<String> {
   public String visit(astRoot node) throws error {
     // curS = gscope
     for (var def : node.getDefs()) {
-      ////System.err.println(def.toString());
+      //// System.err.println(def.toString());
       def.accept(this);
     }
     exit();
@@ -95,8 +95,8 @@ public class SemanticChecker implements astVisitor<String> {
     for (var stmt : node.getBlock().getStmts()) {
       stmt.accept(this);
     }
-    if (!node.getInfo().getRetType().equals(voidType)&& !node.getName().equals("main") && !curS.isexited) {
-      throw new error("function " + node.getName() + " must return a value");
+    if (!node.getInfo().getRetType().equals(voidType) && !node.getName().equals("main") && !curS.isexited) {
+      throw new error("Missing Return Statement");
     }
     exit();
     return node.toString();
@@ -116,19 +116,22 @@ public class SemanticChecker implements astVisitor<String> {
 
   @Override
   public String visit(astVarDefNode node) throws error {
-    //System.err.println("Ln118"+node.getType());
+    // System.err.println("Ln118"+node.getType());
     if (!checkValidType(node.getType().getInfo())) {
-      throw new error("invalid type " + node.getType().getInfo().getName());
+      throw new error("Invalid Type");
     }
-    
-    // //System.err.println(node.getName() + "defined as" + node.getType().getInfo().toString());
+
+    // //System.err.println(node.getName() + "defined as" +
+    // node.getType().getInfo().toString());
     if (node.getUnit() != null) {
-      // //System.err.println(node.getUnit().getType().toString() + ((typeinfo) node.getUnit().getType()).getDim());
+      // //System.err.println(node.getUnit().getType().toString() + ((typeinfo)
+      // node.getUnit().getType()).getDim());
       node.getUnit().accept(this);
-      // //System.err.println(node.getUnit().getType().toString() + ((typeinfo) node.getUnit().getType()).getDim());
+      // //System.err.println(node.getUnit().getType().toString() + ((typeinfo)
+      // node.getUnit().getType()).getDim());
       var info = node.getUnit().getType();
       if (info instanceof typeinfo && !info.equals(node.getType().getInfo())) {
-        throw new error("type mismatch init:" + info.getName() + " var:" + node.getType().getInfo().getName());
+        throw new error("Type Mismatch");
       }
     }
     curS.defineVariable(node.getName(), node.getType().getInfo());
@@ -138,17 +141,29 @@ public class SemanticChecker implements astVisitor<String> {
 
   @Override
   public String visit(astNewArrayExprNode node) throws error {
-    if (!checkValidType(node.getType())
-        || (((typeinfo) node.getType()).getDim() == 0 && ((typeinfo) node.getType()).isBuiltin())) {
-      throw new error("invalid type " + node.getType().getName());
+    if (!checkValidType(node.getType()))
+      throw new error("Invalid Type");
+    if (((typeinfo) node.getType()).getDim() == 0 && ((typeinfo) node.getType()).isBuiltin()) {
+      throw new error("Invalid Type");
     }
     if (node.getLengths() != null)
       for (var length : node.getLengths()) {
         length.accept(this);
         if (!length.getType().equals(new typeinfo("int", 0))) {
-          throw new error("invalid initial length type " + length.getType().getName());
+          throw new error("Type Mismatch");
         }
       }
+    if (node.getInit() != null) {
+      // //System.err.println(node.getInit().getType().toString() + ((typeinfo)
+      // node.getInit().getType()).getDim());
+      node.getInit().accept(this);
+      // //System.err.println(node.getInit().getType().toString() + ((typeinfo)
+      // node.getInit().getType()).getDim());
+      var info = node.getInit().getType();
+      if (info instanceof typeinfo && !info.equals(node.getType())) {
+        throw new error("Type Mismatch");
+      }
+    }
     return node.toString();
   }
 
@@ -157,27 +172,26 @@ public class SemanticChecker implements astVisitor<String> {
     // funcscope name argstype
     // func -> funcinfo
     node.getFunc().accept(this);
-    //System.err.println("ln157" + node.getFunc());
+    // System.err.println("ln157" + node.getFunc());
     var funcinfo = node.getFunc().getType();
     if (funcinfo == null || !(funcinfo instanceof FuncInfo)) {
-      throw new error("function " + ((astExprNode) node.getFunc()).getType() + " not found");
+      throw new error("Undefined Identifier");
     }
     var func = (FuncInfo) funcinfo;
     // args -> type match funcinfo
     if (func.getArgsType().size() != node.getArgs().size()) {
-      throw new error("function " + func.getName() + " expected " + func.getArgsType().size() + " args, found"
-          + node.getArgs().size());
+      throw new error("Undefined Identifier");
     }
     for (int i = 0; i < node.getArgs().size(); i++) {
       node.getArgs().get(i).accept(this);
       if (!node.getArgs().get(i).getType().equals(func.getArgsType().get(i))) {
-        throw new error("function " + func.getName() + " arg " + i + " type mismatch");
+        throw new error("Type Mismatch");
       }
     }
     // expr type -> func
     node.setType(func.getRetType());
     node.setLValue(false);
-    //System.err.println("ln157 exited" + node.getFunc());
+    // System.err.println("ln157 exited" + node.getFunc());
     return node.toString();
   }
 
@@ -186,12 +200,12 @@ public class SemanticChecker implements astVisitor<String> {
     node.getArray().accept(this);
     Info arrayInfo = node.getArray().getType();
     if (!(arrayInfo instanceof typeinfo) || ((typeinfo) arrayInfo).getDim() == 0) {
-      throw new error("invalid type " + arrayInfo.getName());
+      throw new error("Dimension Out Of Bound");
     }
     node.getSub().accept(this);
     // sub not int
     if (!node.getSub().getType().equals(new typeinfo("int", 0))) {
-      throw new error("invalid index type " + node.getSub().getType().toString());
+      throw new error("Invalid Type");
     }
     node.setType(new typeinfo(arrayInfo.getName(), ((typeinfo) arrayInfo).getDim() - 1));
     node.setLValue(true);
@@ -208,16 +222,17 @@ public class SemanticChecker implements astVisitor<String> {
     } else {
       Info type = node.getVec().get(0).getType();
       if (!(type instanceof typeinfo)) {
-        throw new error("invalid type " + type.getName());
+        throw new error("Undefined Identifier");
       }
       for (var expr : node.getVec()) {
         if (!type.equals(expr.getType())) {
-          throw new error("type mismatch " + expr.getType().getName() + " " + type.getName());
+          throw new error("Type Mismatch");
         }
-        if (!((typeinfo) expr.getType()).isDim_()
-            || ((typeinfo) expr.getType()).getDim() > ((typeinfo) type).getDim()) {
-          type = expr.getType();
-        }
+        if (!((typeinfo) type).isDim_())
+          if (!((typeinfo) expr.getType()).isDim_()
+              || ((typeinfo) expr.getType()).getDim() > ((typeinfo) type).getDim()) {
+            type = expr.getType();
+          }
       }
       node.setType(new typeinfo(type.getName(), ((typeinfo) type).getDim() + 1, ((typeinfo) type).isDim_()));
     }
@@ -229,24 +244,24 @@ public class SemanticChecker implements astVisitor<String> {
     node.getExpr().accept(this);
     Info exprInfo = node.getExpr().getType();
     if (!(exprInfo instanceof typeinfo)) {
-      throw new error("invalid type " + exprInfo.getName());
+      throw new error("Undefined Identifier");
     }
     var expr = (typeinfo) exprInfo;
-    //System.err.println("semChk ln225" + expr.toString() + expr.getDim());
+    // System.err.println("semChk ln225" + expr.toString() + expr.getDim());
     if (expr.getDim() > 0) {
       if (node.getMember().equals("size")) {
-        node.setType(new FuncInfo("size",new typeinfo("int", 0)));
+        node.setType(new FuncInfo("size", new typeinfo("int", 0)));
         node.setLValue(false);
-        ////System.err.println("semChk ln230" + expr.getName() + "Size");
-        ////System.err.println("ln157 exited");
+        //// System.err.println("semChk ln230" + expr.getName() + "Size");
+        //// System.err.println("ln157 exited");
         return node.toString();
       } else {
-        throw new error("undefined " + expr.getName() + " array type called member");
+        throw new error("Undefined Identifier");
       }
     } else {
       var Class = gScope.getTypeFromName(expr.getName());
       if (Class == null || !(Class instanceof ClassInfo)) {
-        throw new error("class " + expr.getName() + " not found");
+        throw new error("Undefined Identifier");
       }
       var classinfo = (ClassInfo) Class;
       var member = classinfo.getVars().get(node.getMember());
@@ -257,7 +272,7 @@ public class SemanticChecker implements astVisitor<String> {
       }
       var method = classinfo.getFuncs().get(node.getMember());
       if (method == null) {
-        throw new error("member " + node.getMember() + " not found");
+        throw new error("Undefined Identifier");
       } else {
         node.setType(method);
         return node.toString();
@@ -271,22 +286,22 @@ public class SemanticChecker implements astVisitor<String> {
     node.getExpr().accept(this);
     var exprType = node.getExpr().getType();
     if (!(exprType instanceof typeinfo)) {
-      throw new error("not type " + exprType.getName());
+      throw new error("Undefined Identifier");
     }
     var Type = (typeinfo) exprType;
     if (node.getOp().equals("LogicNot")) {
       if (!Type.equals(boolType)) {
-        throw new error("invalid type " + Type.getName());
+        throw new error("Type Mismatch");
       }
       node.setType(boolType);
       node.setLValue(false);
       return node.toString();
     }
     if (!Type.equals(intType))
-      throw new error("invalid type " + node.getType().getName());
+      throw new error("Type Mismatch");
     if (node.getOp().equals("Increment") || node.getOp().equals("Decrement")) {
       if (!node.getExpr().isLValue())
-        throw new error("invalid rvalue " + node.getExpr().toString());
+        throw new error("Type Mismatch");
       node.setType(Type);
       node.setLValue(false);
     } else {
@@ -302,15 +317,15 @@ public class SemanticChecker implements astVisitor<String> {
     node.getExpr().accept(this);
     var exprType = node.getExpr().getType();
     if (!(exprType instanceof typeinfo)) {
-      throw new error("not type " + exprType.getName());
+      throw new error("Undefined Identifier");
     }
     var Type = (typeinfo) exprType;
     if (!(Type instanceof typeinfo))
-      throw new error("invalid type " + Type.getName());
+      throw new error("Undefine Identifier");
     if (!Type.equals(intType))
-      throw new error("invalid type " + Type.getName() + " for " + node.getOp());
+      throw new error("Type Mismatch");
     if (!node.getExpr().isLValue())
-      throw new error(node.getExpr().toString() + "not a Lvalue for " + node.getOp());
+      throw new error("Type Mismatch");
     node.setType(Type);
     node.setLValue(true);
     return node.toString();
@@ -321,11 +336,11 @@ public class SemanticChecker implements astVisitor<String> {
     node.getLhs().accept(this);
     node.getRhs().accept(this);
     if (!(node.getLhs().getType() instanceof typeinfo)) {
-      throw new error("invalid type " + node.getLhs().getType().getName());
+      throw new error("Undefined Identifier");
     }
     var type = (typeinfo) node.getLhs().getType();
     if (!type.equals(node.getRhs().getType())) {
-      throw new error("type mismatch " + node.getLhs().getType().getName() + " " + node.getRhs().getType().getName());
+      throw new error("Type Mismatch");
     }
     if (type.getDim() > 0 || type.equals(nullType)) {
       if (node.getOp().equals("Equal") || node.getOp().equals("UnEqual")) {
@@ -333,7 +348,7 @@ public class SemanticChecker implements astVisitor<String> {
         node.setLValue(false);
         return node.toString();
       } else {
-        throw new error("invalid type " + type.getName() + " for " + node.getOp());
+        throw new error("Type Mismatch");
       }
     }
     if (type.equals(intType)) {
@@ -361,7 +376,7 @@ public class SemanticChecker implements astVisitor<String> {
         node.setLValue(false);
         return node.toString();
       } else {
-        throw new error("invalid type " + type.getName() + " for " + node.getOp());
+        throw new error("Type Mismatch");
       }
     } else if (type.equals(boolType)) {
       if (node.getOp().equals("LogicAnd") || node.getOp().equals("LogicOr")) {
@@ -373,7 +388,7 @@ public class SemanticChecker implements astVisitor<String> {
         node.setLValue(false);
         return node.toString();
       } else {
-        throw new error("invalid type " + type.getName() + " for " + node.getOp());
+        throw new error("Type Mismatch");
       }
     } else if (type.equals(stringType)) {
       if (node.getOp().equals("Plus")) {
@@ -387,10 +402,10 @@ public class SemanticChecker implements astVisitor<String> {
         node.setLValue(false);
         return node.toString();
       } else {
-        throw new error("invalid type " + type.getName() + " for " + node.getOp());
+        throw new error("Type Mismatch");
       }
     } else {
-      throw new error("invalid type " + type.getName() + " for " + node.getOp());
+      throw new error("Invalid Type");
     }
     // Mul | Div | Mod Plus | Minus LeftShift | RightShift int
     // Greater | GreaterEqual | Less | LessEqual bool
@@ -406,8 +421,7 @@ public class SemanticChecker implements astVisitor<String> {
     node.getCond().accept(this);
     if (!(node.getLhs().getType() instanceof typeinfo) || !(node.getRhs().getType() instanceof typeinfo)
         || !(node.getCond().getType() instanceof typeinfo)) {
-      throw new error("invalid type for condExpr " + node.getLhs().getType().getName() + " "
-          + node.getRhs().getType().getName() + " " + node.getCond().getType().getName());
+      throw new error("Undefine Identifier");
     }
     if (node.getCond().getType().equals(boolType)) {
       if (node.getLhs().getType().equals(node.getRhs().getType())) {
@@ -415,10 +429,10 @@ public class SemanticChecker implements astVisitor<String> {
         node.setLValue(false);
         return node.toString();
       } else {
-        throw new error("type mismatch " + node.getLhs().getType().getName() + " " + node.getRhs().getType().getName());
+        throw new error("Type Mismatch");
       }
     } else {
-      throw new error("invalid type " + node.getCond().getType().getName());
+      throw new error("Invalid Type");
     }
   }
 
@@ -426,10 +440,9 @@ public class SemanticChecker implements astVisitor<String> {
   public String visit(astAssignExprNode node) throws error {
     node.getLhs().accept(this);
     node.getRhs().accept(this);
-    //System.err.println(node.getLhs().getType());
+    // System.err.println(node.getLhs().getType());
     if (!(node.getLhs().getType() instanceof typeinfo) || !(node.getRhs().getType() instanceof typeinfo)) {
-      throw new error(
-          "not type for AssignExpr " + node.getLhs().getType().getName() + " " + node.getRhs().getType().getName());
+      throw new error("Undefine Identifier");
     }
     if (node.getLhs().isLValue()) {
       if (node.getLhs().getType().equals(node.getRhs().getType())) {
@@ -437,38 +450,38 @@ public class SemanticChecker implements astVisitor<String> {
         node.setLValue(true);
         return node.toString();
       } else {
-        throw new error("type mismatch " + node.getLhs().getType().getName() + " " + node.getRhs().getType().getName());
+        throw new error("Type Mismatch");
       }
     } else {
-      throw new error("not Lvalue " + node.getLhs().toString());
+      throw new error("Type Mismatch");
     }
   }
 
   @Override
   public String visit(astAtomExprNode node) throws error {
     // Atom getType.
-    //System.err.println(node.getType());
+    // System.err.println(node.getType());
     if (node.getType().getName().equals(("1custom"))) {
       var info = curS.containsVariable(node.getValue(), true);
       if (info == null) {
-        //System.err.println(node.getValue());
-        throw new error("variable " + node.getValue() + " not found");
+        // System.err.println(node.getValue());
+        throw new error("Undefined Identifier");
       }
       if (info instanceof FuncInfo) {
         node.setType(new FuncInfo((FuncInfo) info));
         node.setLValue(false);
-        assert(node.getType() instanceof FuncInfo);
-        //System.err.println(" : " + node.getType().toString());
+        assert (node.getType() instanceof FuncInfo);
+        // System.err.println(" : " + node.getType().toString());
       } else if (info instanceof typeinfo) {
         node.setType((typeinfo) info);
         node.setLValue(true);
       } else {
-        throw new error("invalid type " + info.getName());
+        throw new error("Undefined Identifier");
       }
     } else if (node.getType().equals(new typeinfo("this", 0))) {
       var info = curS.findCLASS();
       if (info == null) {
-        throw new error(node.toString() + " not in class");
+        throw new error("Undefined Identifier");
       }
       node.setType(info);
       node.setLValue(false);
@@ -492,8 +505,10 @@ public class SemanticChecker implements astVisitor<String> {
   @Override
   public String visit(astIfStmtNode node) throws error {
     node.getCond().accept(this);
-    if (!(node.getCond().getType() instanceof typeinfo) || !node.getCond().getType().equals(boolType)) {
-      throw new error("invalid type " + node.getCond().getType().getName());
+    if (!(node.getCond().getType() instanceof typeinfo))
+      throw new error("Undefined Identifier");
+    if(!node.getCond().getType().equals(boolType)) {
+      throw new error("Invalid Type");
     }
     node.setThenscope(new Scope(curS, null, ScopeType.BLOCK));
     curS = node.getThenscope();
@@ -512,13 +527,13 @@ public class SemanticChecker implements astVisitor<String> {
   public String visit(astForStmtNode node) throws error {
     curS = new Scope(curS, null, ScopeType.LOOP);
     node.getInit().accept(this);
-    if(node.getCond() != null) {
+    if (node.getCond() != null) {
       node.getCond().accept(this);
       if (!(node.getCond().getType() instanceof typeinfo) || !node.getCond().getType().equals(boolType)) {
-        throw new error("invalid type " + node.getCond().getType().getName());
+        throw new error("Undefined Identifier");
       }
     }
-    if(node.getUpdate() != null)
+    if (node.getUpdate() != null)
       node.getUpdate().accept(this);
     if (node.getStmt() instanceof astBlockStmtNode)
       for (var stmt : ((astBlockStmtNode) node.getStmt()).getStmts()) {
@@ -534,8 +549,10 @@ public class SemanticChecker implements astVisitor<String> {
   public String visit(astWhileStmtNode node) throws error {
     curS = new Scope(curS, null, ScopeType.LOOP);
     node.getCond().accept(this);
-    if (!(node.getCond().getType() instanceof typeinfo) || !node.getCond().getType().equals(boolType)) {
-      throw new error("invalid type " + node.getCond().getType().getName());
+    if (!(node.getCond().getType() instanceof typeinfo))
+      throw new error("Undefined Identifier");
+    if (!node.getCond().getType().equals(boolType)) {
+      throw new error("Invalid Type");
     }
     if (node.getStmt() instanceof astBlockStmtNode)
       for (var stmt : ((astBlockStmtNode) node.getStmt()).getStmts()) {
@@ -550,7 +567,7 @@ public class SemanticChecker implements astVisitor<String> {
   @Override
   public String visit(astContinueStmtNode node) throws error {
     if (!curS.findLOOP()) {
-      throw new error("continue not in loop");
+      throw new error("Invalid Control Flow");
     }
     return node.toString();
   }
@@ -558,7 +575,7 @@ public class SemanticChecker implements astVisitor<String> {
   @Override
   public String visit(astBreakStmtNode node) throws error {
     if (!curS.findLOOP()) {
-      throw new error("continue not in loop");
+      throw new error("Invalid Control Flow");
     }
     return node.toString();
   }
@@ -567,17 +584,17 @@ public class SemanticChecker implements astVisitor<String> {
   public String visit(astReturnStmtNode node) throws error {
     var funcinfo = curS.findFunc();
     if (funcinfo == null) {
-      throw new error("return not in function");
+      throw new error("Invalid Control Flow");
     }
     var type = (((FuncInfo) funcinfo).getRetType());
     if (node.getExpr() == null) {
       if (type != null && type != voidType) {
-        throw new error("return type mismatch");
+        throw new error("Type Mismatch");
       }
     } else {
       node.getExpr().accept(this);
       if (!node.getExpr().getType().equals(type)) {
-        throw new error("return type mismatch");
+        throw new error("Type Mismatch");
       }
     }
 
@@ -592,10 +609,10 @@ public class SemanticChecker implements astVisitor<String> {
 
   @Override
   public String visit(astVarDefStmtNode node) throws error {
-    if(node.getArray() == null)
+    if (node.getArray() == null)
       return node.toString();
     for (var def : node.getArray()) {
-      ////System.err.println(def instanceof astVarDefNode);
+      //// System.err.println(def instanceof astVarDefNode);
       ((astVarDefNode) def).accept(this);
     }
     return node.toString();
@@ -624,7 +641,7 @@ public class SemanticChecker implements astVisitor<String> {
       if (!(type instanceof typeinfo)
           || (!type.equals(stringType) && !type.equals(intType) && !type.equals(boolType)) ||
           type.getName().equals("null")) {
-        throw new error("invalid type " + type.getName());
+        throw new error("Invalid Type");
       }
     }
     node.setType(stringType);
