@@ -1,0 +1,21 @@
+package juhuh.compiler.ast.node.stmt;
+
+import juhuh.compiler.ast.node.def.astVarDefNode;
+import juhuh.compiler.frontend.astVisitor;
+import juhuh.compiler.util.vector;
+import juhuh.compiler.util.error.error;
+
+@lombok.experimental.SuperBuilder
+@lombok.Getter
+@lombok.EqualsAndHashCode(callSuper = true)
+public class astVarDefStmtNode extends astStmtNode{
+    private vector<astVarDefNode> array;
+    @Override
+    public String toString() {
+        return super.toString() + array.toString();
+    }
+    @Override
+    public <T> T accept(astVisitor<T> visitor) throws error {
+        return visitor.visit(this);
+    }
+}
