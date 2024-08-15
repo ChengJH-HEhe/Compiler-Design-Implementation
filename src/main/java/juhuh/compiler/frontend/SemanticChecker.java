@@ -130,7 +130,13 @@ public class SemanticChecker implements astVisitor<String> {
       // //System.err.println(node.getUnit().getType().toString() + ((typeinfo)
       // node.getUnit().getType()).getDim());
       var info = node.getUnit().getType();
-      if (info instanceof typeinfo && !info.equals(node.getType().getInfo())) {
+      if(!(info instanceof typeinfo))
+        throw new error("Invalid Type");
+      
+      if(!info.equals(node.getType().getInfo()) && !info.getName().equals(node.getType().getInfo().getName())) {
+        throw new error("Type Mismatch");
+      }
+      if (!info.equals(node.getType().getInfo())) {
         throw new error("Type Mismatch");
       }
     }
@@ -348,7 +354,7 @@ public class SemanticChecker implements astVisitor<String> {
         node.setLValue(false);
         return node.toString();
       } else {
-        throw new error("Type Mismatch");
+        throw new error("Invalid Type");
       }
     }
     if (type.equals(intType)) {
@@ -376,7 +382,7 @@ public class SemanticChecker implements astVisitor<String> {
         node.setLValue(false);
         return node.toString();
       } else {
-        throw new error("Type Mismatch");
+        throw new error("Invalid Type");
       }
     } else if (type.equals(boolType)) {
       if (node.getOp().equals("LogicAnd") || node.getOp().equals("LogicOr")) {
@@ -388,7 +394,7 @@ public class SemanticChecker implements astVisitor<String> {
         node.setLValue(false);
         return node.toString();
       } else {
-        throw new error("Type Mismatch");
+        throw new error("Invalid Type");
       }
     } else if (type.equals(stringType)) {
       if (node.getOp().equals("Plus")) {
@@ -402,7 +408,7 @@ public class SemanticChecker implements astVisitor<String> {
         node.setLValue(false);
         return node.toString();
       } else {
-        throw new error("Type Mismatch");
+        throw new error("Invalid Type");
       }
     } else {
       throw new error("Invalid Type");
@@ -529,9 +535,11 @@ public class SemanticChecker implements astVisitor<String> {
     node.getInit().accept(this);
     if (node.getCond() != null) {
       node.getCond().accept(this);
-      if (!(node.getCond().getType() instanceof typeinfo) || !node.getCond().getType().equals(boolType)) {
+      if (!(node.getCond().getType() instanceof typeinfo))  {
         throw new error("Undefined Identifier");
       }
+      if(!node.getCond().getType().equals(boolType))
+        throw new error("Invalid Type");
     }
     if (node.getUpdate() != null)
       node.getUpdate().accept(this);

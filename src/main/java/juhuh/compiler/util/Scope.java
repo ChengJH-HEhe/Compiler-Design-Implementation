@@ -1,6 +1,7 @@
 package juhuh.compiler.util;
 
 import juhuh.compiler.mir.register;
+import juhuh.compiler.util.error.error;
 import juhuh.compiler.util.error.semanticError;
 import java.util.HashMap;
 
@@ -58,10 +59,10 @@ public class Scope {
       //System.err.println("defineVariable: " + name);
         if (members.containsKey(name)){
             if(t instanceof typeinfo)
-                throw new semanticError("Semantic Error: variable" + name +" redefine");
+                throw new error("Multiple Definitions");
             else {
               assert(t instanceof FuncInfo);
-              throw new semanticError("Semantic Error: function" + name +" redefine");
+              throw new error("Multiple Definitions");
             }
         }
         members.put(name, t);
