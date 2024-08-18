@@ -47,8 +47,8 @@ public class Main {
             //System.err.println("Symbol collected successfully");
             new SemanticChecker(gScope).visit(ASTRoot);
             //System.err.println("Sema successfully");
-            // mainFn f = new mainFn();
-            // new IRBuilder(f, gScope).visit(ASTRoot);
+            irmainFn f = new irMain();
+            new irBuilder(f, gScope).visit(ASTRoot);
             // // new IRPrinter(System.out).visitFn(f);
 
             // AsmFn asmF = new AsmFn();
