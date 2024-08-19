@@ -545,14 +545,12 @@ public class SemanticChecker implements astVisitor<String> {
     if (node.getUpdate() != null)
       node.getUpdate().accept(this);
     
-    curS = new Scope(curS, null, ScopeType.BLOCK);
     if (node.getStmt() instanceof astBlockStmtNode)
       for (var stmt : ((astBlockStmtNode) node.getStmt()).getStmts()) {
         stmt.accept(this);
       }
     else
       node.getStmt().accept(this);
-    exit();
     
     exit();
     return node.toString();
