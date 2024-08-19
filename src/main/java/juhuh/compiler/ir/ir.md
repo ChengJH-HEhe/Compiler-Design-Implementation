@@ -1,0 +1,48 @@
+## file structure
+```
+Root
+|
+--def
+  |--globaldef i = 1/(_init)
+  |--funcdef
+  |--classdef
+  |--vardef
+|
+```
+
+## task description
+need to build a IR code transformer,then use toString method to get the whole IRcode
+
+break the whole task into several unique tasks
+### 1. tool design: 
+ 1) instruction taker (in folder ir/ins) for   taking some args and output the ir ins code.
+  2) inst node corresponding astExprNode ->
+  3) stmt node corresponding astStmtNode
+  5) type node : -> right before irbuilder
+   - i32 int
+   - i8 bool ?
+   - ptr 4 
+   - string -> ptr to the char array
+   - stringconst -> anonymous global variable "@.str_%d"
+   - array -> ptr to the addr real val array, length = first 4byte, -> length*typeaddr
+   create a new array we must know its length before actually running the code
+  4) global def node name manager:
+  - consensus
+    1. base type : 
+      - @ global variable + init value
+    2. class:
+      - %class.a = {i32, ptr}
+      - method (this, type)
+      - constr: (assignexpr) ?
+  6) func def node
+  7) class def node 
+  - consensus
+    1. method -> classname.method 
+    2. variable -> class ? 
+     :var + (.) string -> count
+### 2. IR build roadmap
+ 1) entity -> type : constant or register
+ 2) ins
+ 3) stmt
+ 4) builder
+
