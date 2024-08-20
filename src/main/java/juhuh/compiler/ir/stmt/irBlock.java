@@ -10,11 +10,15 @@ import juhuh.compiler.util.error.error;
 @lombok.Getter
 @lombok.Setter
 public class irBlock extends irStmt{
-  vector<irBlock> stmts;
+  vector<irStmt> stmts;
   irBlock parent;
   String label; // label & terminalstmt must add;
   Scope scope; // scope.parent == parent.scope -> hold back
   irIns terminalstmt;
+  int anonyNum;
+  public void add(irStmt stmt) {
+    stmts.add(stmt);
+  }
   @Override
   public String toString(){
     StringBuilder s = new StringBuilder();
