@@ -2,7 +2,9 @@ package juhuh.compiler.ir.ins;
 
 import juhuh.compiler.frontend.irVisitor;
 import juhuh.compiler.util.error.error;
-
+@lombok.experimental.SuperBuilder
+@lombok.Getter
+@lombok.Setter
 public class irBinary extends irIns{
   String res, op, tp, op1, op2;
   @Override
