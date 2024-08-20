@@ -8,8 +8,12 @@ import juhuh.compiler.util.error.error;
 @lombok.Setter
 public class irFuncDecl extends irDefNode{
   String retType, fName;
-  vector<String> paralist;
+  vector<String> paratypelist, paravaluelist;
   public String toString(){
+    String paralist = "";
+    for(int i = 0; i < this.paratypelist.size(); i++){
+      paralist += this.paratypelist.get(i) + " " + this.paravaluelist.get(i) + ", ";
+    }
     return "declare " + retType + " @" + fName + "(" + paralist + ")";
   }
   @Override

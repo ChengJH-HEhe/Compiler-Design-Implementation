@@ -1,6 +1,7 @@
 package juhuh.compiler.ir.def;
 
 import juhuh.compiler.frontend.irVisitor;
+import juhuh.compiler.ir.stmt.irStmt;
 import juhuh.compiler.util.vector;
 import juhuh.compiler.util.error.error;
 @lombok.experimental.SuperBuilder
@@ -8,11 +9,15 @@ import juhuh.compiler.util.error.error;
 @lombok.Setter
 public class irFuncDef extends irDefNode{
   String retType, fName;
-  vector<String> paralist;
-  vector<String> body;
+  vector<String> paratypelist, paravaluelist;
+  irStmt body;
   @Override
   public String toString(){
-    return "define " + retType + " @" + fName + "(" + paralist + ") {\n" + body + "\n}";
+    String paralist = "";
+    for(int i = 0; i < this.paratypelist.size(); i++){
+      paralist += this.paratypelist.get(i) + " " + this.paravaluelist.get(i) + ", ";
+    }
+    return "define " + retType + " @" + fName + "(" + paralist + ") {\n" + body.toString() + "\n}";
   }
   @Override
   public<T> T accept(irVisitor<T> visitor) throws error{
