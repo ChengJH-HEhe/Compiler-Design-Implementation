@@ -1,13 +1,15 @@
-package juhuh.compiler.ir;
+package juhuh.compiler.ir.ins;
 
 import juhuh.compiler.frontend.irVisitor;
 import juhuh.compiler.util.error.error;
 
-public class irRoot extends irNode{
+public class irJump extends irIns{
+  String dest;
+  @Override
   public String toString(){
-    //TODO
-    return "";
+    return "br label " + dest;
   }
+  @Override
   public<T> T accept(irVisitor<T> visitor) throws error{
     return visitor.visit(this);
   }

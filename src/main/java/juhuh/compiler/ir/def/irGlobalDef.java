@@ -1,12 +1,12 @@
-package juhuh.compiler.ir;
+package juhuh.compiler.ir.def;
 
 import juhuh.compiler.frontend.irVisitor;
 import juhuh.compiler.util.error.error;
 
-public class irRoot extends irNode{
+public class irGlobalDef extends irDefNode{
+  String name, type, initConst;
   public String toString(){
-    //TODO
-    return "";
+    return name + " = global " + type + " " + initConst;
   }
   public<T> T accept(irVisitor<T> visitor) throws error{
     return visitor.visit(this);
