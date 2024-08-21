@@ -15,15 +15,15 @@ public class irBlock extends irStmt{
   String label; // label & terminalstmt must add;
   Scope scope; // scope.parent == parent.scope -> hold back
   irIns terminalstmt;
-  int anonyNum;
   public void add(irStmt stmt) {
     stmts.add(stmt);
   }
   @Override
   public String toString(){
     StringBuilder s = new StringBuilder();
+    indent = "  ";
     if(label != null){
-      s.append(super.toString() + label + ":\n");
+      s.append(label + ":\n");
     }
     for(var stmt : stmts){
       s.append(super.toString() + stmt.toString() + "\n");

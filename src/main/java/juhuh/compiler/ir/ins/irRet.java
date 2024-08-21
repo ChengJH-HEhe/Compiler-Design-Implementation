@@ -10,7 +10,9 @@ public class irRet extends irIns{
   String tp, val;
   @Override
   public String toString(){
-    return "ret " + tp + " " + val;  
+    if(tp == "void")
+      return "ret void";
+    else  return "ret " + tp + " " + val;  
   }
   @Override
   public<T> T accept(irVisitor<T> visitor) throws error{

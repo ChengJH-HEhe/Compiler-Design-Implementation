@@ -6,7 +6,9 @@ import juhuh.compiler.util.error.error;
 @lombok.Getter
 @lombok.Setter
 public class register extends entity {
-  String name;
+  String name; 
+  // TODO add ptr
+  String ptr;
   @Override
   public String toString() {
     return "entity";
