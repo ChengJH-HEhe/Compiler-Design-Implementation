@@ -21,7 +21,6 @@ public interface astVisitor<T> {
   public T visit(astArrayConstExpr node) throws error;
   public T visit(astMemberExprNode node) throws error;
   
-
   public T visit(astFStrExpr node) throws error;
   public T visit(astUnaryExprNode node) throws error;
   public T visit(astPreSelfExprNode node) throws error;

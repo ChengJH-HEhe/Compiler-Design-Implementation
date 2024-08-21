@@ -1,9 +1,9 @@
 package juhuh.compiler.frontend;
 import juhuh.compiler.util.*;
 import juhuh.compiler.util.error.error;
-
-// import juhuh.compiler.ast.binaryExprNode.binaryOpType;
-// import juhuh.compiler.ast.cmpExprNode.cmpOpType;
+import juhuh.compiler.util.info.ClassInfo;
+import juhuh.compiler.util.info.FuncInfo;
+import juhuh.compiler.util.info.typeinfo;
 import juhuh.compiler.ast.node.astNode;
 import juhuh.compiler.ast.node.astRoot;
 import juhuh.compiler.ast.node.def.*;

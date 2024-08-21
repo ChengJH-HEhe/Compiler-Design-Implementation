@@ -5,13 +5,13 @@ import juhuh.compiler.ast.node.astRoot;
 import juhuh.compiler.ast.node.def.*;
 import juhuh.compiler.ast.node.expr.*;
 import juhuh.compiler.ast.node.stmt.*;
-import juhuh.compiler.util.ClassInfo;
-import juhuh.compiler.util.FuncInfo;
 import juhuh.compiler.util.Scope;
 import juhuh.compiler.util.globalScope;
-import juhuh.compiler.util.typeinfo;
 import juhuh.compiler.util.Scope.ScopeType;
 import juhuh.compiler.util.error.error;
+import juhuh.compiler.util.info.ClassInfo;
+import juhuh.compiler.util.info.FuncInfo;
+import juhuh.compiler.util.info.typeinfo;
 
 public class SymbolCollector implements astVisitor<astNode> {
   private globalScope gScope;

@@ -1,5 +1,12 @@
 package juhuh.compiler.frontend;
 
-public class irVisitor {
-    
+import juhuh.compiler.ir.irNode;
+import juhuh.compiler.ir.irRoot;
+import juhuh.compiler.util.error.error;
+
+public interface irVisitor<T> {
+  // TODO
+  public T visit(irNode node) throws error;
+  public T visit(irRoot node) throws error;
+  
 }
