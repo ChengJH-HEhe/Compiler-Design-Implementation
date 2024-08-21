@@ -1,6 +1,7 @@
 package juhuh.compiler.ir.def;
 
 import juhuh.compiler.frontend.irVisitor;
+import juhuh.compiler.util.vector;
 import juhuh.compiler.util.error.error;
 
 @lombok.experimental.SuperBuilder
@@ -8,10 +9,11 @@ import juhuh.compiler.util.error.error;
 @lombok.Setter
 
 public class irClassDef extends irDefNode{
+  irStructDef struct;
+  vector<irFuncDef> funcDefs;
   @Override
   public String toString(){
-    //TODO
-    return "";
+    throw new UnsupportedOperationException("irClassDef toString");
   }
   @Override
   public<T> T accept(irVisitor<T> visitor) throws error{

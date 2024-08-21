@@ -1,9 +1,7 @@
 package juhuh.compiler.ir;
 
 import juhuh.compiler.frontend.irVisitor;
-import juhuh.compiler.ir.def.irFuncDecl;
-import juhuh.compiler.ir.def.irFuncDef;
-import juhuh.compiler.ir.def.irGlobalDef;
+import juhuh.compiler.ir.def.*;
 import juhuh.compiler.util.vector;
 import juhuh.compiler.util.error.error;
 
@@ -12,14 +10,21 @@ import juhuh.compiler.util.error.error;
 @lombok.Setter
 
 public class irRoot extends irNode {
+  vector<irStructDef> structDef;
   vector<irGlobalDef> globalDef;
   vector<irFuncDecl> globalFDecl;
-  vector<irFuncDef> FDef;
+  vector<irFuncDef> FDef, globalFuncDefs;
   public void add(irGlobalDef def){
     globalDef.add(def);
   }
+  public void add(irStructDef def){
+    structDef.add(def);
+  }
   public void add(irFuncDecl decl){
     globalFDecl.add(decl);
+  }
+  public void addGlobal(irFuncDef def){
+    globalFuncDefs.add(def);
   }
   public void add(irFuncDef def){
     FDef.add(def);
@@ -27,6 +32,12 @@ public class irRoot extends irNode {
   public String toString(){
     String s = "";
     for(var def : globalDef){
+      s += def.toString() + "\n";
+    }
+    for(var def : structDef){
+      s += def.toString() + "\n";
+    }
+    for(var def : globalFuncDefs){
       s += def.toString() + "\n";
     }
     for(var decl : globalFDecl){

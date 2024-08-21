@@ -44,5 +44,11 @@ break the whole task into several unique tasks
  1) entity -> type : constant or register
  2) ins
  3) stmt
- 4) builder
-
+ 
+ 4) builder : only consider int, bool, class
+  - int a = 1 + 2; // 2const / 0const 2place _init() initialplace promise : register contain the final name , visit binary node -> return res is enough
+  - 
+ 5) string 
+ 6) array
+ 7) toString 
+ 最终只需要汇集到root中 例如遇到classdef -> funcdef 需要加回 root->funcdef，不妨碍，可以先进classdef函数
