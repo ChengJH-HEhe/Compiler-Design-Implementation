@@ -32,9 +32,11 @@ public class irBuilder implements astVisitor<irNode> {
     curS.depth = depth;
     curS.selfN = selfN;
   }
+
   private void exit() {
     curS = curS.parentScope();
   }
+
   public irBuilder(globalScope gSc) {
     curS = gSc;
     gScope = gSc;
@@ -114,7 +116,7 @@ public class irBuilder implements astVisitor<irNode> {
             globalvar.setInit(((constant) init).toString());
           } else {
             // need to initialize with an init not constant;
-            
+
             var exprinit = (register) init;
             curBlock.add(irStore.builder()
                 .tp(globalvar.getType())
@@ -169,7 +171,7 @@ public class irBuilder implements astVisitor<irNode> {
     curdef = func.getEntry();
     curBlock = curdef;
     enter(node.getFuncScope(), 1, curS.sonN++);
-    
+
     if (!node.getRet().equals("void")) {
       curdef.add(irAlloca.builder()
           .res("%0ret")
@@ -213,7 +215,7 @@ public class irBuilder implements astVisitor<irNode> {
         label = "";
       }
     }
-    
+
     exit();
     return func;
   }
@@ -243,7 +245,7 @@ public class irBuilder implements astVisitor<irNode> {
   public irNode visit(astVarDefNode node) throws error {
     // curdef add alloca,
     // no this a.val
-    String tmpname = "%" + curS.rename(node.getName(), true);
+    String tmpname = "%" + curS.Varrename(node.getName());
 
     // if class
     if (!node.getType().getInfo().equals(SemanticChecker.intType)
@@ -307,7 +309,7 @@ public class irBuilder implements astVisitor<irNode> {
 
   @Override
   public irNode visit(astArrayConstExpr node) throws error {
-    // TODO what? 
+    // TODO what?
     throw new UnsupportedOperationException("Unimplemented method 'visit'");
   }
 
@@ -325,20 +327,200 @@ public class irBuilder implements astVisitor<irNode> {
 
   @Override
   public irNode visit(astUnaryExprNode node) throws error {
-    // TODO ++-- lval otherwise rval
-    throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    entity res = (entity) visit(node.getExpr());
+    if (node.getOp().equals("Plus")) {
+      return res;
+    } else if (node.getOp().equals("Minus")) {
+      String resul = curFunc.tmprename();
+      curBlock.add(irBinary.builder()
+          .op("sub")
+          .res(resul)
+          .tp("i32")
+          .op1("0")
+          .op2((res.toString()))
+          .build());
+      return register.builder()
+          .name(resul)
+          .build();
+    } else if (node.getOp().equals("Not")) {
+      String resul = curFunc.tmprename();
+      curBlock.add(irBinary.builder()
+          .op("xor")
+          .res(resul)
+          .tp("i32")
+          .op1("-1")
+          .op2(((register) res).getName())
+          .build());
+      return register.builder()
+          .name(resul)
+          .build();
+    } else if (node.getOp().equals("LogicNot")) {
+      String resul = curFunc.tmprename();
+      curBlock.add(irBinary.builder()
+          .op("xor")
+          .res(resul)
+          .op1("1")
+          .op2(((register) res).getName())
+          .build());
+      return register.builder()
+          .name(resul)
+          .build();
+    } else if (node.getOp().equals("Increment") || node.getOp().equals("Decrement")) {
+      // res in a name & ptr store in the ptrname;
+      String resul = curFunc.tmprename();
+      curBlock.add(irBinary.builder()
+          .op(node.getOp().equals("Increment") ? "add" : "sub")
+          .res(resul)
+          .tp("i32")
+          .op1(((register) res).getName())
+          .op2("1")
+          .build());
+      curBlock.add(irStore.builder()
+          .tp("i32")
+          .res(resul)
+          .ptr(((register) res).getPtr())
+          .build());
+      return register.builder()
+          .name(resul)
+          .ptr(((register) res).getPtr())
+          .build();
+    } else {
+      throw new UnsupportedOperationException("Unimplemented method 'visitUnary'");
+    }
   }
 
   @Override
   public irNode visit(astPreSelfExprNode node) throws error {
-    // TODO rvalue
-    throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    // rvalue
+    entity res = (entity) visit(node.getExpr());
+    String resul = curFunc.tmprename(),
+        resul1 = curFunc.tmprename();
+    curBlock.add(irBinary.builder()
+        .op("add")
+        .res(resul)
+        .tp("i32")
+        .op1(((register) res).getName())
+        .op2("0")
+        .build());
+    curBlock.add(irBinary.builder()
+        .op(node.getOp().equals("Increment") ? "add" : "sub")
+        .res(resul1)
+        .tp("i32")
+        .op1(((register) res).getName())
+        .op2("1")
+        .build());
+    curBlock.add(irStore.builder()
+        .tp("i32")
+        .res(resul1)
+        .ptr(((register) res).getPtr())
+        .build());
+    return register.builder()
+        .name(resul)
+        .ptr(((register) res).getPtr())
+        .build();
   }
 
   @Override
   public irNode visit(astBinaryExprNode node) throws error {
-    // TODO calc the res to the curBlock & return the res to a register node
-    throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    // calc the res to the curBlock & return the res to a register node
+    if (node.getOp().equals("LogicAnd") || node.getOp().equals("LogicOr")) {
+      // TODO get label name
+      String target = node.getOp().equals("LogicAnd") ? "1" : "0";
+      // not equal target -> end
+      String resul = curFunc.tmprename();
+      entity res1 = (entity) visit(node.getLhs()),
+          res2 = (entity) visit(node.getRhs());
+      curBlock.add(irBinary.builder()
+          .op("eq")
+          .res(resul)
+          .tp("i1")
+          .op1(((register) res1).getName())
+          .op2("0")
+          .build());
+      if (node.getOp().equals("LogicAnd")) {
+        curBlock.add(irCond.builder()
+            .op("br")
+            .cond(resul)
+            .trueDest(label1)
+            .falseDest(label2)
+            .build());
+        curBlock.add(irBlock.builder()
+            .label(label1)
+            .stmts(new vector<irStmt>())
+            .build());
+        curBlock.add(irBinary.builder()
+            .op("ne")
+            .res(resul)
+            .tp("i1")
+            .op1(((register) res2).getName())
+            .op2("0")
+            .build());
+        curBlock.add(irJump.builder()
+            .dest(label2)
+            .build());
+        curBlock.add(irBlock.builder()
+            .label(label2)
+            .stmts(new vector<irStmt>())
+            .build());
+      } else {
+        curBlock.add(irCond.builder()
+            .op("br")
+            .cond(resul)
+            .trueDest(label2)
+            .falseDest(label1)
+            .build());
+        curBlock.add(irBlock.builder()
+            .label(label1)
+            .stmts(new vector<irStmt>())
+            .build());
+        curBlock.add(irBinary.builder()
+            .op("ne")
+            .res(resul)
+            .tp("i1")
+            .op1(((register) res2).getName())
+            .op2("0")
+            .build());
+        curBlock.add(irJump.builder()
+            .dest(label2)
+            .build());
+        curBlock.add(irBlock.builder()
+            .label(label2)
+            .stmts(new vector<irStmt>())
+            .build());
+      }
+      
+    } else {
+      String Optp = irIcmp.builder().build().getop(node.getOp());
+      if (Optp != null) {
+        entity res1 = (entity) visit(node.getLhs()),
+            res2 = (entity) visit(node.getRhs());
+        String resul = curFunc.tmprename();
+        curBlock.add(irIcmp.builder()
+            .op(Optp)
+            .res(resul)
+            .tp(((register) res1).getTp())
+            .op1(((register) res1).getName())
+            .op2(((register) res2).getName())
+            .build());
+        return register.builder()
+            .name(resul)
+            .build();
+      } else {
+        entity res1 = (entity) visit(node.getLhs()),
+            res2 = (entity) visit(node.getRhs());
+        String resul = curFunc.tmprename();
+        curBlock.add(irBinary.builder()
+            .op(irBinary.builder().build().getop(node.getOp()))
+            .res(resul)
+            .tp("i32")
+            .op1(((register) res1).getName())
+            .op2(((register) res2).getName())
+            .build());
+        return register.builder()
+            .name(resul)
+            .build();
+      }
+    }
   }
 
   @Override
