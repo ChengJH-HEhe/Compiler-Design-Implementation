@@ -1,21 +1,46 @@
 package juhuh.compiler.util;
 
-import juhuh.compiler.mir.register;
+import juhuh.compiler.ir.entity.*;
 import juhuh.compiler.util.error.error;
-import juhuh.compiler.util.error.semanticError;
+import juhuh.compiler.util.info.ClassInfo;
+import juhuh.compiler.util.info.FuncInfo;
+import juhuh.compiler.util.info.Info;
+import juhuh.compiler.util.info.typeinfo;
+
 import java.util.HashMap;
 
 public class Scope {
-  protected Info info;
+  public Info info;
   public enum ScopeType {
     LOOP, BLOCK, FUNC, CLASS, GLOBAL;
   }
-  protected ScopeType type;
+  public ScopeType type;
   public boolean isexited;
 
   private HashMap<String, Info> members;
   public HashMap<String, register> entities = new HashMap<>();
   private Scope parentScope;
+  // scope to manage the rename job
+  public int regnum = 0, depth = 0, sonN = 0, selfN = 0;
+  public String getValPtr(String name) {
+    if(type == ScopeType.CLASS) {
+      var id = ((ClassInfo)info).getVarsId().get(name);
+      // TODO elementptr?
+    }
+      
+    if(entities.containsKey(name))
+      return "%" + name + "." + depth + "." + selfN;
+    if(parentScope == null)
+      return null;
+    return parentScope.getValPtr(name);
+  }
+  public String Varrename(String name) {
+    if(type == ScopeType.GLOBAL)
+      return "@" + name;
+    else {
+      return "%" + name + "." + depth + "." + selfN;
+    } 
+  }
   public boolean findLOOP(){
     if(type == ScopeType.LOOP)
       return true;

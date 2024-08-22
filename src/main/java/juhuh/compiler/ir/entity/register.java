@@ -8,7 +8,7 @@ import juhuh.compiler.util.error.error;
 public class register extends entity {
   String name; 
   // TODO add ptr
-  String ptr;
+  String ptr, tp;
   @Override
   public String toString() {
     return "entity";

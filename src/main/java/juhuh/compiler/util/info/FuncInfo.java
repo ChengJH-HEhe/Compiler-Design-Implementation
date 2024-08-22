@@ -1,6 +1,8 @@
-package juhuh.compiler.util;
+package juhuh.compiler.util.info;
 
 import java.util.stream.Collectors;
+
+import juhuh.compiler.util.vector;
 
 // rettype == null -> Void
 @lombok.experimental.SuperBuilder

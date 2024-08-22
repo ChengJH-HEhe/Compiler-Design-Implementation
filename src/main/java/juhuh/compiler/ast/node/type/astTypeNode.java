@@ -2,8 +2,8 @@ package juhuh.compiler.ast.node.type;
 
 import juhuh.compiler.ast.node.astNode;
 import juhuh.compiler.frontend.astVisitor;
-import juhuh.compiler.util.typeinfo;
 import juhuh.compiler.util.error.error;
+import juhuh.compiler.util.info.typeinfo;
 
 @lombok.experimental.SuperBuilder
 @lombok.Getter

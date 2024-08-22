@@ -7,7 +7,7 @@ import juhuh.compiler.util.error.error;
 @lombok.Getter
 @lombok.Setter
 public class irIcmp extends irIns {
-  String res, op, op1, op2;
+  String res, op, op1, op2, tp;
 
   public String getop(String p) {
     if (p.equals("Greater"))
@@ -23,13 +23,13 @@ public class irIcmp extends irIns {
     else if (p.equals("UnEqual"))
       op = "ne";
     else
-      assert (false);
+      return null;
     return op;
   }
 
   @Override
   public String toString() {
-    return res + " = icmp " + op + " " + op1 + " " + op2;
+    return res + " = icmp " + op + " " + tp + " " + op1 + " " + op2;
   }
 
   @Override

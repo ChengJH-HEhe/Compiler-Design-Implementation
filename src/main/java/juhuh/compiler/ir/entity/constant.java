@@ -6,6 +6,7 @@ import juhuh.compiler.util.error.error;
 @lombok.Getter
 @lombok.Setter
 public class constant extends entity {
+  String name;
   @Override
   public String toString() {
     return "entity";

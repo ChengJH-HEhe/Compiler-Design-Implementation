@@ -4,10 +4,10 @@ import juhuh.compiler.ast.node.stmt.astBlockStmtNode;
 import juhuh.compiler.ast.node.stmt.astStmtNode;
 import juhuh.compiler.ast.node.stmt.scopeStmt;
 import juhuh.compiler.frontend.astVisitor;
-import juhuh.compiler.util.FuncInfo;
 import juhuh.compiler.util.Scope;
 import juhuh.compiler.util.vector;
 import juhuh.compiler.util.error.error;
+import juhuh.compiler.util.info.FuncInfo;
 
 @lombok.experimental.SuperBuilder
 @lombok.Getter

@@ -1,5 +1,7 @@
 package juhuh.compiler;
 
+import java.io.FileWriter;
+
 // import java.io.FileInputStream;
 // import java.io.InputStream;
 
@@ -16,6 +18,7 @@ import juhuh.compiler.ast.node.astRoot;
 // import Backend.RegAlloc;
 
 import juhuh.compiler.frontend.*;
+import juhuh.compiler.ir.irRoot;
 
 // import MIR.mainFn;
 
@@ -47,10 +50,11 @@ public class Main {
             //System.err.println("Symbol collected successfully");
             new SemanticChecker(gScope).visit(ASTRoot);
             //System.err.println("Sema successfully");
-            irmainFn f = new irMain();
-            new irBuilder(f, gScope).visit(ASTRoot);
-            // // new IRPrinter(System.out).visitFn(f);
-
+            irBuilder IR = new irBuilder(gScope);
+            irRoot rt = (irRoot) IR.visit(ASTRoot);
+            FileWriter writer = new FileWriter("src/main/java/juhuh/compiler/test/output.ll");
+            writer.write(rt.toString());
+            writer.close();
             // AsmFn asmF = new AsmFn();
             // new InstSelector(asmF).visitFn(f);
             // new RegAlloc(asmF).work();

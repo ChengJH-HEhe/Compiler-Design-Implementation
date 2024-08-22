@@ -1,4 +1,4 @@
-package juhuh.compiler.util;
+package juhuh.compiler.util.info;
 
 @lombok.experimental.SuperBuilder
 @lombok.Getter

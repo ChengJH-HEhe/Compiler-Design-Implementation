@@ -1,6 +1,7 @@
 package juhuh.compiler.util;
 
 import juhuh.compiler.util.error.semanticError;
+import juhuh.compiler.util.info.Info;
 
 import java.util.HashMap;
 

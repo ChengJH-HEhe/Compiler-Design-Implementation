@@ -2,7 +2,6 @@ package juhuh.compiler.ir.def;
 
 import juhuh.compiler.frontend.irVisitor;
 import juhuh.compiler.ir.stmt.irBlock;
-import juhuh.compiler.ir.stmt.irStmt;
 import juhuh.compiler.util.vector;
 import juhuh.compiler.util.error.error;
 @lombok.experimental.SuperBuilder
@@ -14,6 +13,9 @@ public class irFuncDef extends irDefNode{
   vector<String> paratypelist, paravaluelist;
   irBlock entry, ret;
   vector<irBlock> body;
+  public String tmprename(){
+    return "%" + (anonyNum++);
+  }
   @Override
   public String toString(){
     String paralist = "";

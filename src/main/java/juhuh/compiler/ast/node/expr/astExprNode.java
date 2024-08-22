@@ -1,8 +1,8 @@
 package juhuh.compiler.ast.node.expr;
 import juhuh.compiler.ast.node.astNode;
 import juhuh.compiler.frontend.astVisitor;
-import juhuh.compiler.util.Info;
 import juhuh.compiler.util.error.error;
+import juhuh.compiler.util.info.Info;
 @lombok.experimental.SuperBuilder
 @lombok.Getter
 @lombok.Setter

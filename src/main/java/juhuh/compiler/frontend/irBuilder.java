@@ -27,6 +27,7 @@ public class irBuilder implements astVisitor<irNode> {
   private String label;
 
   // add label String
+
   private void enter(Scope scope, int depth, int selfN) {
     curS = scope;
     curS.depth = depth;
@@ -424,81 +425,55 @@ public class irBuilder implements astVisitor<irNode> {
   public irNode visit(astBinaryExprNode node) throws error {
     // calc the res to the curBlock & return the res to a register node
     if (node.getOp().equals("LogicAnd") || node.getOp().equals("LogicOr")) {
-      // TODO get label name
-      String target = node.getOp().equals("LogicAnd") ? "1" : "0";
-      // not equal target -> end
+      // short circuit
+      int target = node.getOp().equals("LogicAnd") ? 0 : 1;
       String resul = curFunc.tmprename();
-      entity res1 = (entity) visit(node.getLhs()),
-          res2 = (entity) visit(node.getRhs());
-      curBlock.add(irBinary.builder()
-          .op("eq")
-          .res(resul)
+      // and 1 -> log.false
+      entity res1 = (entity) visit(node.getLhs());    
+      curBlock.add(irStore.builder()
           .tp("i1")
-          .op1(((register) res1).getName())
-          .op2("0")
+          .res(resul)
+          .ptr(((register)res1).getPtr())
           .build());
-      if (node.getOp().equals("LogicAnd")) {
-        curBlock.add(irCond.builder()
-            .op("br")
-            .cond(resul)
-            .trueDest(label1)
-            .falseDest(label2)
-            .build());
-        curBlock.add(irBlock.builder()
-            .label(label1)
-            .stmts(new vector<irStmt>())
-            .build());
-        curBlock.add(irBinary.builder()
-            .op("ne")
-            .res(resul)
-            .tp("i1")
-            .op1(((register) res2).getName())
-            .op2("0")
-            .build());
-        curBlock.add(irJump.builder()
-            .dest(label2)
-            .build());
-        curBlock.add(irBlock.builder()
-            .label(label2)
-            .stmts(new vector<irStmt>())
-            .build());
-      } else {
-        curBlock.add(irCond.builder()
-            .op("br")
-            .cond(resul)
-            .trueDest(label2)
-            .falseDest(label1)
-            .build());
-        curBlock.add(irBlock.builder()
-            .label(label1)
-            .stmts(new vector<irStmt>())
-            .build());
-        curBlock.add(irBinary.builder()
-            .op("ne")
-            .res(resul)
-            .tp("i1")
-            .op1(((register) res2).getName())
-            .op2("0")
-            .build());
-        curBlock.add(irJump.builder()
-            .dest(label2)
-            .build());
-        curBlock.add(irBlock.builder()
-            .label(label2)
-            .stmts(new vector<irStmt>())
-            .build());
-      }
-      
+      String[] label = {"log.false" + resul, "log.end" + resul};
+      curBlock.add(irBranch.builder()
+          .cond(((register)res1).getName())
+          .iftrue(label[target])
+          .iffalse(label[target^1])
+          .build());
+      // iftrue -> res1赋值
+      // iffalse 跳过res2赋值
+      curBlock.add(irBlock.builder()
+          .label(label[0])
+          .stmts(new vector<irStmt>())
+          .build());    
+      entity res2 = (entity) visit(node.getRhs());
+      curBlock.add(irStore.builder()
+          .tp("i1")
+          .res(resul)
+          .ptr(((register)res2).getPtr())
+          .build());
+      curBlock.add(irJump.builder()
+          .dest(label[1])
+          .build());
+      curBlock.add(irBlock.builder()
+          .label(label[1])
+          .stmts(new vector<irStmt>())
+          .build());
+      return register.builder()
+          .name(resul)
+          .build();
     } else {
       String Optp = irIcmp.builder().build().getop(node.getOp());
       if (Optp != null) {
+        // res 
         entity res1 = (entity) visit(node.getLhs()),
             res2 = (entity) visit(node.getRhs());
         String resul = curFunc.tmprename();
         curBlock.add(irIcmp.builder()
             .op(Optp)
             .res(resul)
-            .tp(((register) res1).getTp())
+            .tp("i1")
             .op1(((register) res1).getName())
             .op2(((register) res2).getName())
             .build());
@@ -506,6 +481,7 @@ public class irBuilder implements astVisitor<irNode> {
             .name(resul)
             .build();
       } else {
+        // expr done
         entity res1 = (entity) visit(node.getLhs()),
             res2 = (entity) visit(node.getRhs());
         String resul = curFunc.tmprename();
@@ -525,32 +501,98 @@ public class irBuilder implements astVisitor<irNode> {
 
   @Override
   public irNode visit(astConditionalExprNode node) throws error {
-    // TODO select cmd
-    throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    // select cmd rvalue
+    entity cond = (entity) visit(node.getCond());
+    String resul = curFunc.tmprename();
+    register val1 = (register) visit(node.getLhs()),
+        val2 = (register) visit(node.getRhs()); 
+    curBlock.add(irSelect.builder()
+        .res(resul)
+        .cond(((register) cond).getName())
+        .tp1(tp((typeinfo)node.getLhs().getType()))
+        .val1(val1.getName())
+        .tp2(tp((typeinfo)node.getRhs().getType()))
+        .val2(val2.getName())
+        .build());
+    return register.builder()
+        .name(resul)
+        .build();
   }
 
   @Override
   public irNode visit(astAssignExprNode node) throws error {
-    // TODO calc lhs.ptr, calc rhs.val , store to lhs.ptr
-    throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    // calc lhs.ptr, calc rhs.val , store to lhs.ptr
+    entity res2 = (entity) visit(node.getRhs());
+    entity res1 = (entity) visit(node.getLhs());
+    String resul;
+    if(res2 instanceof register) {
+      curBlock.add(irStore.builder()
+        .tp(tp((typeinfo)node.getLhs().getType()))
+        .res(((register) res2).getName())
+        .ptr(((register) res1).getPtr())
+        .build());
+      resul = ((register) res2).getName();
+    } else {
+      curBlock.add(irStore.builder()
+        .tp(tp((typeinfo)node.getLhs().getType()))
+        .res(((constant) res2).toString())
+        .ptr(((register) res1).getPtr())
+        .build());
+      resul = curFunc.tmprename();
+      curBlock.add(irBinary.builder()
+          .op("add")
+          .res(resul)
+          .tp("i32")
+          .op1(((constant) res2).toString())
+          .op2("0")
+          .build());
+    }
+    return register.builder()
+        .name(resul)
+        .ptr(((register) res1).getPtr())
+        .build();
   }
 
   @Override
   public irNode visit(astAtomExprNode node) throws error {
-    // TODO use astAtom res to return a const or stringconst or a funccall
-    throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    // use astAtom res to return a const or stringconst (or a funccall x)
+    // register ? Lvalue = true
+    if(node.isLValue()) {
+      // TODO Consider struct this? 
+      String ptr = curS.getValPtr(node.getValue());
+      // ptr ? 
+      return register.builder()
+          .name(curFunc.tmprename())
+          .ptr(ptr)
+          .build();
+    } else {
+      if(!node.getType().equals(SemanticChecker.stringType))
+        return constant.builder()
+            .name(node.getValue())
+            .build();
+      else {
+        // TODO String Const
+        return null;
+      }
+    }
+    // constant ? Lvalue = false
+    
   }
 
   @Override
   public irNode visit(astBlockStmtNode node) throws error {
-    // TODO simple block; upd scope depth
-    throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    for(var stmt : node.getStmts()) {
+      visit(stmt);
+    }
+    return null;
   }
 
   @Override
   public irNode visit(astIfStmtNode node) throws error {
-    // TODO calc cond? true if.then or if.end whole is a stmt; scope update for num
-    throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    // calc cond? true if.then or if.end whole is a stmt; scope update for num
+    
+    entity cond = (entity) visit(node.getCond());
+    String[] label = {"if.then" + curS.depth + "." + curS.sonN, "if.else" + curS.depth + "." + curS.sonN, "if.end" + curS.depth + "." + curS.sonN};
   }
 
   @Override
