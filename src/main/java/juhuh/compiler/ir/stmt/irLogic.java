@@ -9,7 +9,7 @@ import juhuh.compiler.util.error.error;
 public class irLogic extends irStmt{
   @Override
   public String toString(){
-    //TODO
+    //
     return "";
   }
   @Override

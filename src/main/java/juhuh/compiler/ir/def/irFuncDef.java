@@ -16,6 +16,9 @@ public class irFuncDef extends irDefNode{
   public String tmprename(){
     return "%" + (anonyNum++);
   }
+  public void add(irBlock b){
+    body.add(b);
+  }
   @Override
   public String toString(){
     String paralist = "";

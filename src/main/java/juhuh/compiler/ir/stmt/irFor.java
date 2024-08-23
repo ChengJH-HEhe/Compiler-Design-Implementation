@@ -6,14 +6,12 @@ import juhuh.compiler.util.error.error;
 @lombok.experimental.SuperBuilder
 @lombok.Getter
 @lombok.Setter
-public class irFor extends irStmt{
-  irBlock init, cond, inc, body;
+public class irFor extends irBlock{
+  irBlock cond, inc, body;
+  String label;
   @Override
   public String toString(){
     String s = "";
-    if(init != null){
-      s += init.toString();
-    }
     if(cond != null){
       s += cond.toString();
     }
@@ -23,6 +21,7 @@ public class irFor extends irStmt{
     if(body != null) {
       s += body.toString();
     }
+    s += label + ":\n";
     return s;
   }
   @Override

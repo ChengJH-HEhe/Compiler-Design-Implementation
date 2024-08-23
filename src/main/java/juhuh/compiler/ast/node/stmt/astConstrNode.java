@@ -1,6 +1,7 @@
 package juhuh.compiler.ast.node.stmt;
 
 import juhuh.compiler.frontend.astVisitor;
+import juhuh.compiler.util.Scope;
 import juhuh.compiler.util.error.error;
 
 @lombok.experimental.SuperBuilder
@@ -9,6 +10,7 @@ import juhuh.compiler.util.error.error;
 public class astConstrNode extends astStmtNode {
   private String className;
   private astBlockStmtNode block;
+  private Scope scope;
 
   @Override
   public String toString() {

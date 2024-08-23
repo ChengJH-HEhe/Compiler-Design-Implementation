@@ -531,7 +531,8 @@ public class SemanticChecker implements astVisitor<String> {
 
   @Override
   public String visit(astForStmtNode node) throws error {
-    curS = new Scope(curS, null, ScopeType.LOOP);
+    enter(new Scope(curS, null, ScopeType.LOOP));
+    node.setScope(curS);
     node.getInit().accept(this);
     if (node.getCond() != null) {
       node.getCond().accept(this);
@@ -558,7 +559,8 @@ public class SemanticChecker implements astVisitor<String> {
 
   @Override
   public String visit(astWhileStmtNode node) throws error {
-    curS = new Scope(curS, null, ScopeType.LOOP);
+    node.setScope(new Scope(curS, null, ScopeType.LOOP));
+    enter(node.getScope());
     node.getCond().accept(this);
     if (!(node.getCond().getType() instanceof typeinfo))
       throw new error("Undefined Identifier");
@@ -636,7 +638,8 @@ public class SemanticChecker implements astVisitor<String> {
 
   @Override
   public String visit(astConstrNode node) throws error {
-    curS = new Scope(curS, new FuncInfo("construct", voidType), ScopeType.FUNC);
+    node.setScope(new Scope(curS, new FuncInfo("construct", voidType), ScopeType.FUNC));
+    enter(node.getScope());
     for (var stmt : node.getBlock().getStmts()) {
       stmt.accept(this);
     }

@@ -7,7 +7,8 @@ import juhuh.compiler.util.error.error;
 @lombok.Getter
 @lombok.Setter
 public class irWhile extends irStmt{
-  irBlock init, cond, inc, body;
+  irBlock cond, body;
+  String label;
   @Override
   public String toString(){
     String s = "";
@@ -17,6 +18,7 @@ public class irWhile extends irStmt{
     if(body != null) {
       s += body.toString();
     }
+    s += label + ":\n";
     return s;
   }
   @Override

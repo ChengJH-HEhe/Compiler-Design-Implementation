@@ -6,13 +6,13 @@ import juhuh.compiler.util.error.error;
 @lombok.experimental.SuperBuilder
 @lombok.Getter
 @lombok.Setter
-public class irIf extends irStmt{
+public class irIf extends irBlock{
 
-  irBlock cond, tbran, fbran;
-
+  irBlock tbran, fbran;
+  String label;   
   @Override
   public String toString(){
-    String s = cond.toString() + tbran.toString() + fbran.toString();
+    String s = tbran.toString() + "\n" + fbran.toString() + "\n" + label + ":\n";
     return s;
   }
   @Override

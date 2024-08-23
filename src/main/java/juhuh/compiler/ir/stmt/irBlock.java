@@ -11,7 +11,6 @@ import juhuh.compiler.util.error.error;
 @lombok.Setter
 public class irBlock extends irStmt{
   vector<irStmt> stmts;
-  irBlock parent;
   String label; // label & terminalstmt must add;
   Scope scope; // scope.parent == parent.scope -> hold back
   irIns terminalstmt;
@@ -26,7 +25,10 @@ public class irBlock extends irStmt{
       s.append(label + ":\n");
     }
     for(var stmt : stmts){
-      s.append(super.toString() + stmt.toString() + "\n");
+      if(stmt instanceof irBlock)
+        s.append(stmt.toString() + "\n");
+      else
+        s.append(super.toString() + stmt.toString() + "\n");
     }
     if(terminalstmt != null){
       s.append(super.toString() + terminalstmt.toString() + "\n");
