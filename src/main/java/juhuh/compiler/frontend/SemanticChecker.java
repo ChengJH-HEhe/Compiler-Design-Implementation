@@ -248,6 +248,7 @@ public class SemanticChecker implements astVisitor<String> {
   @Override
   public String visit(astMemberExprNode node) throws error {
     node.getExpr().accept(this);
+    node.setMember(node.getExpr().isMember());
     Info exprInfo = node.getExpr().getType();
     if (!(exprInfo instanceof typeinfo)) {
       throw new error("Undefined Identifier");
@@ -273,13 +274,16 @@ public class SemanticChecker implements astVisitor<String> {
       var member = classinfo.getVars().get(node.getMember());
       if (member != null) {
         node.setType(member);
+        node.setMember(true);
         node.setLValue(true);
         return node.toString();
       }
+      // 
       var method = classinfo.getFuncs().get(node.getMember());
       if (method == null) {
         throw new error("Undefined Identifier");
       } else {
+        method.setName(classinfo.getName() + "::" + method.getName());
         node.setType(method);
         return node.toString();
       }
@@ -480,6 +484,14 @@ public class SemanticChecker implements astVisitor<String> {
         // System.err.println(" : " + node.getType().toString());
       } else if (info instanceof typeinfo) {
         node.setType((typeinfo) info);
+        // find member? 
+        var scp = curS;
+        while(scp.containsVariable(node.getValue(), false) == null)
+          scp = scp.parentScope();
+        if(scp.type == ScopeType.CLASS && ((ClassInfo)scp.info).getVarsId().containsKey(node.getValue()))
+          node.setMember(true);
+        else
+          node.setMember(false);
         node.setLValue(true);
       } else {
         throw new error("Undefined Identifier");
@@ -490,6 +502,7 @@ public class SemanticChecker implements astVisitor<String> {
         throw new error("Undefined Identifier");
       }
       node.setType(info);
+      node.setMember(true);
       node.setLValue(false);
     } else {
       node.setLValue(false);

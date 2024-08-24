@@ -35,17 +35,16 @@ public class Scope {
     } else
       return parentScope.getflow(type);
   }
-
   public String getValPtr(String name) {
     if (type == ScopeType.CLASS) {
       var id = ((ClassInfo) info).getVarsId().get(name);
-      // TODO elementptr?
+      if(id != null) {
+        // nothing previous
+        return "%0" + id;
+      }
     }
-
     if (entities.containsKey(name))
-      return "%" + name + "." + depth + "." + selfN;
-    if (parentScope == null)
-      return null;
+      return (type == ScopeType.GLOBAL?"@" :"%") + name + "." + depth + "." + selfN;
     return parentScope.getValPtr(name);
   }
 

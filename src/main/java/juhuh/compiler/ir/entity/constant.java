@@ -9,7 +9,7 @@ public class constant extends entity {
   String name;
   @Override
   public String toString() {
-    return "entity";
+    return name;
   }
   @Override
   public <T> T accept(irVisitor<T> visitor)

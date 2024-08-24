@@ -6,7 +6,7 @@ import juhuh.compiler.util.error.error;
 
 @lombok.experimental.SuperBuilder
 @lombok.Getter
-
+@lombok.Setter
 // program 3 interface: funcdef, classdef, vardef
 
 public class astDefNode extends astNode{  

@@ -9,10 +9,11 @@ import juhuh.compiler.util.info.Info;
 @lombok.EqualsAndHashCode(callSuper = false)
 public class astExprNode extends astNode{
   private Info type;
-  private boolean isLValue;
+  private boolean LValue, Member;
   public astExprNode(){
     super();
-    isLValue = false;
+    LValue = false;
+    Member = false;
   }
   @Override
   public String toString() {

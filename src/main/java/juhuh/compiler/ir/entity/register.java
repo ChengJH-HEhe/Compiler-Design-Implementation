@@ -7,11 +7,10 @@ import juhuh.compiler.util.error.error;
 @lombok.Setter
 public class register extends entity {
   String name; 
-  // TODO add ptr
   String ptr, tp;
   @Override
   public String toString() {
-    return "entity";
+    return name;
   }
   @Override
   public <T> T accept(irVisitor<T> visitor)

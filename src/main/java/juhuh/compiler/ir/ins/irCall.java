@@ -1,14 +1,17 @@
 package juhuh.compiler.ir.ins;
 
+import juhuh.compiler.frontend.irBuilder;
 import juhuh.compiler.frontend.irVisitor;
 import juhuh.compiler.util.vector;
 import juhuh.compiler.util.error.error;
+import juhuh.compiler.util.info.FuncInfo;
 
 @lombok.experimental.SuperBuilder
 @lombok.Getter
 @lombok.Setter
 public class irCall extends irIns{
-  String res, retType, func;
+  String res;
+  FuncInfo func;
   vector<String> type, val;
   @Override
   public String toString(){
@@ -17,8 +20,8 @@ public class irCall extends irIns{
       s += type.get(i) + " " + val.get(i) + ", ";
     }
     if(res.equals(""))
-      return "call void " + func + "(" + s + ")";
-    return res + " = call " + retType + " " + func + "(" + s + ")";
+      return "call void @" + func.getName() + "(" + s + ")";
+    return res + " = call " + irBuilder.tp(func.getRetType()) + " @" + func.getName() + "(" + s + ")";
   }
   @Override
   public<T> T accept(irVisitor<T> visitor) throws error{

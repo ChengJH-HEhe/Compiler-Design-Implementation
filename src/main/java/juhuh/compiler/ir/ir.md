@@ -36,10 +36,13 @@ break the whole task into several unique tasks
       - constr: (assignexpr) ?
   6) func def node
   7) class def node 
-  - consensus
+  - 命名规则
     1. method -> classname.method 
     2. variable -> class ? 
      :var + (.) string -> count
+     ptr name + ".depth+.selfN"
+     this.a.b  ptr 
+     
 ### 2. IR build roadmap
  1) entity -> type : constant or register
  2) ins
@@ -47,8 +50,12 @@ break the whole task into several unique tasks
  
  4) builder : only consider int, bool, class
   - int a = 1 + 2; // 2const / 0const 2place _init() initialplace promise : register contain the final name , visit binary node -> return res is enough
-  - 
+  - member (a.b).c ()
+  - array  array[sub] array class member? 0 : 1
+  - atom check (this.)? -> ptr 
  5) string 
  6) array
+  - 一维？ int bool w
  7) toString 
  最终只需要汇集到root中 例如遇到classdef -> funcdef 需要加回 root->funcdef，不妨碍，可以先进classdef函数
+
