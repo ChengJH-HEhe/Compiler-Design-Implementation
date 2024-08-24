@@ -197,13 +197,18 @@ public class irBuilder implements astVisitor<irNode> {
       func.getParatypelist().add("ptr");
       func.getParavaluelist().add("%this");
       curdef.add(irAlloca.builder()
-          .res("%this.1." + curS.selfN)
+          .res("%this.addr." + curS.selfN)
           .tp("ptr")
           .build());
       curdef.add(irStore.builder()
           .tp("ptr")
           .res("%this")
-          .ptr("%this.1." + curS.selfN)
+          .ptr("%this.addr." + curS.selfN)
+          .build());
+      curdef.add(irLoad.builder()
+          .tp("ptr")
+          .res("%this.copy")
+          .ptr("%this.addr." + curS.selfN)
           .build());
       func.setFName("@" + curS.parentScope().info.getName());
     }
@@ -325,6 +330,11 @@ public class irBuilder implements astVisitor<irNode> {
         .res("%this")
         .ptr("%this.addr")
         .build());
+    curdef.add(irLoad.builder()
+        .tp("ptr")
+        .res("%this.copy")
+        .ptr("%this.addr")
+        .build());
     curBlock = curdef;
     visit(node.getBlock());
     return Func;
@@ -333,7 +343,7 @@ public class irBuilder implements astVisitor<irNode> {
   @Override
   public irNode visit(astNewArrayExprNode node) throws error {
     // TODO array
-
+    throw new UnsupportedOperationException("Unimplemented method 'visit'");
   }
 
   @Override
@@ -377,15 +387,13 @@ public class irBuilder implements astVisitor<irNode> {
         .tp(tp((typeinfo) node.getType()))
         .ptrval(((register) res).getPtr())
         .build();
-    if (node.isMember()) {
+    // all need to add 0
+    {
       gep.setTp1("i32");
       gep.setId1("0");
       gep.setTp2("i32");
       gep.setId2((visit(node.getSub())).toString());
-    } else {
-      gep.setTp1("i32");
-      gep.setId1((visit(node.getSub())).toString());
-    }
+    } 
     curBlock.add(irLoad.builder()
         .res(reg.getName())
         .tp(tp((typeinfo) node.getType()))
@@ -684,7 +692,7 @@ public class irBuilder implements astVisitor<irNode> {
         reg.setPtr(curFunc.tmprename());
         curBlock.add(gep);
       }
-      
+
       curBlock.add(irLoad.builder()
           .res(reg.getName())
           .tp(tp((typeinfo) node.getType()))
@@ -696,6 +704,19 @@ public class irBuilder implements astVisitor<irNode> {
         return constant.builder()
             .name(node.getValue())
             .build();
+      else if(node.getType().equals(SemanticChecker.thisType)) {
+        // this -> this.addr -> this.copy
+        var reg = register.builder()
+            .name(curFunc.tmprename())
+            .ptr("%this.copy")
+            .build();
+        curBlock.add(irLoad.builder()
+            .res(reg.getName())
+            .tp(tp((typeinfo) node.getType()))
+            .ptr("%this.copy")
+            .build());
+        return reg;
+      }
       else {
         // TODO String Const
 

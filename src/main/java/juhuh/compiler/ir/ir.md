@@ -55,7 +55,9 @@ break the whole task into several unique tasks
   - atom check (this.)? -> ptr 
  5) string 
  6) array
-  - 一维？ int bool w
+  - 一维？ int bool ptr
+  - arr[-1] = size, size = 4*n
+  
  7) toString 
  最终只需要汇集到root中 例如遇到classdef -> funcdef 需要加回 root->funcdef，不妨碍，可以先进classdef函数
 
