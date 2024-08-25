@@ -32,7 +32,8 @@ public class Main {
     public static void main(String[] args) throws Exception{
         var input = CharStreams.fromStream(System.in);
         try {
-            globalScope gScope = new globalScope(null,null);
+            globalScope gScope = new globalScope(null,null),
+            origin = new globalScope(null,null);
 
             MxLexer lexer = new MxLexer(input);
             lexer.removeErrorListeners();
@@ -46,11 +47,11 @@ public class Main {
 
             var ASTRoot = (astRoot)astBuilder.visit(parseTreeRoot);
             //System.err.println("AST built successfully");
-            new SymbolCollector(gScope).visit(ASTRoot);
+            new SymbolCollector(gScope, origin).visit(ASTRoot);
             //System.err.println("Symbol collected successfully");
             new SemanticChecker(gScope).visit(ASTRoot);
             //System.err.println("Sema successfully");
-            irBuilder IR = new irBuilder(gScope);
+            irBuilder IR = new irBuilder(origin);
             irRoot rt = (irRoot) IR.visit(ASTRoot);
             FileWriter writer = new FileWriter("src/main/java/juhuh/compiler/test/output.ll");
             writer.write(rt.toString());

@@ -26,6 +26,17 @@ public class Scope {
   // scope to manage the rename job
   public int regnum = 0, depth = 0, sonN = 0, selfN = 0;
 
+  
+  // public Scope clone(Scope parentScope){
+  //   Scope res = new Scope(parentScope, info, type);
+  //   res.members = new HashMap<>(members);
+  //   res.entities = new HashMap<>(entities);
+  //   res.regnum = regnum;
+  //   res.depth = depth;
+  //   res.sonN = sonN;
+  //   res.selfN = selfN;
+  //   return res;
+  // }
   public String getflow(String type) {
     if (this.type == ScopeType.LOOP) {
       if (type.equals("br"))

@@ -467,19 +467,19 @@ public class astBuilder extends MxBaseVisitor<astNode> {
     var fstr = ctx.formatStr();
     if(fstr.FstringConst() != null) {
       vecStr.add(astAtomExprNode.builder().
-      Value(fstr.FstringConst().getText()).build().toString());
+      Value(fstr.FstringConst().getText().substring(2, fstr.FstringConst().getText().length()-1)).build().toString());
       return astFStrExpr.builder()
           .vecStr(vecStr)
           .vecExpr(vecExpr)
           .build();
     }
     vecStr.add(astAtomExprNode.builder().
-      Value(fstr.Fstring_l().getText().substring(2,fstr.Fstring_l().getText().length()-2)).build().toString());
+      Value(fstr.Fstring_l().getText().substring(2,fstr.Fstring_l().getText().length()-1)).build().toString());
     for(var fstr_m : fstr.Fstring_m())
       vecStr.add(astAtomExprNode.builder().
-      Value(fstr_m.getText().substring(1,fstr_m.getText().length()-2)).build().toString());
+      Value(fstr_m.getText().substring(1,fstr_m.getText().length()-1)).build().toString());
     vecStr.add(astAtomExprNode.builder().
-      Value(fstr.Fstring_lst().getText().substring(1, fstr.Fstring_lst().getText().length()-2)).build().toString());
+      Value(fstr.Fstring_lst().getText().substring(1, fstr.Fstring_lst().getText().length()-1)).build().toString());
     for (var expr : fstr.expr()) {
       vecExpr.add((astExprNode) visit(expr));
     }
@@ -530,8 +530,12 @@ public class astBuilder extends MxBaseVisitor<astNode> {
     for (var newExpr : newarray.getLengths())
       if (newExpr != null)
         newExpr.setParent(newarray);
-    if (ctx.arrayConst() != null)
+    if (ctx.arrayConst() != null) {
+      if(!inittrue) {
+        throw new error("Invalid Identifier");
+      }
       newarray.setInit((astArrayConstExpr) visit(ctx.arrayConst()));
+    }
     return newarray;
   }
 

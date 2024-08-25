@@ -11,6 +11,8 @@ import juhuh.compiler.util.info.FuncInfo;
 public class irFuncDecl extends irDefNode{
   FuncInfo info;
   vector<String> paratypelist, paravaluelist;
+  
+  @Override
   public String toString(){
     String paralist = "";
     for(int i = 0; i < this.paratypelist.size(); i++){

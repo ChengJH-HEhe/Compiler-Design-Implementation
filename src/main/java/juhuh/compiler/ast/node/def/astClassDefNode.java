@@ -11,7 +11,7 @@ import juhuh.compiler.util.info.ClassInfo;
 @lombok.Getter
 @lombok.Setter
 public class astClassDefNode extends astDefNode implements scopeStmt{
-  private Scope classScope;
+  private Scope classScope, origin;
   private final astConstrNode constructor;
   private final vector<astFuncDefNode> methods;
   private final vector<astVarDefNode> fields;

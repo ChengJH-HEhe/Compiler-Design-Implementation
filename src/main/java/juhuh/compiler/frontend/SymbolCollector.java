@@ -15,24 +15,30 @@ import juhuh.compiler.util.info.typeinfo;
 
 public class SymbolCollector implements astVisitor<astNode> {
   private globalScope gScope;
-  private Scope curS;
-  public void enter(Scope scope) {
+  private Scope curS, curOrigin;
+  public void enter(Scope scope, Scope copy) {
     curS = scope;
+    curOrigin = copy;
   }
   public void exit() {
     curS = curS.parentScope();
+    curOrigin = curOrigin.parentScope();
   }
   boolean checkValidType(typeinfo type) {
     return (type.isBuiltin() && (type.getName().equals("int")
     || type.getName().equals("bool") || type.getName().equals("string"))) 
     || gScope.getTypeFromName(type.getName()) != null;
   }
-  public SymbolCollector(globalScope gScope) {
-    this.gScope = gScope; curS = gScope;
+  public SymbolCollector(globalScope gScope, globalScope copy) {
+    this.gScope = gScope; 
+    this.curOrigin = copy;
+    curS = gScope;
+    curOrigin = copy;
     for(var tp : SemanticChecker.builtinTypes) {
       gScope.addType(tp.getName(), tp);
       // output the tp.getName
     }
+    // curOrigin = gScope.clone(null);
   }
   
   @Override
@@ -70,8 +76,9 @@ public class SymbolCollector implements astVisitor<astNode> {
   public astNode visit(astFuncDefNode node) throws error {
     // name returntype 
     node.setFuncScope(new Scope(curS, node.getInfo(), ScopeType.FUNC));
+    node.setOrigin(new Scope(curOrigin, node.getInfo(), ScopeType.FUNC));
     assert(node.getFuncScope().parentScope() != null);
-    enter(node.getFuncScope());
+    enter(node.getFuncScope(), node.getOrigin());
     if(node.getInfo().getName().equals("main")) {
       if(!node.getInfo().retType.equals(SemanticChecker.intType))
         throw new error("Type Mismatch");
@@ -92,18 +99,22 @@ public class SymbolCollector implements astVisitor<astNode> {
   public astNode visit(astClassDefNode node) throws error {
     // classname (member, fields) all together
     node.setClassScope(new Scope(curS, new typeinfo(node.getName(), 0), ScopeType.CLASS));
-    enter(node.getClassScope());
+    node.setOrigin(new Scope(curOrigin, new typeinfo(node.getName(), 0), ScopeType.CLASS));
+    enter(node.getClassScope(), node.getOrigin());
     // forward reference
     // funcinfo args.type saved
     for(var func : node.getMethods()) {
       func.accept(this);
       func.setName(node.getInfo().getName()+"_"+func.getName());
       curS.defineVariable(func.getName(), func.getInfo());
+      curOrigin.defineVariable(func.getName(), func.getInfo());
     }
     for(var vars : node.getFields()) {
       curS.defineVariable(vars.getName(), vars.getType().getInfo());
+      curOrigin.defineVariable(vars.getName(), vars.getType().getInfo());
     }
     exit();
+
     return node;
   }
 
@@ -113,6 +124,7 @@ public class SymbolCollector implements astVisitor<astNode> {
     if(!checkValidType(type))
       throw new error("Invalid Type");
     curS.defineVariable(node.getName(), type);
+    curOrigin.defineVariable(node.getName(), type);
     return node;
   }
   @Override

@@ -14,7 +14,7 @@ import juhuh.compiler.util.info.FuncInfo;
 @lombok.Setter
 public class astFuncDefNode extends astDefNode implements scopeStmt{
   private FuncInfo info;
-  private Scope funcScope;
+  private Scope funcScope, origin;
   private final vector<astVarDefNode> args;
   private final astBlockStmtNode block;
   public String getRet() {

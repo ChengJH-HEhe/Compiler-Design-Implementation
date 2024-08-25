@@ -36,18 +36,17 @@ public class SemanticChecker implements astVisitor<String> {
   public static FuncInfo toStringFunc = new FuncInfo("toString", stringType, intType);
   // string add
   public static FuncInfo stringAddFunc = new FuncInfo("_add", stringType, stringType, stringType);
-  public static FuncInfo strcmpFunc = new FuncInfo("_strcmp", intType, stringType, stringType);
+  public static FuncInfo strcmpFunc = new FuncInfo("_strcmp", intType, stringType, stringType); 
 
-
-  public FuncInfo[] builtinFuncs = { printFunc, printlnFunc, printIntFunc, printlnIntFunc, getStringFunc, getIntFunc,
+  public static FuncInfo[] builtinFuncs = { printFunc, printlnFunc, printIntFunc, printlnIntFunc, getStringFunc, getIntFunc,
       toStringFunc };
-  public FuncInfo arraySizeFunc = new FuncInfo("size", intType);
-  public FuncInfo stringLengthFunc = new FuncInfo("length", intType);
-  public FuncInfo stringSubstringFunc = new FuncInfo("substring", stringType, intType, intType);
-  public FuncInfo stringParseintFunc = new FuncInfo("parseInt", intType);
-  public FuncInfo stringOrdFunc = new FuncInfo("ord", intType, intType);
-  public vector<FuncInfo> builtinInfo = new vector<FuncInfo>(stringLengthFunc, stringSubstringFunc, stringParseintFunc, stringOrdFunc);
-  ClassInfo stringClass = new ClassInfo("string",
+  public static FuncInfo arraySizeFunc = new FuncInfo("size", intType);
+  public static FuncInfo stringLengthFunc = new FuncInfo("length", intType);
+  public static FuncInfo stringSubstringFunc = new FuncInfo("substring", stringType, intType, intType);
+  public static FuncInfo stringParseintFunc = new FuncInfo("parseInt", intType);
+  public static FuncInfo stringOrdFunc = new FuncInfo("ord", intType, intType);
+  public static vector<FuncInfo> builtinInfo = new vector<FuncInfo>(stringLengthFunc, stringSubstringFunc, stringParseintFunc, stringOrdFunc);
+  public static ClassInfo stringClass = new ClassInfo("string",
       builtinInfo);
 
   public SemanticChecker(globalScope gScope) {
@@ -55,6 +54,7 @@ public class SemanticChecker implements astVisitor<String> {
     for (var func : builtinFuncs) {
       gScope.defineVariable(func.getName(), func);
     }
+
     stringClass.func = builtinInfo;
     gScope.addType("string", stringClass);
   }

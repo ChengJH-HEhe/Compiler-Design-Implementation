@@ -7,6 +7,13 @@ import java.util.HashMap;
 
 public class globalScope extends Scope {
     private HashMap<String, Info> types = new HashMap<>();
+
+    // @Override public globalScope clone(Scope s) {
+    //     super.clone(null);
+    //     globalScope res = new globalScope(null, info);
+    //     res.types = new HashMap<>(types);
+    //     return res;
+    // }
     public globalScope(Scope parentScope, Info info) {
         super(parentScope, info, ScopeType.GLOBAL);
     }
