@@ -97,7 +97,7 @@ public class SymbolCollector implements astVisitor<astNode> {
     // funcinfo args.type saved
     for(var func : node.getMethods()) {
       func.accept(this);
-      func.setName(node.getInfo().getName()+"::"+func.getName());
+      func.setName(node.getInfo().getName()+"_"+func.getName());
       curS.defineVariable(func.getName(), func.getInfo());
     }
     for(var vars : node.getFields()) {

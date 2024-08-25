@@ -12,6 +12,7 @@ import juhuh.compiler.util.vector;
 public class ClassInfo extends Info {
   public HashMap<String, typeinfo> vars;
   public HashMap<String, Integer> varsId;
+  public vector<FuncInfo> func;
   public HashMap<String, FuncInfo> funcs;
   public ClassInfo(String name, vector<astVarDefNode> vars, vector<astFuncDefNode> funcs) {
     super(name);

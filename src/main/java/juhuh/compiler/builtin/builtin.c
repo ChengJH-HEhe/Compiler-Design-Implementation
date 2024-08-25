@@ -46,54 +46,30 @@ int string_length(char* str){
   return strlen(str);
 }
 
-char *str_substring(char *str, int left, int right){
+char *string_substring(char *str, int left, int right){
   char *sub = (char*)malloc(right - left + 2);
   memcpy(sub, str + left, right - left + 1);
   sub[right - left + 1] = '\0';
   return sub;
 }
 
-int str_parseInt(char *str){
+int string_parseInt(char *str){
   int i;
   sscanf(str, "%d", &i);
   return i;
 }
 
-int str_ord(char *str){
+int string_ord(char *str){
   return (int)str[0];
 }
 
-char* str_add(char *str1, char *str2){
+char* _add(char *str1, char *str2){
   char *str = (char*)malloc(strlen(str1) + strlen(str2) + 1);
   sprintf(str, "%s%s", str1, str2);
   return str;
 }
 
-int str_eq(char *str1, char *str2){
-  return strcmp(str1, str2) == 0;
-}
-
-int str_neq(char *str1, char *str2){
-  return strcmp(str1, str2) != 0;
-}
-
-int str_lt(char *str1, char *str2){
-  return strcmp(str1, str2) < 0;
-}
-
-int str_le(char *str1, char *str2){
-  return strcmp(str1, str2) <= 0;
-}
-
-int str_gt(char *str1, char *str2){
-  return strcmp(str1, str2) > 0;
-}
-
-int str_ge(char *str1, char *str2){
-  return strcmp(str1, str2) >= 0;
-}
-
-int arr_size(void* arr) {
+int _arr_size(void* arr) {
   return ((int*)arr)[-1];
 }
 

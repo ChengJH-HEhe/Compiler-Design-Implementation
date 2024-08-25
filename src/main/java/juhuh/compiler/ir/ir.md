@@ -54,10 +54,14 @@ break the whole task into several unique tasks
   - array  array[sub] array class member? 0 : 1
   - atom check (this.)? -> ptr 
  5) string 
+  const ptr
+  variable string.class : char* getelement 0, 0
  6) array
   - 一维？ int bool ptr
   - arr[-1] = size, size = 4*n
   
  7) toString 
  最终只需要汇集到root中 例如遇到classdef -> funcdef 需要加回 root->funcdef，不妨碍，可以先进classdef函数
+
+ 8.25 need to fix irSelect, cond : reg 2 times =
 
