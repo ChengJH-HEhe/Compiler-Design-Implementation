@@ -9,7 +9,8 @@ import juhuh.compiler.util.error.error;
 public class irIcmp extends irIns {
   String res, op, op1, op2, tp;
 
-  public String getop(String p) {
+  public static String getop(String p) {
+    String op;
     if (p.equals("Greater"))
       op = "sgt";
     else if (p.equals("GreaterEqual"))

@@ -27,27 +27,29 @@ public class SemanticChecker implements astVisitor<String> {
   static typeinfo thisType = new typeinfo("this", 0);
   public static typeinfo[] builtinTypes = { voidType, intType, boolType, nullType, thisType };
   // builtin funcs
-  FuncInfo printFunc = new FuncInfo("print", voidType, stringType);
-  FuncInfo printlnFunc = new FuncInfo("println", voidType, stringType);
-  FuncInfo printIntFunc = new FuncInfo("printInt", voidType, intType);
-  FuncInfo printlnIntFunc = new FuncInfo("printlnInt", voidType, intType);
-  FuncInfo getStringFunc = new FuncInfo("getString", stringType);
-  FuncInfo getIntFunc = new FuncInfo("getInt", intType);
-  FuncInfo toStringFunc = new FuncInfo("toString", stringType, intType);
-  FuncInfo[] builtinFuncs = { printFunc, printlnFunc, printIntFunc, printlnIntFunc, getStringFunc, getIntFunc,
+  public static FuncInfo printFunc = new FuncInfo("print", voidType, stringType);
+  public static FuncInfo printlnFunc = new FuncInfo("println", voidType, stringType);
+  public static FuncInfo printIntFunc = new FuncInfo("printInt", voidType, intType);
+  public static FuncInfo printlnIntFunc = new FuncInfo("printlnInt", voidType, intType);
+  public static FuncInfo getStringFunc = new FuncInfo("getString", stringType);
+  public static FuncInfo getIntFunc = new FuncInfo("getInt", intType);
+  public static FuncInfo toStringFunc = new FuncInfo("toString", stringType, intType);
+  // string add
+  public static FuncInfo stringAddFunc = new FuncInfo("_add", stringType, stringType, stringType);
+  public static FuncInfo strcmpFunc = new FuncInfo("_strcmp", intType, stringType, stringType);
+
+
+  public FuncInfo[] builtinFuncs = { printFunc, printlnFunc, printIntFunc, printlnIntFunc, getStringFunc, getIntFunc,
       toStringFunc };
-  FuncInfo arraySizeFunc = new FuncInfo("size", intType);
-  FuncInfo stringLengthFunc = new FuncInfo("length", intType);
-  FuncInfo stringSubstringFunc = new FuncInfo("substring", stringType, intType, intType);
-  FuncInfo stringParseintFunc = new FuncInfo("parseInt", intType);
-  FuncInfo stringOrdFunc = new FuncInfo("ord", intType, intType);
-  vector<FuncInfo> builtinInfo = new vector<FuncInfo>(stringLengthFunc, stringSubstringFunc, stringParseintFunc, stringOrdFunc);
+  public FuncInfo arraySizeFunc = new FuncInfo("size", intType);
+  public FuncInfo stringLengthFunc = new FuncInfo("length", intType);
+  public FuncInfo stringSubstringFunc = new FuncInfo("substring", stringType, intType, intType);
+  public FuncInfo stringParseintFunc = new FuncInfo("parseInt", intType);
+  public FuncInfo stringOrdFunc = new FuncInfo("ord", intType, intType);
+  public vector<FuncInfo> builtinInfo = new vector<FuncInfo>(stringLengthFunc, stringSubstringFunc, stringParseintFunc, stringOrdFunc);
   ClassInfo stringClass = new ClassInfo("string",
       builtinInfo);
-  // string add
-  FuncInfo stringAddFunc = new FuncInfo("_add", stringType, stringType, stringType);
-  
-  
+
   public SemanticChecker(globalScope gScope) {
     curS = this.gScope = gScope;
     for (var func : builtinFuncs) {

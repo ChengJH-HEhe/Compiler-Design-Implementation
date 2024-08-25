@@ -13,7 +13,7 @@ public class irRoot extends irNode {
   vector<irStructDef> structDef;
   vector<irGlobalDef> globalDef;
   vector<irFuncDecl> globalFDecl;
-  vector<irFuncDef> FDef, globalFuncDefs;
+  vector<irFuncDef> FDef;
   public void add(irGlobalDef def){
     globalDef.add(def);
   }
@@ -22,9 +22,6 @@ public class irRoot extends irNode {
   }
   public void add(irFuncDecl decl){
     globalFDecl.add(decl);
-  }
-  public void addGlobal(irFuncDef def){
-    globalFuncDefs.add(def);
   }
   public void add(irFuncDef def){
     FDef.add(def);
@@ -35,9 +32,6 @@ public class irRoot extends irNode {
       s += def.toString() + "\n";
     }
     for(var def : structDef){
-      s += def.toString() + "\n";
-    }
-    for(var def : globalFuncDefs){
       s += def.toString() + "\n";
     }
     for(var decl : globalFDecl){

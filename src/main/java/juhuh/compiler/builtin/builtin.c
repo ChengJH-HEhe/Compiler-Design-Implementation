@@ -12,6 +12,10 @@ void print(char* str){
   printf("%s", str);
 }
 
+int _strcmp(char* str1, char* str2){
+  return strcmp(str1, str2);
+}
+
 void println(char* str){
   printf("%s\n", str);
 }
