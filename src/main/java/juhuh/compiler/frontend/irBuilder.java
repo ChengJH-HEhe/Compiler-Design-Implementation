@@ -27,7 +27,7 @@ public class irBuilder implements astVisitor<irNode> {
   private irBlock curdef, curBlock;
   private irFuncDef curFunc;
   private String label;
-
+  private irRoot rt;
   // add label String
 
   private void enter(Scope scope, int depth, int selfN) {
@@ -76,6 +76,7 @@ public class irBuilder implements astVisitor<irNode> {
         .globalFDecl(new vector<irFuncDecl>())
         .FDef(new vector<irFuncDef>())
         .build();
+    this.rt = rt;
     irFuncDef globalInit = irFuncDef.builder()
         .fName("__init")
         .anonyNum(0)
@@ -784,13 +785,20 @@ public class irBuilder implements astVisitor<irNode> {
             .name(node.getValue())
             .build();
       else {
-        // TODO String Const
-
-        return null;
+        // StringConst global alloca; return ptr 
+        var resul = "@.str." + (irStrDef.strNum++);
+        var reg = register.builder()
+            .name(resul)
+            .ptr(resul)
+            .build(); 
+        rt.add(irStrDef.builder()
+            .res(resul)
+            .init(node.toString())
+            .build());
+        return reg;
       }
     }
-    // constant ? Lvalue = false
-
+    // constant : Lvalue = false
   }
 
   @Override

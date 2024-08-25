@@ -11,11 +11,11 @@ public class astAtomExprNode extends astExprNode {
     @Override
     public String toString() {
         // replace \n -> '\' + 'n'
-        return "\"" + Value.replace("\\", "\\\\")
+        return Value.replace("\\", "\\\\")
         .replace("\n", "\\n")
         .replace("\0", "")
         .replace("\t","\\t")
-        .replace("\"", "\\\"") + "\"";
+        .replace("\"", "\\\"");
     }
 
     @Override
