@@ -95,9 +95,9 @@ public class irBuilder implements astVisitor<irNode> {
     var stringInfo = ((ClassInfo) gScope.getTypeFromName("string")).func;
     // string this & declare
     rt.add(irStructDef.builder()
-    .name("%class.string")
-    .member(new vector<String>())
-    .build());
+        .name("%class.string")
+        .member(new vector<String>())
+        .build());
     for (var decl : stringInfo) {
       decl.setName("string_" + decl.getName());
       var func = irFuncDecl.builder()
@@ -105,7 +105,7 @@ public class irBuilder implements astVisitor<irNode> {
           .paratypelist(new vector<String>("ptr"))
           .paravaluelist(new vector<String>("%this"))
           .build();
-      for(var para : decl.getArgsType()) {
+      for (var para : decl.getArgsType()) {
         func.getParatypelist().add(tp(para));
         func.getParavaluelist().add(para.getName());
       }
@@ -127,9 +127,9 @@ public class irBuilder implements astVisitor<irNode> {
           rt.add(f);
         }
       } else if (def instanceof astVarDefNode) {
-        // global var 
+        // global var
         // String def
-        var Def = (astVarDefNode)def;
+        var Def = (astVarDefNode) def;
         curBlock = globalInit.getEntry();
         // TODO array
         irGlobalDef globalvar = null;
@@ -282,7 +282,7 @@ public class irBuilder implements astVisitor<irNode> {
     // curdef add alloca,
     // no this a.val
     String tmpname = curS.Varrename(node.getName());
-    
+
     // class
     if (!node.getType().getInfo().equals(SemanticChecker.intType)
         && !node.getType().getInfo().equals(SemanticChecker.boolType)) {
@@ -367,14 +367,14 @@ public class irBuilder implements astVisitor<irNode> {
     entity caller = null;
     if (node.getFunc() instanceof astMemberExprNode) {
       // add caller
-      caller = (entity) visit(((astMemberExprNode) node.getFunc()).getExpr());  
+      caller = (entity) visit(((astMemberExprNode) node.getFunc()).getExpr());
     } else {
       // class (this.func)
       var tmpS = curS;
-      while(tmpS.type != null && tmpS.type != Scope.ScopeType.CLASS) {
+      while (tmpS.type != null && tmpS.type != Scope.ScopeType.CLASS) {
         tmpS = tmpS.parentScope();
-      } 
-      if(tmpS != null && tmpS.containsVariable(((astAtomExprNode)node.getFunc()).getType().getName(), false) != null) 
+      }
+      if (tmpS != null && tmpS.containsVariable(((astAtomExprNode) node.getFunc()).getType().getName(), false) != null)
         caller = register.builder()
             .name("%this.copy")
             .ptr("%this.copy")
@@ -387,7 +387,7 @@ public class irBuilder implements astVisitor<irNode> {
     for (var arg : node.getArgs()) {
       entity res = (entity) visit(arg);
       callnode.getType().add(tp((typeinfo) arg.getType()));
-      if(callnode.getType().getlst().equals("ptr"))
+      if (callnode.getType().getlst().equals("ptr"))
         callnode.getVal().add(((register) res).getPtr());
       else
         callnode.getVal().add(res.toString());
@@ -573,11 +573,6 @@ public class irBuilder implements astVisitor<irNode> {
       String resul = curFunc.tmprename();
       // and 1 -> log.false
       entity res1 = (entity) visit(node.getLhs());
-      curBlock.add(irStore.builder()
-          .tp("i1")
-          .res(resul)
-          .ptr(((register) res1).getPtr())
-          .build());
       String[] label = { "log.false" + resul, "log.end" + resul };
       curBlock.add(irBranch.builder()
           .cond(((register) res1).getName())
@@ -591,11 +586,6 @@ public class irBuilder implements astVisitor<irNode> {
           .stmts(new vector<irStmt>())
           .build());
       entity res2 = (entity) visit(node.getRhs());
-      curBlock.add(irStore.builder()
-          .tp("i1")
-          .res(resul)
-          .ptr(((register) res2).getPtr())
-          .build());
       curBlock.add(irJump.builder()
           .dest(label[1])
           .build());
@@ -603,6 +593,24 @@ public class irBuilder implements astVisitor<irNode> {
           .label(label[1])
           .stmts(new vector<irStmt>())
           .build());
+      if(node.getOp().equals("LogicOr"))
+        curBlock.add(irSelect.builder()
+            .res(resul)
+            .cond(((register) res1).getName())
+            .tp1(tp((typeinfo) node.getLhs().getType()))
+            .val1(((register) res1).getName())
+            .tp2(tp((typeinfo) node.getRhs().getType()))
+            .val2(((register) res2).getName())
+            .build());
+      else 
+        curBlock.add(irSelect.builder()
+            .res(resul)
+            .cond(((register) res1).getName())
+            .tp1(tp((typeinfo) node.getRhs().getType()))
+            .val1(((register) res2).getName())
+            .tp2(tp((typeinfo) node.getLhs().getType()))
+            .val2(((register) res1).getName())
+            .build());
       return register.builder()
           .name(resul)
           .build();
@@ -645,10 +653,36 @@ public class irBuilder implements astVisitor<irNode> {
   @Override
   public irNode visit(astConditionalExprNode node) throws error {
     // select cmd rvalue
+    var curFa = curBlock;
+
     entity cond = (entity) visit(node.getCond());
     String resul = curFunc.tmprename();
-    register val1 = (register) visit(node.getLhs()),
-        val2 = (register) visit(node.getRhs());
+    
+    irBlock thenB = irBlock.builder()
+        .label("cond.true" + resul)
+        .stmts(new vector<irStmt>())
+        .terminalstmt(irJump.builder()
+            .dest("cond.end" + resul)
+            .build())
+        .build();
+    curBlock = thenB;
+    register val1 = (register) visit(node.getLhs());
+    // elseB
+    irBlock elseB = irBlock.builder()
+        .label("cond.false" + resul)
+        .stmts(new vector<irStmt>())
+        .terminalstmt(irJump.builder()
+            .dest("cond.end" + resul)
+            .build())
+        .build();
+    curBlock = elseB;
+    register val2 = (register) visit(node.getRhs());
+    // endB
+    irBlock endB = irBlock.builder()
+        .label("cond.end" + resul)
+        .stmts(new vector<irStmt>())
+        .build();
+    curBlock = endB;
     var sel = irSelect.builder()
         .res(resul)
         .cond("TBD")
@@ -659,6 +693,12 @@ public class irBuilder implements astVisitor<irNode> {
         .build();
     sel.setCond(cond.toString());
     curBlock.add(sel);
+
+    curBlock = curFa;
+    curBlock.add(thenB);
+    curBlock.add(elseB);
+    curBlock.add(endB);
+
     return register.builder()
         .name(resul)
         .build();
@@ -705,12 +745,13 @@ public class irBuilder implements astVisitor<irNode> {
           .name(curFunc.tmprename())
           .ptr(ptr)
           .build();
+      // member of class
       if (ptr.charAt(1) == '0' && ptr.length() > 2) {
         // this.i
         var gep = irGetElement.builder()
             .res(curFunc.tmprename())
             .tp(tp((typeinfo) node.getType()))
-            .ptrval("%this.copy") // TODO this -> this.addr -> this.copy
+            .ptrval("%this.copy") // this -> this.addr -> this.copy
             .tp1("i32").id1("0").tp2("i32")
             .id2(ptr.substring(2))
             .build();
@@ -725,11 +766,7 @@ public class irBuilder implements astVisitor<irNode> {
           .build());
       return reg;
     } else {
-      if (!node.getType().equals(SemanticChecker.stringType))
-        return constant.builder()
-            .name(node.getValue())
-            .build();
-      else if (node.getType().equals(SemanticChecker.thisType)) {
+      if (node.getType().equals(SemanticChecker.thisType)) {
         // this -> this.addr -> this.copy
         var reg = register.builder()
             .name(curFunc.tmprename())
@@ -741,7 +778,12 @@ public class irBuilder implements astVisitor<irNode> {
             .ptr("%this.copy")
             .build());
         return reg;
-      } else {
+      }
+      if (!node.getType().equals(SemanticChecker.stringType))
+        return constant.builder()
+            .name(node.getValue())
+            .build();
+      else {
         // TODO String Const
 
         return null;
