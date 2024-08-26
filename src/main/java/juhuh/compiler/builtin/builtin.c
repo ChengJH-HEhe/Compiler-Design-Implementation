@@ -77,6 +77,12 @@ int _arr_size(void* arr) {
   return ((int*)arr)[-1];
 }
 
+int* _arr_init(int size) {
+  int* arr = (int*)malloc(4 * (size + 1));
+  arr[0] = size;
+  return arr + 1;
+}
+
 void* _malloc(int size){
   return malloc(4 * size);
 }

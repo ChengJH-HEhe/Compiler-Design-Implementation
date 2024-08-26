@@ -12,6 +12,7 @@ import juhuh.compiler.util.vector;
 public class ClassInfo extends Info {
   public HashMap<String, typeinfo> vars;
   public HashMap<String, Integer> varsId;
+  private int size;
   public vector<FuncInfo> func;
   public HashMap<String, FuncInfo> funcs;
   public ClassInfo(String name, vector<astVarDefNode> vars, vector<astFuncDefNode> funcs) {
@@ -26,6 +27,7 @@ public class ClassInfo extends Info {
     for (var func : funcs) {
       this.funcs.put(func.getName(), (FuncInfo) func.getInfo());
     }
+    size = vars.size(); // TODO size*4
   }
   public ClassInfo(String name, vector<FuncInfo> funcs) {
     super(name);

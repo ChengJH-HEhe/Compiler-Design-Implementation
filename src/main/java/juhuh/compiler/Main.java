@@ -31,7 +31,7 @@ import juhuh.compiler.util.error.error;
 public class Main {
     public static void main(String[] args) throws Exception{
         var input = CharStreams.fromStream(System.in);
-        try {
+        // try {
             globalScope gScope = new globalScope(null,null),
             origin = new globalScope(null,null);
 
@@ -52,18 +52,19 @@ public class Main {
             new SemanticChecker(gScope).visit(ASTRoot);
             //System.err.println("Sema successfully");
             irBuilder IR = new irBuilder(origin);
-            irRoot rt = (irRoot) IR.visit(ASTRoot);
-            FileWriter writer = new FileWriter("src/main/java/juhuh/compiler/test/output.ll");
-            writer.write(rt.toString());
-            writer.close();
+            // irRoot rt = (irRoot) IR.visit(ASTRoot);
+            // FileWriter writer = new FileWriter("src/main/java/juhuh/compiler/test/output.ll");
+            // writer.write(rt.toString());
+            // writer.close();
             // AsmFn asmF = new AsmFn();
             // new InstSelector(asmF).visitFn(f);
             // new RegAlloc(asmF).work();
             // new AsmPrinter(asmF, System.out).print();
-        } catch (error er) {
-            System.out.println(er.toString());
-            System.exit(1);
-        }
-        System.exit(0);
+        // } 
+        // catch (error er) {
+        //     System.err.println(er.toString());
+        //     System.exit(1);
+        // }
+        // System.exit(0);
     }
 }

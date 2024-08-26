@@ -34,13 +34,15 @@ public class SemanticChecker implements astVisitor<String> {
   public static FuncInfo getStringFunc = new FuncInfo("getString", stringType);
   public static FuncInfo getIntFunc = new FuncInfo("getInt", intType);
   public static FuncInfo toStringFunc = new FuncInfo("toString", stringType, intType);
+  public static FuncInfo mallocFunc = new FuncInfo("_malloc", stringType, intType);
+  public static FuncInfo arrMallocFunc = new FuncInfo("_arr_malloc", stringType, intType);
   // string add
   public static FuncInfo stringAddFunc = new FuncInfo("_add", stringType, stringType, stringType);
   public static FuncInfo strcmpFunc = new FuncInfo("_strcmp", intType, stringType, stringType); 
 
   public static FuncInfo[] builtinFuncs = { printFunc, printlnFunc, printIntFunc, printlnIntFunc, getStringFunc, getIntFunc,
       toStringFunc };
-  public static FuncInfo arraySizeFunc = new FuncInfo("size", intType);
+  public static FuncInfo arraySizeFunc = new FuncInfo("_arr_size", intType, stringType);
   public static FuncInfo stringLengthFunc = new FuncInfo("length", intType);
   public static FuncInfo stringSubstringFunc = new FuncInfo("substring", stringType, intType, intType);
   public static FuncInfo stringParseintFunc = new FuncInfo("parseInt", intType);
@@ -263,7 +265,7 @@ public class SemanticChecker implements astVisitor<String> {
     // System.err.println("semChk ln225" + expr.toString() + expr.getDim());
     if (expr.getDim() > 0) {
       if (node.getMember().equals("size")) {
-        node.setType(new FuncInfo("size", new typeinfo("int", 0)));
+        node.setType(new FuncInfo("_arr_size", intType));
         node.setLValue(false);
         //// System.err.println("semChk ln230" + expr.getName() + "Size");
         //// System.err.println("ln157 exited");
