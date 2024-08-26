@@ -22,8 +22,10 @@ public class irFuncDef extends irDefNode{
   @Override
   public String toString(){
     String paralist = "";
+    if(this.paratypelist.size() > 0)
+      paralist = this.paratypelist.get(0) + " " + this.paravaluelist.get(0);
     for(int i = 0; i < this.paratypelist.size(); i++){
-      paralist += this.paratypelist.get(i) + " " + this.paravaluelist.get(i) + ", ";
+      paralist += ", " + this.paratypelist.get(i) + " " + this.paravaluelist.get(i) ;
     }
     String body = "";
     if(this.body != null)

@@ -15,12 +15,12 @@ public class irFor extends irBlock{
     if(cond != null){
       s += cond.toString();
     }
-    if(inc != null){
-      s += inc.toString();
-    } 
     if(body != null) {
       s += body.toString();
     }
+    if(inc != null){
+      s += inc.toString();
+    } 
     s += label + ":\n";
     return s;
   }

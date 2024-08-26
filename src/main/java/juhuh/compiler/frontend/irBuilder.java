@@ -195,6 +195,11 @@ public class irBuilder implements astVisitor<irNode> {
         .entry(irBlock.builder()
             .label("entry")
             .stmts(new vector<irStmt>())
+            .terminalstmt(irJump.builder().dest("return").build())
+            .build())
+        .ret(irBlock.builder()
+            .label("return")
+            .stmts(new vector<irStmt>())
             .terminalstmt(irRet.builder().tp("void").val("").build())
             .build())
         .build();
@@ -274,7 +279,7 @@ public class irBuilder implements astVisitor<irNode> {
     // get irFuncDef cond -> findfor with only depth as the effective info
     irFuncDef func = irFuncDef.builder()
         .anonyNum(0)
-        .fName("@" + node.getInfo().getName())
+        .fName(node.getInfo().getName())
         .retType(tp(node.getInfo().getRetType()))
         .paratypelist(new vector<String>())
         .paravaluelist(new vector<String>())
@@ -495,6 +500,7 @@ public class irBuilder implements astVisitor<irNode> {
       entity size = (entity) (lengths.get(tp.getDim() - id)).accept(this);
       // size | ptr | ptr ... (ptr * length + 1) binary + 1
       // <- ptr
+      
       register res = register.builder()
           .name(curFunc.tmprename())
           .build();
@@ -548,8 +554,6 @@ public class irBuilder implements astVisitor<irNode> {
           .build();
       curBlock = forBody;
       var resul = (entity) (newArray(tp, id - 1, lengths));
-      curBlock = curFa;
-
       var reg = register.builder()
           .name(curFunc.tmprename())
           .build();
@@ -580,6 +584,7 @@ public class irBuilder implements astVisitor<irNode> {
                   .dest("for.cond." + i)
                   .build())
           .build();
+      curBlock = curFa;
       curBlock.add(irFor.builder()
           .cond(forCond)
           .inc(forInc)
@@ -713,6 +718,7 @@ public class irBuilder implements astVisitor<irNode> {
         .name(curFunc.tmprename())
         .build();
     // arrayexpr getelement
+    
     var gep = irGetElement.builder()
         .res(resul)
         .tp(tp((typeinfo) node.getType()))
@@ -720,8 +726,8 @@ public class irBuilder implements astVisitor<irNode> {
         .build();
     // all need to add 0
     {
-      gep.setTp2("i32");
-      gep.setId2(sub.toString());
+      gep.setTp1("i32");
+      gep.setId1(sub.toString());
     }
     curBlock.add(irLoad.builder()
         .res(reg.getName())

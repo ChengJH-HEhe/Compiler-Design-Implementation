@@ -10,7 +10,7 @@ public class irGetElement extends irIns{
   String id1, id2;
   @Override
   public String toString(){
-    return res + "= getelementptr " + tp + ", ptr " + ptrval + ", " +
+    return res + " = getelementptr " + tp + ", ptr " + ptrval + ", " +
     (tp2 != null ? (tp1 + " " + id1 + " " + tp2 + " " + id2):(tp1 + " " + id1) );  
   }
   @Override
