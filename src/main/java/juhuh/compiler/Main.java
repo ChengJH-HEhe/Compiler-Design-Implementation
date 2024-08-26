@@ -52,10 +52,10 @@ public class Main {
             new SemanticChecker(gScope).visit(ASTRoot);
             //System.err.println("Sema successfully");
             irBuilder IR = new irBuilder(origin);
-            // irRoot rt = (irRoot) IR.visit(ASTRoot);
-            // FileWriter writer = new FileWriter("src/main/java/juhuh/compiler/test/output.ll");
-            // writer.write(rt.toString());
-            // writer.close();
+            irRoot rt = (irRoot) IR.visit(ASTRoot);
+            FileWriter writer = new FileWriter("src/main/java/juhuh/compiler/ir/output.ll");   
+            writer.write(rt.toString());
+            writer.close();
             // AsmFn asmF = new AsmFn();
             // new InstSelector(asmF).visitFn(f);
             // new RegAlloc(asmF).work();

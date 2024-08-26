@@ -531,7 +531,7 @@ public class astBuilder extends MxBaseVisitor<astNode> {
       if (newExpr != null)
         newExpr.setParent(newarray);
     if (ctx.arrayConst() != null) {
-      if(!inittrue) {
+      if(inittrue) {
         throw new error("Invalid Identifier");
       }
       newarray.setInit((astArrayConstExpr) visit(ctx.arrayConst()));

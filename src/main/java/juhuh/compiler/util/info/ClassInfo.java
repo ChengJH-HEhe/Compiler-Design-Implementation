@@ -18,6 +18,7 @@ public class ClassInfo extends Info {
   public ClassInfo(String name, vector<astVarDefNode> vars, vector<astFuncDefNode> funcs) {
     super(name);
     this.vars = new HashMap<String, typeinfo>();
+    this.varsId = new HashMap<String, Integer>();
     this.funcs = new HashMap<String, FuncInfo>();
     int num = 0;
     for (var v : vars) {

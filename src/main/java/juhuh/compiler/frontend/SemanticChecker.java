@@ -287,11 +287,12 @@ public class SemanticChecker implements astVisitor<String> {
         return node.toString();
       }
       // change method name
+      String newName = classinfo.getName() + "_" + node.getMember();
       var method = classinfo.getFuncs().get(node.getMember());
       if (method == null) {
         throw new error("Undefined Identifier");
       } else {
-        method.setName(classinfo.getName() + "." + method.getName());
+        method.setName(newName);
         node.setType(method);
         return node.toString();
       }
