@@ -10,7 +10,7 @@ public class irJump extends irIns{
   String dest;
   @Override
   public String toString(){
-    return "br label " + dest;
+    return "br label %" + dest;
   }
   @Override
   public<T> T accept(irVisitor<T> visitor) throws error{

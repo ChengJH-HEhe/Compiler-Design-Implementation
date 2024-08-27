@@ -11,7 +11,7 @@ public class astAtomExprNode extends astExprNode {
     @Override
     public String toString() {
         // replace \n -> '\' + 'n'
-        return Value.replace("\\", "\\\\")
+        return Value.substring(1, Value.length()-1).replace("\\", "\\\\")
         .replace("\n", "\\n")
         .replace("\0", "")
         .replace("\t","\\t")

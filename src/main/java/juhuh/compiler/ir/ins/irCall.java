@@ -16,10 +16,13 @@ public class irCall extends irIns{
   @Override
   public String toString(){
     String s = "";
-    if(type.size() > 0)
+    if(type.size() > 0) {
       s = type.get(0) + " " + val.get(0);
-    for(int i = 1; i < type.size(); i++){
-      s +=  ", " + type.get(i) + " " + val.get(i) ;
+      assert(type.size() == val.size());
+      for(int i = 1; i < type.size(); i++){
+        s +=  ", " + type.get(i) + " " ;
+        s += val.get(i) ;
+      }
     }
     if(res.equals(""))
       return "call void @" + func.getName() + "(" + s + ")";

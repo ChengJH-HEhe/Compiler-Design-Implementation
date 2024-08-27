@@ -56,6 +56,7 @@ public class Scope {
     }
     if (members.containsKey(name))
       return (type == ScopeType.GLOBAL?"@" :"%") + name + "." + depth + "." + selfN;
+    
     return parentScope.getValPtr(name);
   }
 

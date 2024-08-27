@@ -15,8 +15,11 @@ public class irFuncDecl extends irDefNode{
   @Override
   public String toString(){
     String paralist = "";
-    for(int i = 0; i < this.paratypelist.size(); i++){
-      paralist += this.paratypelist.get(i) + " " + this.paravaluelist.get(i) + ", ";
+    if(this.paratypelist.size() > 0) {
+      paralist = this.paratypelist.get(0) + " " + this.paravaluelist.get(0);
+      for(int i = 1; i < this.paratypelist.size(); i++){
+        paralist +=  ", " + this.paratypelist.get(i) + " " + this.paravaluelist.get(i);
+      }
     }
     return "declare " + irBuilder.tp(info.getRetType()) + " @" + info.getName() + "(" + paralist + ")";
   }

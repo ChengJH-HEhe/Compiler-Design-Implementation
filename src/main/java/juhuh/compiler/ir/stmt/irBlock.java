@@ -15,7 +15,8 @@ public class irBlock extends irStmt{
   Scope scope; // scope.parent == parent.scope -> hold back
   irIns terminalstmt;
   public void add(irStmt stmt) {
-    stmts.add(stmt);
+    if(terminalstmt == null)
+      stmts.add(stmt);
   }
   @Override
   public String toString(){

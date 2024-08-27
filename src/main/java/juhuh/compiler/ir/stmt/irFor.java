@@ -8,7 +8,7 @@ import juhuh.compiler.util.error.error;
 @lombok.Setter
 public class irFor extends irBlock{
   irBlock cond, inc, body;
-  String label;
+  irBlock end;
   @Override
   public String toString(){
     String s = "";
@@ -21,7 +21,7 @@ public class irFor extends irBlock{
     if(inc != null){
       s += inc.toString();
     } 
-    s += label + ":\n";
+    s += end.toString();
     return s;
   }
   @Override

@@ -10,7 +10,14 @@ public class irStructDef extends irDefNode{
   String name;
   vector<String> member;
   public String toString(){
-    return name + " = type { " + member.toString() + " }";
+    String member = "";
+    if(this.member.size() > 0) {
+      member = this.member.get(0);
+      for(int i = 1; i < this.member.size(); i++){
+        member += "," + this.member.get(i);
+      }
+    }
+    return name + " = type { " + member + " }";
   }
   public<T> T accept(irVisitor<T> visitor) throws error{
     return visitor.visit(this);

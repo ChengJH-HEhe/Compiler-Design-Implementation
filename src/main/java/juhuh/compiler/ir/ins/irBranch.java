@@ -9,7 +9,7 @@ public class irBranch extends irIns{
   public String cond, iftrue, iffalse;
   @Override 
   public String toString() {
-    return "br i1" + cond +", label %" + iftrue + ", label %" + iffalse;
+    return "br i1 " + cond +", label %" + iftrue + ", label %" + iffalse;
   }
   @Override
   public<T> T accept(irVisitor<T> visitor) throws error{

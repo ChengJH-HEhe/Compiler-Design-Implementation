@@ -94,7 +94,7 @@ public class SemanticChecker implements astVisitor<String> {
       def.accept(this);
     }
     exit();
-    return node.toString();
+    return null;
   }
 
   @Override
@@ -107,7 +107,7 @@ public class SemanticChecker implements astVisitor<String> {
       throw new error("Missing Return Statement");
     }
     exit();
-    return node.toString();
+    return null;
   }
 
   @Override
@@ -119,7 +119,7 @@ public class SemanticChecker implements astVisitor<String> {
       method.accept(this);
     }
     exit();
-    return node.toString();
+    return null;
   }
 
   @Override
@@ -150,7 +150,7 @@ public class SemanticChecker implements astVisitor<String> {
     }
     curS.defineVariable(node.getName(), node.getType().getInfo());
 
-    return node.toString();
+    return null;
   }
 
   @Override
@@ -178,7 +178,7 @@ public class SemanticChecker implements astVisitor<String> {
         throw new error("Type Mismatch");
       }
     }
-    return node.toString();
+    return null;
   }
 
   @Override
@@ -206,7 +206,7 @@ public class SemanticChecker implements astVisitor<String> {
     node.setType(func.getRetType());
     node.setLValue(false);
     // System.err.println("ln157 exited" + node.getFunc());
-    return node.toString();
+    return null;
   }
 
   @Override
@@ -223,7 +223,7 @@ public class SemanticChecker implements astVisitor<String> {
     }
     node.setType(new typeinfo(arrayInfo.getName(), ((typeinfo) arrayInfo).getDim() - 1));
     node.setLValue(true);
-    return node.toString();
+    return null;
   }
 
   @Override
@@ -250,7 +250,7 @@ public class SemanticChecker implements astVisitor<String> {
       }
       node.setType(new typeinfo(type.getName(), ((typeinfo) type).getDim() + 1, ((typeinfo) type).isDim_()));
     }
-    return node.toString();
+    return null;
   }
 
   @Override
@@ -269,7 +269,7 @@ public class SemanticChecker implements astVisitor<String> {
         node.setLValue(false);
         //// System.err.println("semChk ln230" + expr.getName() + "Size");
         //// System.err.println("ln157 exited");
-        return node.toString();
+        return null;
       } else {
         throw new error("Undefined Identifier");
       }
@@ -284,7 +284,7 @@ public class SemanticChecker implements astVisitor<String> {
         node.setType(member);
         // node.setMember(true);
         node.setLValue(true);
-        return node.toString();
+        return null;
       }
       // change method name
       String newName = classinfo.getName() + "_" + node.getMember();
@@ -294,7 +294,7 @@ public class SemanticChecker implements astVisitor<String> {
       } else {
         method.setName(newName);
         node.setType(method);
-        return node.toString();
+        return null;
       }
     }
   }
@@ -314,7 +314,7 @@ public class SemanticChecker implements astVisitor<String> {
       }
       node.setType(boolType);
       node.setLValue(false);
-      return node.toString();
+      return null;
     }
     if (!Type.equals(intType))
       throw new error("Type Mismatch");
@@ -327,7 +327,7 @@ public class SemanticChecker implements astVisitor<String> {
       node.setType(Type);
       node.setLValue(false);
     }
-    return node.toString();
+    return null;
   }
 
   @Override
@@ -347,7 +347,7 @@ public class SemanticChecker implements astVisitor<String> {
       throw new error("Type Mismatch");
     node.setType(Type);
     node.setLValue(true);
-    return node.toString();
+    return null;
   }
 
   @Override
@@ -365,7 +365,7 @@ public class SemanticChecker implements astVisitor<String> {
       if (node.getOp().equals("Equal") || node.getOp().equals("UnEqual")) {
         node.setType(boolType);
         node.setLValue(false);
-        return node.toString();
+        return null;
       } else {
         throw new error("Invalid Type");
       }
@@ -375,25 +375,25 @@ public class SemanticChecker implements astVisitor<String> {
           || node.getOp().equals("Div") || node.getOp().equals("Mod")) {
         node.setType(intType);
         node.setLValue(false);
-        return node.toString();
+        return null;
       } else if (node.getOp().equals("LeftShift") || node.getOp().equals("RightShift") ||
           node.getOp().equals("And") || node.getOp().equals("Or") || node.getOp().equals("Xor")) {
         node.setType(intType);
         node.setLValue(false);
-        return node.toString();
+        return null;
       } else if (node.getOp().equals("Greater") || node.getOp().equals("GreaterEqual") || node.getOp().equals("Less")
           || node.getOp().equals("LessEqual")) {
         node.setType(boolType);
         node.setLValue(false);
-        return node.toString();
+        return null;
       } else if (node.getOp().equals("Equal") || node.getOp().equals("UnEqual")) {
         node.setType(boolType);
         node.setLValue(false);
-        return node.toString();
+        return null;
       } else if (node.getOp().equals("LogicAnd") || node.getOp().equals("LogicOr")) {
         node.setType(boolType);
         node.setLValue(false);
-        return node.toString();
+        return null;
       } else {
         throw new error("Invalid Type");
       }
@@ -401,11 +401,11 @@ public class SemanticChecker implements astVisitor<String> {
       if (node.getOp().equals("LogicAnd") || node.getOp().equals("LogicOr")) {
         node.setType(boolType);
         node.setLValue(false);
-        return node.toString();
+        return null;
       } else if (node.getOp().equals("Equal") || node.getOp().equals("UnEqual")) {
         node.setType(boolType);
         node.setLValue(false);
-        return node.toString();
+        return null;
       } else {
         throw new error("Invalid Type");
       }
@@ -413,13 +413,13 @@ public class SemanticChecker implements astVisitor<String> {
       if (node.getOp().equals("Plus")) {
         node.setType(stringType);
         node.setLValue(false);
-        return node.toString();
+        return null;
       } else if (node.getOp().equals("Equal") || node.getOp().equals("UnEqual")
           || node.getOp().equals("Greater") || node.getOp().equals("GreaterEqual")
           || node.getOp().equals("Less") || node.getOp().equals("LessEqual")) {
         node.setType(boolType);
         node.setLValue(false);
-        return node.toString();
+        return null;
       } else {
         throw new error("Invalid Type");
       }
@@ -446,7 +446,7 @@ public class SemanticChecker implements astVisitor<String> {
       if (node.getLhs().getType().equals(node.getRhs().getType())) {
         node.setType(node.getLhs().getType());
         node.setLValue(false);
-        return node.toString();
+        return null;
       } else {
         throw new error("Type Mismatch");
       }
@@ -467,7 +467,7 @@ public class SemanticChecker implements astVisitor<String> {
       if (node.getLhs().getType().equals(node.getRhs().getType())) {
         node.setType(new typeinfo((typeinfo) node.getLhs().getType()));
         node.setLValue(true);
-        return node.toString();
+        return null;
       } else {
         throw new error("Type Mismatch");
       }
@@ -516,7 +516,7 @@ public class SemanticChecker implements astVisitor<String> {
     } else {
       node.setLValue(false);
     }
-    return node.toString();
+    return null;
   }
 
   @Override
@@ -527,7 +527,7 @@ public class SemanticChecker implements astVisitor<String> {
       stmt.accept(this);
     }
     exit();
-    return node.toString();
+    return null;
   }
 
   @Override
@@ -543,12 +543,12 @@ public class SemanticChecker implements astVisitor<String> {
     node.getThenStmt().accept(this);
     exit();
     if (node.getElseStmt() == null)
-      return node.toString();
+      return null;
     node.setElsescope(new Scope(curS, null, ScopeType.BLOCK));
     curS = node.getElsescope();
     node.getElseStmt().accept(this);
     exit();
-    return node.toString();
+    return null;
   }
 
   @Override
@@ -576,7 +576,7 @@ public class SemanticChecker implements astVisitor<String> {
       node.getStmt().accept(this);
     
     exit();
-    return node.toString();
+    return null;
   }
 
   @Override
@@ -596,7 +596,7 @@ public class SemanticChecker implements astVisitor<String> {
     else
       node.getStmt().accept(this);
     exit();
-    return node.toString();
+    return null;
   }
 
   @Override
@@ -604,7 +604,7 @@ public class SemanticChecker implements astVisitor<String> {
     if (!curS.findLOOP()) {
       throw new error("Invalid Control Flow");
     }
-    return node.toString();
+    return null;
   }
 
   @Override
@@ -612,7 +612,7 @@ public class SemanticChecker implements astVisitor<String> {
     if (!curS.findLOOP()) {
       throw new error("Invalid Control Flow");
     }
-    return node.toString();
+    return null;
   }
 
   @Override
@@ -634,7 +634,7 @@ public class SemanticChecker implements astVisitor<String> {
     }
 
     curS.setExit();
-    return node.toString();
+    return null;
   }
 
   @Override
@@ -645,17 +645,17 @@ public class SemanticChecker implements astVisitor<String> {
   @Override
   public String visit(astVarDefStmtNode node) throws error {
     if (node.getArray() == null)
-      return node.toString();
+      return null;
     for (var def : node.getArray()) {
       //// System.err.println(def instanceof astVarDefNode);
       ((astVarDefNode) def).accept(this);
     }
-    return node.toString();
+    return null;
   }
 
   @Override
   public String visit(astEmptyStmtNode node) throws error {
-    return node.toString();
+    return null;
   }
 
   @Override
@@ -666,7 +666,7 @@ public class SemanticChecker implements astVisitor<String> {
       stmt.accept(this);
     }
     exit();
-    return node.toString();
+    return null;
   }
 
   @Override
@@ -682,6 +682,6 @@ public class SemanticChecker implements astVisitor<String> {
     }
     node.setType(stringType);
     node.setLValue(false);
-    return node.toString();
+    return null;
   }
 }

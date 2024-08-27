@@ -13,7 +13,7 @@ public class irStrDef extends irGlobalDef{
   public static int strNum = 0;
   @Override
   public String toString(){
-    return res + " = private unnamed_addr constant [" + init.length() + " x i8] c\"" + init + "\\00\"";
+    return res + " = private unnamed_addr constant [" + (init.length()+1) + " x i8] c\"" + init + "\\00\"";
   }
   @Override
   public<T> T accept(irVisitor<T> visitor) throws error{

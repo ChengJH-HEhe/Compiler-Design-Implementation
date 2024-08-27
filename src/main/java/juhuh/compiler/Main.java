@@ -25,7 +25,6 @@ import juhuh.compiler.ir.irRoot;
 import juhuh.compiler.parser.*;
 
 import juhuh.compiler.util.*;
-import juhuh.compiler.util.error.error;
 
 
 public class Main {
@@ -53,9 +52,14 @@ public class Main {
             //System.err.println("Sema successfully");
             irBuilder IR = new irBuilder(origin);
             irRoot rt = (irRoot) IR.visit(ASTRoot);
-            FileWriter writer = new FileWriter("src/main/java/juhuh/compiler/ir/output.ll");   
-            writer.write(rt.toString());
-            writer.close();
+            int op = 1;
+            if(op == 1) {
+                System.out.println(rt.toString());
+            } else {
+                FileWriter writer = new FileWriter("src/main/java/juhuh/compiler/ir/output.ll");   
+                writer.write(rt.toString());
+                writer.close();
+            }
             // AsmFn asmF = new AsmFn();
             // new InstSelector(asmF).visitFn(f);
             // new RegAlloc(asmF).work();

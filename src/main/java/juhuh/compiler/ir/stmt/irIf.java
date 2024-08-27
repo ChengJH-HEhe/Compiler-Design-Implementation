@@ -8,11 +8,10 @@ import juhuh.compiler.util.error.error;
 @lombok.Setter
 public class irIf extends irBlock{
 
-  irBlock tbran, fbran;
-  String label;   
+  irBlock tbran, fbran, end;   
   @Override
   public String toString(){
-    String s = tbran.toString() + "\n" + fbran.toString() + "\n" + label + ":\n";
+    String s = tbran.toString() + "\n" + fbran.toString() + "\n" + end.toString() + ":\n";
     return s;
   }
   @Override
