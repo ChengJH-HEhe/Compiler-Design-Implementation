@@ -30,7 +30,7 @@ public class irIcmp extends irIns {
 
   @Override
   public String toString() {
-    return res + " = icmp " + op + " " + tp + " " + op1 + " " + op2;
+    return res + " = icmp " + op + " " + tp + " " + op1 + ", " + op2;
   }
 
   @Override

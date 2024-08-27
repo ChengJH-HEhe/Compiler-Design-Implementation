@@ -14,9 +14,15 @@ public class irBlock extends irStmt{
   String label; // label & terminalstmt must add;
   Scope scope; // scope.parent == parent.scope -> hold back
   irIns terminalstmt;
+  Boolean actual_t;
   public void add(irStmt stmt) {
-    if(terminalstmt == null)
+    if(terminalstmt == null || (actual_t != null && actual_t == true))
       stmts.add(stmt);
+  }
+  public void setTerminal(irIns stmt) {
+    if(terminalstmt == null || (actual_t == null || actual_t == false))
+      terminalstmt = stmt;
+      actual_t = true;
   }
   @Override
   public String toString(){

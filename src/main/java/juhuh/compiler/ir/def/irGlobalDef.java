@@ -8,7 +8,7 @@ import juhuh.compiler.util.error.error;
 public class irGlobalDef extends irDefNode{
   String name, type, init;
   public String toString(){
-    return name + " = global " + type + " " + init;
+    return "@" + name + " = global " + type + " " + init;
   }
   public<T> T accept(irVisitor<T> visitor) throws error{
     return visitor.visit(this);

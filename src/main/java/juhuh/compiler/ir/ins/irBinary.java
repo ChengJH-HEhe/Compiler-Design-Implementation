@@ -34,7 +34,7 @@ public class irBinary extends irIns{
   }
   @Override
   public String toString(){
-    return res + " = " + op + " " + tp + " " + op1 + " " + op2;  
+    return res + " = " + op + " " + tp + " " + op1 + ", " + op2;  
   }
   @Override
   public<T> T accept(irVisitor<T> visitor) throws error{
