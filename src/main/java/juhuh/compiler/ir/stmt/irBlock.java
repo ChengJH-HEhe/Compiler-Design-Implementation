@@ -16,7 +16,7 @@ public class irBlock extends irStmt{
   irIns terminalstmt;
   Boolean actual_t;
   public void add(irStmt stmt) {
-    if(terminalstmt == null || (actual_t != null && actual_t == true))
+    if(terminalstmt == null || (actual_t == null || actual_t == false))
       stmts.add(stmt);
   }
   public void setTerminal(irIns stmt) {

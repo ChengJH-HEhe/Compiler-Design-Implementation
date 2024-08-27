@@ -306,8 +306,8 @@ public class astBuilder extends MxBaseVisitor<astNode> {
     } else if (ctx.arrayConst() != null){
       return (astArrayConstExpr)visit(ctx.arrayConst());
     } else {
-      assert(false);
-      return null;
+      throw new error("Invalid Identifier");
+      // return null;
     }
   }
 

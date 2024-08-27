@@ -29,7 +29,7 @@ public class irBinary extends irIns{
       op = "xor";
     else if (p.equals("Or"))
       op = "or";
-    else assert(false);
+    else throw new UnsupportedOperationException("getOp");
     return op;
   }
   @Override

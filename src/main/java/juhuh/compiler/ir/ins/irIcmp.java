@@ -10,7 +10,7 @@ public class irIcmp extends irIns {
   String res, op, op1, op2, tp;
 
   public static String getop(String p) {
-    String op;
+    String op= null;
     if (p.equals("Greater"))
       op = "sgt";
     else if (p.equals("GreaterEqual"))
@@ -24,7 +24,7 @@ public class irIcmp extends irIns {
     else if (p.equals("UnEqual"))
       op = "ne";
     else
-      return null;
+      op = null;
     return op;
   }
 
