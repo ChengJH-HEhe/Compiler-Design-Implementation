@@ -4,6 +4,8 @@ import java.util.HashMap;
 
 import juhuh.compiler.ast.node.def.astFuncDefNode;
 import juhuh.compiler.ast.node.def.astVarDefNode;
+import juhuh.compiler.ast.node.stmt.astConstrNode;
+import juhuh.compiler.frontend.SemanticChecker;
 import juhuh.compiler.util.vector;
 
 @lombok.experimental.SuperBuilder
@@ -15,7 +17,7 @@ public class ClassInfo extends Info {
   private int size;
   public vector<FuncInfo> func;
   public HashMap<String, FuncInfo> funcs;
-  public ClassInfo(String name, vector<astVarDefNode> vars, vector<astFuncDefNode> funcs) {
+  public ClassInfo(String name, vector<astVarDefNode> vars, vector<astFuncDefNode> funcs, astConstrNode cstr) {
     super(name);
     this.vars = new HashMap<String, typeinfo>();
     this.varsId = new HashMap<String, Integer>();
@@ -27,6 +29,10 @@ public class ClassInfo extends Info {
     }
     for (var func : funcs) {
       this.funcs.put(func.getName(), (FuncInfo) func.getInfo());
+    }
+    // construct for origin
+    if(cstr != null) {
+      this.funcs.put(name, new FuncInfo(name + "." + name, SemanticChecker.voidType));
     }
     size = vars.size(); // TODO size*4
   }

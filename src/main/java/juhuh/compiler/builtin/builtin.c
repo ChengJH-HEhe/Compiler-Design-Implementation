@@ -51,9 +51,10 @@ int string_length(char* str){
 }
 
 char *string_substring(char *str, int left, int right){
-  char *sub = (char*)malloc(right - left + 2);
-  memcpy(sub, str + left, right - left + 1);
-  sub[right - left + 1] = '\0';
+  int cd = right - left;
+  char *sub = (char*)malloc(cd + 1);
+  memcpy(sub, str + left, cd);
+  sub[cd] = '\0';
   return sub;
 }
 

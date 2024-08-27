@@ -20,6 +20,9 @@ public class SymbolCollector implements astVisitor<astNode> {
     curS = scope;
     curOrigin = copy;
   }
+  public globalScope getCopy() {
+    return (globalScope)curOrigin;
+  }
   public void exit() {
     curS = curS.parentScope();
     curOrigin = curOrigin.parentScope();
@@ -36,6 +39,7 @@ public class SymbolCollector implements astVisitor<astNode> {
     curOrigin = copy;
     for(var tp : SemanticChecker.builtinTypes) {
       gScope.addType(tp.getName(), tp);
+      ((globalScope)curOrigin).addType(tp.getName(), tp);
       // output the tp.getName
     }
     // curOrigin = gScope.clone(null);
@@ -52,6 +56,9 @@ public class SymbolCollector implements astVisitor<astNode> {
         for(var def : node.getDefs()) {
             if(def instanceof astClassDefNode) {
               gScope.addType(def.getName(), 
+              (ClassInfo)(((astClassDefNode)def).getInfo()));
+
+              ((globalScope)curOrigin).addType(def.getName(), 
               (ClassInfo)(((astClassDefNode)def).getInfo()));
             } else if(def instanceof astFuncDefNode) {
               var info = ((astFuncDefNode)def).getInfo();
@@ -106,7 +113,7 @@ public class SymbolCollector implements astVisitor<astNode> {
     for(var func : node.getMethods()) {
       func.accept(this);
       curS.defineVariable(func.getName(), func.getInfo());
-      curOrigin.defineVariable(func.getName(), func.getInfo());
+      curOrigin.defineVariable(node.getName() + "." + func.getName(), func.getInfo());
     }
     for(var vars : node.getFields()) {
       curS.defineVariable(vars.getName(), vars.getType().getInfo());

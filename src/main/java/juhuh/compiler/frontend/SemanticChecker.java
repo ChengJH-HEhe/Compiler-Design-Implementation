@@ -19,13 +19,14 @@ public class SemanticChecker implements astVisitor<String> {
   private Scope curS;
   private globalScope gScope;
   // builtin types
-  static typeinfo voidType = new typeinfo("void", 0);
+  public static typeinfo voidType = new typeinfo("void", 0);
   static typeinfo intType = new typeinfo("int", 0);
   static typeinfo boolType = new typeinfo("bool", 0);
   static typeinfo stringType = new typeinfo("string", 0);
   static typeinfo nullType = new typeinfo("null", 1, true);
   static typeinfo thisType = new typeinfo("this", 0);
-  public static typeinfo[] builtinTypes = { voidType, intType, boolType, nullType, thisType };
+  static typeinfo ptrType = new typeinfo("ptr", 0, true);
+  public static typeinfo[] builtinTypes = { voidType, intType, boolType, nullType, thisType, ptrType };
   // builtin funcs
   public static FuncInfo printFunc = new FuncInfo("print", voidType, stringType);
   public static FuncInfo printlnFunc = new FuncInfo("println", voidType, stringType);
@@ -34,14 +35,15 @@ public class SemanticChecker implements astVisitor<String> {
   public static FuncInfo getStringFunc = new FuncInfo("getString", stringType);
   public static FuncInfo getIntFunc = new FuncInfo("getInt", intType);
   public static FuncInfo toStringFunc = new FuncInfo("toString", stringType, intType);
-  public static FuncInfo mallocFunc = new FuncInfo("_malloc", stringType, intType);
-  public static FuncInfo arrMallocFunc = new FuncInfo("_arr_malloc", stringType, intType);
+  
+  public static FuncInfo mallocFunc = new FuncInfo("_malloc", ptrType, intType);
+  public static FuncInfo arrMallocFunc = new FuncInfo("_arr_init", ptrType, intType);
   // string add
   public static FuncInfo stringAddFunc = new FuncInfo("_add", stringType, stringType, stringType);
   public static FuncInfo strcmpFunc = new FuncInfo("_strcmp_", intType, stringType, stringType); 
 
   public static FuncInfo[] builtinFuncs = { printFunc, printlnFunc, printIntFunc, printlnIntFunc, getStringFunc, getIntFunc,
-      toStringFunc };
+      toStringFunc,mallocFunc,arrMallocFunc,stringAddFunc, strcmpFunc};
   public static FuncInfo arraySizeFunc = new FuncInfo("_arr_size", intType, stringType);
   public static FuncInfo stringLengthFunc = new FuncInfo("length", intType);
   public static FuncInfo stringSubstringFunc = new FuncInfo("substring", stringType, intType, intType);
@@ -293,7 +295,7 @@ public class SemanticChecker implements astVisitor<String> {
         throw new error("Undefined Identifier");
       } else {
         method.setName(newName);
-        node.setType(method);
+        node.setType(method); // but name is changing class_name old / TODO memberexpr has redeclared
         return null;
       }
     }

@@ -1,6 +1,9 @@
 package juhuh.compiler.ir.def;
 
 import juhuh.compiler.frontend.irVisitor;
+import juhuh.compiler.ir.ins.irIns;
+import juhuh.compiler.ir.ins.irJump;
+import juhuh.compiler.ir.ins.irStore;
 import juhuh.compiler.ir.stmt.irBlock;
 import juhuh.compiler.util.vector;
 import juhuh.compiler.util.error.error;
@@ -13,6 +16,7 @@ public class irFuncDef extends irDefNode {
   int anonyNum;
   vector<String> paratypelist, paravaluelist;
   irBlock entry, ret;
+  public irBlock curBlock;
   vector<irBlock> body;
 
   public String tmprename() {
@@ -23,16 +27,18 @@ public class irFuncDef extends irDefNode {
     body.add(b);
   }
 
-  // public void checkRet(irIns terminalstmt) {
-
-  // if (entry.getTerminalstmt() == null)
-  // entry.setTerminalstmt(terminalstmt);
-  // else if (body.getlst().getTerminalstmt() == null) {
-  // body.getlst().setTerminalstmt(terminalstmt);
-  // } else {
-  // throw new error("irFuncDef: checkRet: multiple return statement");
-  // }
-  // }
+  public void checkRet(irIns terminalstmt) {
+    
+    if(terminalstmt instanceof irStore) {
+      curBlock.add(terminalstmt);
+      curBlock.setTerminalstmt(irJump.builder()
+      .dest("return")
+      .build());
+    } else {
+      curBlock.setTerminalstmt(terminalstmt);
+    }
+    // 
+  }
 
   @Override
   public String toString() {
@@ -47,15 +53,10 @@ public class irFuncDef extends irDefNode {
       }
     }
     String body = "";
-    if (this.body != null) {
-      boolean first = true;
+    if (this.body != null) 
       for (var b : this.body) {
-        if(fName == "main" && first)
-          first = false;
-        else
           body += b.toString() + "\n";
       }
-    }
     return "define " + retType + " @" + fName + "(" + paralist + ") {\n" +
         entry.toString() + "\n" + body + "\n" + ret.toString() + "\n}\n";
   }

@@ -33,7 +33,7 @@ public class Main {
         // try {
             globalScope gScope = new globalScope(null,null),
             origin = new globalScope(null,null);
-
+            
             MxLexer lexer = new MxLexer(input);
             lexer.removeErrorListeners();
             lexer.addErrorListener(new MxErrorListener());
@@ -46,7 +46,8 @@ public class Main {
 
             var ASTRoot = (astRoot)astBuilder.visit(parseTreeRoot);
             //System.err.println("AST built successfully");
-            new SymbolCollector(gScope, origin).visit(ASTRoot);
+            var symbol = new SymbolCollector(gScope, origin);
+            symbol.visit(ASTRoot);
             //System.err.println("Symbol collected successfully");
             new SemanticChecker(gScope).visit(ASTRoot);
             //System.err.println("Sema successfully");
@@ -54,7 +55,8 @@ public class Main {
             irRoot rt = (irRoot) IR.visit(ASTRoot);
             {
                 System.out.println(rt.toString());
-            }  {
+            }  
+            {
                 FileWriter writer = new FileWriter("src/main/java/juhuh/compiler/ir/output.ll");   
                 writer.write(rt.toString());
                 writer.close();

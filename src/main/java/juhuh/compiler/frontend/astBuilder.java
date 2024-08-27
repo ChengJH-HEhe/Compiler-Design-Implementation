@@ -63,7 +63,7 @@ public class astBuilder extends MxBaseVisitor<astNode> {
         .constructor(constructor)
         .methods(methods)
         .fields(fields)
-        .info(new ClassInfo(name, fields, methods))
+        .info(new ClassInfo(name, fields, methods, constructor))
         .build();
     if (constructor != null)
       constructor.setParent(ClassDef);

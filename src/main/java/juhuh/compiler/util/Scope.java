@@ -48,7 +48,12 @@ public class Scope {
   }
   public String getValPtr(String name) {
     if (type == ScopeType.CLASS) {
-      var id = ((ClassInfo) info).getVarsId().get(name);
+      var tmp = this;
+      while(tmp.parentScope() != null)
+        tmp = tmp.parentScope();
+      
+      var id = ((ClassInfo)((globalScope)tmp).getSafeTypeFromName(this.info.getName()))
+        .getVarsId().get(name);
       if(id != null) {
         // nothing previous
         return "%0" + id;

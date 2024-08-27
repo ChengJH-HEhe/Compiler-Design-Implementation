@@ -31,6 +31,7 @@ public class irBlock extends irStmt{
     if(label != null){
       s.append(label + ":\n");
     }
+    if(stmts != null)
     for(var stmt : stmts){
       if(stmt instanceof irBlock)
         s.append(stmt.toString() + "\n");
