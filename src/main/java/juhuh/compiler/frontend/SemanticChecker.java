@@ -38,7 +38,7 @@ public class SemanticChecker implements astVisitor<String> {
   public static FuncInfo arrMallocFunc = new FuncInfo("_arr_malloc", stringType, intType);
   // string add
   public static FuncInfo stringAddFunc = new FuncInfo("_add", stringType, stringType, stringType);
-  public static FuncInfo strcmpFunc = new FuncInfo("_strcmp", intType, stringType, stringType); 
+  public static FuncInfo strcmpFunc = new FuncInfo("_strcmp_", intType, stringType, stringType); 
 
   public static FuncInfo[] builtinFuncs = { printFunc, printlnFunc, printIntFunc, printlnIntFunc, getStringFunc, getIntFunc,
       toStringFunc };
@@ -287,7 +287,7 @@ public class SemanticChecker implements astVisitor<String> {
         return null;
       }
       // change method name
-      String newName = classinfo.getName() + "_" + node.getMember();
+      String newName = classinfo.getName() + "." + node.getMember();
       var method = classinfo.getFuncs().get(node.getMember());
       if (method == null) {
         throw new error("Undefined Identifier");

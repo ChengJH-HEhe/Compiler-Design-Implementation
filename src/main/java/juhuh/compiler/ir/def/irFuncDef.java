@@ -24,32 +24,38 @@ public class irFuncDef extends irDefNode {
   }
 
   // public void checkRet(irIns terminalstmt) {
-    
-  //   if (entry.getTerminalstmt() == null)
-  //     entry.setTerminalstmt(terminalstmt);
-  //   else if (body.getlst().getTerminalstmt() == null) {
-  //     body.getlst().setTerminalstmt(terminalstmt);
-  //   } else {
-  //     throw new error("irFuncDef: checkRet: multiple return statement");
-  //   }
+
+  // if (entry.getTerminalstmt() == null)
+  // entry.setTerminalstmt(terminalstmt);
+  // else if (body.getlst().getTerminalstmt() == null) {
+  // body.getlst().setTerminalstmt(terminalstmt);
+  // } else {
+  // throw new error("irFuncDef: checkRet: multiple return statement");
+  // }
   // }
 
   @Override
   public String toString() {
     // checkRet(irJump.builder()
-    //     .dest("return")
-    //     .build());
+    // .dest("return")
+    // .build());
     String paralist = "";
-    if (this.paratypelist.size() > 0)
+    if (this.paratypelist.size() > 0) {
       paralist = this.paratypelist.get(0) + " " + this.paravaluelist.get(0);
-    for (int i = 0; i < this.paratypelist.size(); i++) {
-      paralist += ", " + this.paratypelist.get(i) + " " + this.paravaluelist.get(i);
+      for (int i = 1; i < this.paratypelist.size(); i++) {
+        paralist += ", " + this.paratypelist.get(i) + " " + this.paravaluelist.get(i);
+      }
     }
     String body = "";
-    if (this.body != null)
+    if (this.body != null) {
+      boolean first = true;
       for (var b : this.body) {
-        body += b.toString() + "\n";
+        if(fName == "main" && first)
+          first = false;
+        else
+          body += b.toString() + "\n";
       }
+    }
     return "define " + retType + " @" + fName + "(" + paralist + ") {\n" +
         entry.toString() + "\n" + body + "\n" + ret.toString() + "\n}\n";
   }

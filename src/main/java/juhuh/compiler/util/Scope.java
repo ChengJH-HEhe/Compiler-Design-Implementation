@@ -11,7 +11,7 @@ import java.util.HashMap;
 
 public class Scope {
   public Info info;
-
+  public int count;
   public enum ScopeType {
     LOOP, BLOCK, FUNC, CLASS, GLOBAL;
   }

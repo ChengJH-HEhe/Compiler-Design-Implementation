@@ -52,10 +52,9 @@ public class Main {
             //System.err.println("Sema successfully");
             irBuilder IR = new irBuilder(origin);
             irRoot rt = (irRoot) IR.visit(ASTRoot);
-            int op = 1;
-            if(op == 1) {
+            {
                 System.out.println(rt.toString());
-            } else {
+            }  {
                 FileWriter writer = new FileWriter("src/main/java/juhuh/compiler/ir/output.ll");   
                 writer.write(rt.toString());
                 writer.close();
