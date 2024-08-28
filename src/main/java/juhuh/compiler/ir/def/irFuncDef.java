@@ -30,14 +30,18 @@ public class irFuncDef extends irDefNode {
 
   public void checkRet(irIns terminalstmt) {
     // irStore?
-    if(terminalstmt instanceof irStore) {
-      curBlock.add(terminalstmt);
-      curBlock.setTerminal(irJump.builder()
-      .dest("return")
-      .build());
-    } else {
-      curBlock.setTerminalstmt(terminalstmt);
-    }
+    if(curBlock.getTerminalstmt() == null) 
+      if(terminalstmt instanceof irStore) {
+        
+        {
+          curBlock.add(terminalstmt);
+          curBlock.setEndTerm(irJump.builder()
+          .dest("return")
+          .build());
+        }
+      } else {
+        curBlock.setEndTerm(terminalstmt);
+      }
     // 
   }
 

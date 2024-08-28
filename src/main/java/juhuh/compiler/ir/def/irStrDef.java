@@ -17,11 +17,11 @@ public class irStrDef extends irGlobalDef{
     boolean match = false;
     for(int i = 0; i < init.length(); ++i) {
       if(init.getBytes()[i] == '\\'){
-        if(!match) {
-          match = true;
-        } else {
+        if(match) {
           match = false;
           ++size;
+        } else {
+          match = true;
         }
       } else {
         ++size;
@@ -29,7 +29,7 @@ public class irStrDef extends irGlobalDef{
     }
     
     return res + " = private unnamed_addr constant [" + (size) + " x i8] c\""
-     + init.replace("\\\n", "\\0A").replace("\\\"", "\\22").replace("\t","\\t") + "\\00\"";
+     + init.replace("\\\"", "\\22").replace("\t","\\t").replace("\\n", "\\0A") + "\\00\"";
   }
   @Override
   public<T> T accept(irVisitor<T> visitor) throws error{

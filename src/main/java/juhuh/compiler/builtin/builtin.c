@@ -64,8 +64,8 @@ int string_parseInt(char *str){
   return i;
 }
 
-int string_ord(char *str){
-  return (int)str[0];
+int string_ord(char *str, int id){
+  return (int)(str[id]);
 }
 
 char* _add(char *str1, char *str2){

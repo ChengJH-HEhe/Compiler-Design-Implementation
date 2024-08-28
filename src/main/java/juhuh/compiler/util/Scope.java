@@ -12,6 +12,7 @@ import java.util.HashMap;
 public class Scope {
   public Info info;
   public int count;
+  public boolean flowTag;
   public enum ScopeType {
     LOOP, BLOCK, FUNC, CLASS, GLOBAL;
   }
@@ -27,16 +28,6 @@ public class Scope {
   public int regnum = 0, depth = 0, sonN = 0, selfN = 0;
 
   
-  // public Scope clone(Scope parentScope){
-  //   Scope res = new Scope(parentScope, info, type);
-  //   res.members = new HashMap<>(members);
-  //   res.entities = new HashMap<>(entities);
-  //   res.regnum = regnum;
-  //   res.depth = depth;
-  //   res.sonN = sonN;
-  //   res.selfN = selfN;
-  //   return res;
-  // }
   public String getflow(String type) {
     if (this.type == ScopeType.LOOP) {
       if (type.equals("br"))
@@ -88,7 +79,13 @@ public class Scope {
       return null;
     return parentScope.findFunc();
   }
-
+  public boolean findTAG() { //TODO FINDTAG
+    if(flowTag)
+      return true;
+    if (parentScope == null)
+      return false;
+    return parentScope.findTAG();
+  }
   public void setExit() {
     if (type == ScopeType.FUNC) {
       isexited = true;

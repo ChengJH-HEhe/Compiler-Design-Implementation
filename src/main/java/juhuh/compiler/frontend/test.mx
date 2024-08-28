@@ -1,0 +1,13 @@
+for
+   a == b 
+   irbranch -> irbranch
+    force break; 
+   
+   ? c : d
+   end -> for.end
+   ;
+
+
+init -> for cond;*..; {body;*;, inc, } end.? -> others      
+
+for cond -> 

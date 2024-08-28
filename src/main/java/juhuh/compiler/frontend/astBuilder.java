@@ -467,7 +467,7 @@ public class astBuilder extends MxBaseVisitor<astNode> {
     var fstr = ctx.formatStr();
     if(fstr.FstringConst() != null) {
       vecStr.add(astAtomExprNode.builder().
-      Value(fstr.FstringConst().getText().substring(2, fstr.FstringConst().getText().length()-1)).build().toString());
+      Value(fstr.FstringConst().getText().substring(1, fstr.FstringConst().getText().length()-1)).build().toString());
       return astFStrExpr.builder()
           .vecStr(vecStr)
           .vecExpr(vecExpr)

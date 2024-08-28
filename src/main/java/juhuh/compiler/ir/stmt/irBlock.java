@@ -15,12 +15,12 @@ public class irBlock extends irStmt{
   Scope scope; // scope.parent == parent.scope -> hold back
   irIns terminalstmt, endTerm;
   public void add(irStmt stmt) {
-    if(terminalstmt == null)
-      stmts.add(stmt);
+    stmts.add(stmt);
   }
   public void setTerminal(irIns stmt) {
-    if(terminalstmt == null)
-      terminalstmt = stmt;
+    if(terminalstmt != null)
+      throw new error(terminalstmt.toString());
+    terminalstmt = stmt;
   }
   @Override
   public String toString(){
