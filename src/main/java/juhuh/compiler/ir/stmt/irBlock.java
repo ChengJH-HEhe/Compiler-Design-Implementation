@@ -13,16 +13,14 @@ public class irBlock extends irStmt{
   vector<irStmt> stmts;
   String label; // label & terminalstmt must add;
   Scope scope; // scope.parent == parent.scope -> hold back
-  irIns terminalstmt;
-  Boolean actual_t;
+  irIns terminalstmt, endTerm;
   public void add(irStmt stmt) {
-    if(terminalstmt == null || (actual_t == null || actual_t == false))
+    if(terminalstmt == null)
       stmts.add(stmt);
   }
   public void setTerminal(irIns stmt) {
-    if(terminalstmt == null || (actual_t == null || actual_t == false))
+    if(terminalstmt == null)
       terminalstmt = stmt;
-      actual_t = true;
   }
   @Override
   public String toString(){
@@ -40,6 +38,8 @@ public class irBlock extends irStmt{
     }
     if(terminalstmt != null){
       s.append(super.toString() + terminalstmt.toString() + "\n");
+    } else {
+      s.append(super.toString() + endTerm.toString() + "\n");
     }
     return s.toString();
   }

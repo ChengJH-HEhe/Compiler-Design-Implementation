@@ -17,7 +17,7 @@ public class astFuncDefNode extends astDefNode implements scopeStmt{
   private Scope funcScope, origin;
   private final vector<astVarDefNode> args;
   private final astBlockStmtNode block;
-  public String getRet() {
+  public String getFunctionName() {
     return getName();
   }
   public vector<astStmtNode> getBody() {

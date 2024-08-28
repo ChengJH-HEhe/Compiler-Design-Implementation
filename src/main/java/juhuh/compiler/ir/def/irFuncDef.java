@@ -17,6 +17,7 @@ public class irFuncDef extends irDefNode {
   vector<String> paratypelist, paravaluelist;
   irBlock entry, ret;
   public irBlock curBlock;
+  
   vector<irBlock> body;
 
   public String tmprename() {
@@ -28,10 +29,10 @@ public class irFuncDef extends irDefNode {
   }
 
   public void checkRet(irIns terminalstmt) {
-    
+    // irStore?
     if(terminalstmt instanceof irStore) {
       curBlock.add(terminalstmt);
-      curBlock.setTerminalstmt(irJump.builder()
+      curBlock.setTerminal(irJump.builder()
       .dest("return")
       .build());
     } else {

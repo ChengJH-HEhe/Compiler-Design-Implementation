@@ -40,7 +40,7 @@ public class SemanticChecker implements astVisitor<String> {
   public static FuncInfo arrMallocFunc = new FuncInfo("_arr_init", ptrType, intType);
   // string add
   public static FuncInfo stringAddFunc = new FuncInfo("_add", stringType, stringType, stringType);
-  public static FuncInfo strcmpFunc = new FuncInfo("_strcmp_", intType, stringType, stringType); 
+  public static FuncInfo strcmpFunc = new FuncInfo("_strcmp", intType, stringType, stringType); 
 
   public static FuncInfo[] builtinFuncs = { printFunc, printlnFunc, printIntFunc, printlnIntFunc, getStringFunc, getIntFunc,
       toStringFunc,mallocFunc,arrMallocFunc,stringAddFunc, strcmpFunc};

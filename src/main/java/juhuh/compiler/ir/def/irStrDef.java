@@ -13,7 +13,23 @@ public class irStrDef extends irGlobalDef{
   public static int strNum = 0;
   @Override
   public String toString(){
-    return res + " = private unnamed_addr constant [" + (init.length()+1) + " x i8] c\"" + init + "\\00\"";
+    int size = 1;
+    boolean match = false;
+    for(int i = 0; i < init.length(); ++i) {
+      if(init.getBytes()[i] == '\\'){
+        if(!match) {
+          match = true;
+        } else {
+          match = false;
+          ++size;
+        }
+      } else {
+        ++size;
+      }
+    }
+    
+    return res + " = private unnamed_addr constant [" + (size) + " x i8] c\""
+     + init.replace("\\\n", "\\0A").replace("\\\"", "\\22").replace("\t","\\t") + "\\00\"";
   }
   @Override
   public<T> T accept(irVisitor<T> visitor) throws error{
