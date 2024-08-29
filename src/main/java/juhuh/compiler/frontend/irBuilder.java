@@ -134,7 +134,7 @@ public class irBuilder implements astVisitor<irNode> {
         .member(new vector<String>())
         .build());
     for (var decl : stringInfo) {
-      decl.setName(decl.getName());
+      decl.setName("string." +decl.getName());
       var func = irFuncDecl.builder()
           .info(decl)
           .paratypelist(new vector<String>("ptr"))
@@ -469,8 +469,9 @@ public class irBuilder implements astVisitor<irNode> {
         .funcDefs(new vector<irFuncDef>())
         .build();
     // fields
-    if (node.getConstructor() != null)
+    if (node.getConstructor() != null) {
       cls.getFuncDefs().add((irFuncDef) (node.getConstructor()).accept(this));
+    }
     else {
       // why not add a default constructor
       cls.getFuncDefs().add((irFuncDef) (astConstrNode.builder()
@@ -483,7 +484,10 @@ public class irBuilder implements astVisitor<irNode> {
     }
     // methods
     for (var method : node.getMethods()) {
-      cls.getFuncDefs().add((irFuncDef) method.accept(this));
+      irFuncDef result = (irFuncDef) method.accept(this);
+      result.setFName(node.getInfo().getName() + "." + result.getFName());
+      cls.getFuncDefs().add(result);
+      System.err.println(result.getFName());
     }
     exit();
     return cls;
@@ -549,7 +553,7 @@ public class irBuilder implements astVisitor<irNode> {
         .build());
     // 初始化函数
     if (!tp.isBuiltin() && newVar) {
-      FuncInfo func = new FuncInfo(tp.getName(), SemanticChecker.ptrType);
+      FuncInfo func = new FuncInfo(tp.getName() + "." + tp.getName(), SemanticChecker.ptrType);
       add(irCall.builder()
           .res("")
           .func(func)
@@ -565,7 +569,7 @@ public class irBuilder implements astVisitor<irNode> {
     // a::a(ptr this) another funcdef
     enter(node.getScope(), curS.depth + 1, curS.sonN++);
     curFunc = irFuncDef.builder()
-        .fName(node.getClassName())
+        .fName(node.getClassName() + "." + node.getClassName()) // TODO change1 constructor name
         .retType("void")
         .paratypelist(new vector<String>("ptr"))
         .paravaluelist(new vector<String>("%this"))

@@ -13,10 +13,10 @@
 %class.Array_Node = type { ptr,i32 }
 %class.Heap_Node = type { ptr }
 %class.Node = type { i32,i32 }
-declare i32 @length(ptr %this)
-declare ptr @substring(ptr %this, i32 %.int0, i32 %.int1)
-declare i32 @parseInt(ptr %this)
-declare i32 @ord(ptr %this, i32 %.int0)
+declare i32 @string.length(ptr %this)
+declare ptr @string.substring(ptr %this, i32 %.int0, i32 %.int1)
+declare i32 @string.parseInt(ptr %this)
+declare i32 @string.ord(ptr %this, i32 %.int0)
 declare i32 @_arr_size(ptr %array)
 declare ptr @_malloc(i32 %size)
 declare ptr @_arr_init(i32 %size)
@@ -29,7 +29,7 @@ declare void @printInt(i32 %i)
 declare void @printlnInt(i32 %i)
 declare ptr @getString()
 declare i32 @getInt()
-define void @Edge(ptr %this) {
+define void @Edge.Edge(ptr %this) {
 entry:
   %this.addr= alloca ptr
   store ptr %this, ptr %this.addr
@@ -42,7 +42,7 @@ return:
 
 }
 
-define void @EdgeList(ptr %this) {
+define void @EdgeList.EdgeList(ptr %this) {
 entry:
   %this.addr= alloca ptr
   store ptr %this, ptr %this.addr
@@ -164,7 +164,7 @@ entry:
   store i32 %w, ptr %w.1.5
   %e.1.6= alloca ptr
   %0 = call ptr @_malloc(i32 3)
-  call void @Edge(ptr %0)
+  call void @Edge.Edge(ptr %0)
   store ptr %0, ptr %e.1.6
   %1 = load i32, ptr %u.1.3
   %2 = load ptr, ptr %e.1.6
@@ -232,7 +232,7 @@ return:
 
 }
 
-define i32 @nVertices(ptr %this) {
+define i32 @EdgeList.nVertices(ptr %this) {
 entry:
   %ret.val= alloca i32
   %this.addr.3= alloca ptr
@@ -252,7 +252,7 @@ return:
 
 }
 
-define i32 @nEdges(ptr %this) {
+define i32 @EdgeList.nEdges(ptr %this) {
 entry:
   %ret.val= alloca i32
   %this.addr.4= alloca ptr
@@ -272,7 +272,7 @@ return:
 
 }
 
-define void @Array_Node(ptr %this) {
+define void @Array_Node.Array_Node(ptr %this) {
 entry:
   %this.addr= alloca ptr
   store ptr %this, ptr %this.addr
@@ -369,7 +369,7 @@ return:
 
 }
 
-define ptr @back(ptr %this) {
+define ptr @Array_Node.back(ptr %this) {
 entry:
   %ret.val= alloca ptr
   %this.addr.2= alloca ptr
@@ -434,7 +434,7 @@ return:
 
 }
 
-define void @resize(ptr %this, i32 %newSize) {
+define void @Array_Node.resize(ptr %this, i32 %newSize) {
 entry:
   %this.addr.5= alloca ptr
   store ptr %this, ptr %this.addr.5
@@ -494,7 +494,7 @@ return:
 
 }
 
-define void @set(ptr %this, i32 %i, ptr %v) {
+define void @Array_Node.set(ptr %this, i32 %i, ptr %v) {
 entry:
   %this.addr.7= alloca ptr
   store ptr %this, ptr %this.addr.7
@@ -565,7 +565,7 @@ return:
 
 }
 
-define void @doubleStorage(ptr %this) {
+define void @Array_Node.doubleStorage(ptr %this) {
 entry:
   %this.addr.9= alloca ptr
   store ptr %this, ptr %this.addr.9
@@ -637,13 +637,13 @@ return:
 
 }
 
-define void @Heap_Node(ptr %this) {
+define void @Heap_Node.Heap_Node(ptr %this) {
 entry:
   %this.addr= alloca ptr
   store ptr %this, ptr %this.addr
   %this.copy = load ptr, ptr %this.addr
   %0 = call ptr @_malloc(i32 2)
-  call void @Array_Node(ptr %0)
+  call void @Array_Node.Array_Node(ptr %0)
   %1 = getelementptr %class.Heap_Node, ptr %this.copy, i32 0
   %2 = getelementptr %class.Array_Node, ptr %1, i32 0
   %3 = load ptr, ptr %2
@@ -760,7 +760,7 @@ return:
 
 }
 
-define ptr @top(ptr %this) {
+define ptr @Heap_Node.top(ptr %this) {
 entry:
   %ret.val= alloca ptr
   %this.addr.2= alloca ptr
@@ -800,7 +800,7 @@ return:
 
 }
 
-define i32 @lchild(ptr %this, i32 %x) {
+define i32 @Heap_Node.lchild(ptr %this, i32 %x) {
 entry:
   %ret.val= alloca i32
   %this.addr.4= alloca ptr
@@ -821,7 +821,7 @@ return:
 
 }
 
-define i32 @rchild(ptr %this, i32 %x) {
+define i32 @Heap_Node.rchild(ptr %this, i32 %x) {
 entry:
   %ret.val= alloca i32
   %this.addr.5= alloca ptr
@@ -842,7 +842,7 @@ return:
 
 }
 
-define i32 @pnt(ptr %this, i32 %x) {
+define i32 @Heap_Node.pnt(ptr %this, i32 %x) {
 entry:
   %ret.val= alloca i32
   %this.addr.6= alloca ptr
@@ -863,7 +863,7 @@ return:
 
 }
 
-define void @maxHeapify(ptr %this, i32 %x) {
+define void @Heap_Node.maxHeapify(ptr %this, i32 %x) {
 entry:
   %this.addr.7= alloca ptr
   store ptr %this, ptr %this.addr.7
@@ -994,7 +994,7 @@ entry:
   %3 = load i32, ptr @m.0.29
   store i32 %2, ptr @m.0.29
   %4 = call ptr @_malloc(i32 4)
-  call void @EdgeList(ptr %4)
+  call void @EdgeList.EdgeList(ptr %4)
   %5 = load ptr, ptr @g.0.30
   store ptr %4, ptr @g.0.30
   %6 = load ptr, ptr @g.0.30
@@ -1044,7 +1044,7 @@ return:
 
 }
 
-define void @Node(ptr %this) {
+define void @Node.Node(ptr %this) {
 entry:
   %this.addr= alloca ptr
   store ptr %this, ptr %this.addr
@@ -1136,10 +1136,10 @@ for.end2.0.6:
   %22 = load i32, ptr %21
   store i32 0, ptr %21
   %23 = call ptr @_malloc(i32 1)
-  call void @Heap_Node(ptr %23)
+  call void @Heap_Node.Heap_Node(ptr %23)
   store ptr %23, ptr %q.1.40
   %24 = call ptr @_malloc(i32 2)
-  call void @Node(ptr %24)
+  call void @Node.Node(ptr %24)
   store ptr %24, ptr %src.1.41
   %25 = load ptr, ptr %src.1.41
   %26 = getelementptr %class.Node, ptr %25, i32 0
@@ -1260,7 +1260,7 @@ if.end6.0.8:
   %101 = load i32, ptr %100
   store i32 %97, ptr %100
   %102 = call ptr @_malloc(i32 2)
-  call void @Node(ptr %102)
+  call void @Node.Node(ptr %102)
   %103 = load ptr, ptr %node.3.42
   store ptr %102, ptr %node.3.42
   %104 = load i32, ptr %v.5.45

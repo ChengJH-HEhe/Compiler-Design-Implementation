@@ -293,12 +293,13 @@ public class SemanticChecker implements astVisitor<String> {
       }
       // TODO change method name only in scope memberexpr has redeclared
       // TODO method
-      FuncInfo method = classinfo.getFuncs().get(node.getMember());
-      // expr.getName
-      var newName = expr.getName() + "." + node.getMember();
-      if (method == null) {
+      FuncInfo tmpp = (classinfo.getFuncs().get(node.getMember()));
+      if (tmpp == null) {
         throw new error("Undefined Identifier");
       } else {
+        FuncInfo method = new FuncInfo(tmpp);
+        // expr.getName
+        var newName = expr.getName() + "." + node.getMember();
         node.setType(method);
          // but name is changing class_name old / 
         node.getType().setName(newName);
@@ -493,7 +494,8 @@ public class SemanticChecker implements astVisitor<String> {
       // add class 
       System.err.print(node.getValue() + " info begin " );
       var info = curS.containsVariable(node.getValue(), true);
-      System.err.println(" info end");
+      // 
+      System.err.println(" info end ");
       if (info == null) {
         // System.err.println(node.getValue());
         throw new error("Undefined Identifier");
