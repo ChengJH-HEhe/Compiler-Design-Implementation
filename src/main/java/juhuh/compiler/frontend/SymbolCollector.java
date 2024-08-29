@@ -84,7 +84,6 @@ public class SymbolCollector implements astVisitor<astNode> {
     // name returntype 
     node.setFuncScope(new Scope(curS, node.getInfo(), ScopeType.FUNC));
     node.setOrigin(new Scope(curOrigin, node.getInfo(), ScopeType.FUNC));
-    assert(node.getFuncScope().parentScope() != null);
     enter(node.getFuncScope(), node.getOrigin());
     if(node.getInfo().getName().equals("main")) {
       if(!node.getInfo().retType.equals(SemanticChecker.intType))
@@ -111,9 +110,11 @@ public class SymbolCollector implements astVisitor<astNode> {
     // forward reference
     // funcinfo args.type saved
     for(var func : node.getMethods()) {
-      func.accept(this);
       curS.defineVariable(func.getName(), func.getInfo());
       curOrigin.defineVariable(node.getName() + "." + func.getName(), func.getInfo());
+    }
+    for(var func : node.getMethods()) {
+      func.accept(this);
     }
     for(var vars : node.getFields()) {
       curS.defineVariable(vars.getName(), vars.getType().getInfo());

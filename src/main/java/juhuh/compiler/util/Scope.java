@@ -1,6 +1,5 @@
 package juhuh.compiler.util;
 
-import juhuh.compiler.ir.entity.*;
 import juhuh.compiler.util.error.error;
 import juhuh.compiler.util.info.ClassInfo;
 import juhuh.compiler.util.info.FuncInfo;
@@ -21,12 +20,16 @@ public class Scope {
   public boolean isexited;
 
   private HashMap<String, Info> members;
-  public HashMap<String, register> entities = new HashMap<>();
+  public HashMap<String, String> entities = new HashMap<>();
   private Scope parentScope;
   public String loopbr, loopct; // for while
   // scope to manage the rename job
   public int regnum = 0, depth = 0, sonN = 0, selfN = 0;
-
+  public int getRegnum() {
+    Scope tmp = this;
+    while(tmp.parentScope() != null) tmp = tmp.parentScope();
+    return tmp.regnum++;
+  }
   
   public String getflow(String type) {
     if (this.type == ScopeType.LOOP) {
@@ -39,29 +42,27 @@ public class Scope {
   }
   public String getValPtr(String name) {
     if (type == ScopeType.CLASS) {
-      var tmp = this;
+      Scope tmp = this;
       while(tmp.parentScope() != null)
         tmp = tmp.parentScope();
       
-      var id = ((ClassInfo)((globalScope)tmp).getSafeTypeFromName(this.info.getName()))
+      Integer id = ((ClassInfo)((globalScope)tmp).getSafeTypeFromName(this.info.getName()))
         .getVarsId().get(name);
       if(id != null) {
         // nothing previous
         return "%0" + id;
       }
     }
-    if (members.containsKey(name))
-      return (type == ScopeType.GLOBAL?"@" :"%") + name + "." + depth + "." + selfN;
-    
+    if (entities.containsKey(name))
+      return entities.get(name);
+      // selfN may not unique add scope regname
     return parentScope.getValPtr(name);
   }
-
-  public String Varrename(String name) {
-    if (type == ScopeType.GLOBAL)
-      return "@" + name;
-    else {
-      return "%" + name + "." + depth + "." + selfN;
-    }
+  public String setNewVarPtr(String name) {
+    // make sure not in class
+    String rename = (type == ScopeType.GLOBAL?"@" :"%") + name + "." + depth + "." + getRegnum();
+    entities.put(name, rename);
+    return rename;
   }
 
   public boolean findLOOP() {
@@ -79,7 +80,7 @@ public class Scope {
       return null;
     return parentScope.findFunc();
   }
-  public boolean findTAG() { //TODO FINDTAG
+  public boolean findTAG() { // FINDTAG
     if(flowTag)
       return true;
     if (parentScope == null)
@@ -125,21 +126,25 @@ public class Scope {
     }
     members.put(name, t);
   }
-
+  
   public Info containsVariable(String name, boolean lookUpon) {
-    if (members.containsKey(name))
-      return members.get(name);
+    if (members.containsKey(name)) {
+      Info method = members.get(name);
+      if(method instanceof FuncInfo) {
+        FuncInfo tmp = new FuncInfo((FuncInfo) method);
+        if(type == ScopeType.CLASS) {
+          tmp.setName(info.getName() + "." + name);
+          System.err.print(info.getName() + " " + tmp.getName() + " " + method.getName());
+        }
+        return tmp;
+      }  else {
+        // type never change
+        return method;
+      }
+    }
     else if (parentScope != null && lookUpon)
       return parentScope.containsVariable(name, true);
     else
       return null;
-  }
-
-  public register getEntity(String name, boolean lookUpon) {
-    if (entities.containsKey(name))
-      return entities.get(name);
-    else if (parentScope != null && lookUpon)
-      return parentScope.getEntity(name, true);
-    return null;
   }
 }

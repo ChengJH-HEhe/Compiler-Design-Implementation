@@ -25,6 +25,7 @@ public class irStrDef extends irGlobalDef{
         }
       } else {
         ++size;
+        match = false;
       }
     }
     

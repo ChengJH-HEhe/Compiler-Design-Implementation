@@ -187,6 +187,7 @@ public class SemanticChecker implements astVisitor<String> {
   public String visit(astCallExprNode node) throws error {
     // funcscope name argstype
     // func -> funcinfo
+    // TODO node.getFunc add classname.
     node.getFunc().accept(this);
     // System.err.println("ln157" + node.getFunc());
     var funcinfo = node.getFunc().getType();
@@ -259,6 +260,7 @@ public class SemanticChecker implements astVisitor<String> {
   public String visit(astMemberExprNode node) throws error {
     node.getExpr().accept(this);
     // node.setMember(node.getExpr().isMember());
+    // rhs . set expr, member
     Info exprInfo = node.getExpr().getType();
     if (!(exprInfo instanceof typeinfo)) {
       throw new error("Undefined Identifier");
@@ -280,6 +282,7 @@ public class SemanticChecker implements astVisitor<String> {
       if (Class == null || !(Class instanceof ClassInfo)) {
         throw new error("Undefined Identifier");
       }
+      // classinfo
       var classinfo = (ClassInfo) Class;
       var member = classinfo.getVars().get(node.getMember());
       if (member != null) {
@@ -288,14 +291,18 @@ public class SemanticChecker implements astVisitor<String> {
         node.setLValue(true);
         return null;
       }
-      // change method name
-      String newName = classinfo.getName() + "." + node.getMember();
-      var method = classinfo.getFuncs().get(node.getMember());
+      // TODO change method name only in scope memberexpr has redeclared
+      // TODO method
+      FuncInfo method = classinfo.getFuncs().get(node.getMember());
+      // expr.getName
+      var newName = expr.getName() + "." + node.getMember();
       if (method == null) {
         throw new error("Undefined Identifier");
       } else {
-        method.setName(newName);
-        node.setType(method); // but name is changing class_name old / TODO memberexpr has redeclared
+        node.setType(method);
+         // but name is changing class_name old / 
+        node.getType().setName(newName);
+        System.err.println(method.getName() + " " + newName);
         return null;
       }
     }
@@ -483,7 +490,10 @@ public class SemanticChecker implements astVisitor<String> {
     // Atom getType.
     // System.err.println(node.getType());
     if (node.getType().getName().equals(("1custom"))) {
+      // add class 
+      System.err.print(node.getValue() + " info begin " );
       var info = curS.containsVariable(node.getValue(), true);
+      System.err.println(" info end");
       if (info == null) {
         // System.err.println(node.getValue());
         throw new error("Undefined Identifier");
@@ -492,6 +502,7 @@ public class SemanticChecker implements astVisitor<String> {
         node.setType(new FuncInfo((FuncInfo) info));
         node.setLValue(false);
         assert (node.getType() instanceof FuncInfo);
+
         // System.err.println(" : " + node.getType().toString());
       } else if (info instanceof typeinfo) {
         node.setType((typeinfo) info);
