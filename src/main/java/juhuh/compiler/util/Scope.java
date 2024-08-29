@@ -11,7 +11,7 @@ import java.util.HashMap;
 public class Scope {
   public Info info;
   public int count;
-  public boolean flowTag;
+  public boolean flowTag = false;
   public enum ScopeType {
     LOOP, BLOCK, FUNC, CLASS, GLOBAL;
   }

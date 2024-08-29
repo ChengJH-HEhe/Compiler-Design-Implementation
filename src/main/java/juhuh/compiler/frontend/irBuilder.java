@@ -530,7 +530,7 @@ public class irBuilder implements astVisitor<irNode> {
   // 基类指针 引用类型 ptr alloc对应空间
   public entity baseRes(typeinfo tp, boolean newVar) {
     int size;
-    if (tp.equals(SemanticChecker.nullType))
+    if (tp == SemanticChecker.nullType)
       return register.builder()
           .name("null")
           .build();
@@ -549,7 +549,6 @@ public class irBuilder implements astVisitor<irNode> {
         .build());
     // 初始化函数
     if (!tp.isBuiltin() && newVar) {
-      // System.err.print(tp.getName() + "name !!! 11!");
       FuncInfo func = new FuncInfo(tp.getName(), SemanticChecker.ptrType);
       add(irCall.builder()
           .res("")
@@ -609,6 +608,7 @@ public class irBuilder implements astVisitor<irNode> {
   entity newArray(typeinfo tp, int id, vector<astExprNode> lengths) {
     // 1-D array
     // size
+    
     entity size = (entity) (lengths.get(tp.getDim() - id)).accept(this);
     // size | ptr | ptr ... (ptr * length + 1) binary + 1
     // <- ptr
@@ -730,7 +730,7 @@ public class irBuilder implements astVisitor<irNode> {
 
   entity ArrayConst(int id, astArrayConstExpr arrConst) throws error {
     typeinfo tp = (typeinfo) arrConst.getType();
-    if (id == 0 || tp.equals(SemanticChecker.nullType)) {
+    if (id == 0 || tp == SemanticChecker.nullType) {
       return baseRes(new typeinfo(tp.getName(), 0), true);
     } else {
       // store
@@ -746,8 +746,6 @@ public class irBuilder implements astVisitor<irNode> {
       for (int i = 0; i < arrConst.getVec().size(); ++i) {
         entity val = (id != 1) ? (entity) ArrayConst(id - 1, (astArrayConstExpr) (arrConst.getVec().get(i)))
             : (entity) arrConst.getVec().get(i).accept(this);
-        if (val.toString() == "null")
-          continue;
         var reg1 = register.builder()
             .name(curFunc.tmprename())
             .build();
@@ -771,15 +769,17 @@ public class irBuilder implements astVisitor<irNode> {
   @Override
   public irNode visit(astNewArrayExprNode node) throws error {
     typeinfo tp = (typeinfo) node.getType();
+    if (node.getInit() != null)
+      // array const
+      tp = (typeinfo) node.getInit().getType();
     if (tp.getDim() == 0) {
       return baseRes(tp, true);
     }
     if (node.getInit() != null) {
       // array const
-      tp = (typeinfo) node.getInit().getType();
       return ArrayConst(tp.getDim(), node.getInit());
     }
-    return (tp.getDim() == (node.getLengths() == null ? tp.getDim() : node.getLengths().size()))
+    return (tp.getDim() == (node.getLengths() == null ? 0 : node.getLengths().size()))
         ? newArray(tp, tp.getDim(), node.getLengths())
         : newArray(SemanticChecker.nullType, node.getLengths() == null ? 0 : node.getLengths().size(),
             node.getLengths());
