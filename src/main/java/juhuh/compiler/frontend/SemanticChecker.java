@@ -20,12 +20,12 @@ public class SemanticChecker implements astVisitor<String> {
   private globalScope gScope;
   // builtin types
   public static typeinfo voidType = new typeinfo("void", 0);
-  static typeinfo intType = new typeinfo("int", 0);
-  static typeinfo boolType = new typeinfo("bool", 0);
-  static typeinfo stringType = new typeinfo("string", 0);
-  static typeinfo nullType = new typeinfo("null", 1, true);
-  static typeinfo thisType = new typeinfo("this", 0);
-  static typeinfo ptrType = new typeinfo("ptr", 0, true);
+  public static typeinfo intType = new typeinfo("int", 0);
+  public static typeinfo boolType = new typeinfo("bool", 0);
+  public static typeinfo stringType = new typeinfo("string", 0);
+  public static typeinfo nullType = new typeinfo("null", 1, true);
+  public static typeinfo thisType = new typeinfo("this", 0);
+  public static typeinfo ptrType = new typeinfo("ptr", 0, true);
   public static typeinfo[] builtinTypes = { voidType, intType, boolType, nullType, thisType, ptrType };
   // builtin funcs
   public static FuncInfo printFunc = new FuncInfo("print", voidType, stringType);
