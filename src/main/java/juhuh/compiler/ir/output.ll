@@ -296,9 +296,9 @@ return:
 
 define void @Array_Node.push_back(ptr %this, ptr %v) {
 entry:
-  %this.addr.0= alloca ptr
-  store ptr %this, ptr %this.addr.0
-  %this.copy = load ptr, ptr %this.addr.0
+  %this.addr.1= alloca ptr
+  store ptr %this, ptr %this.addr.1
+  %this.copy = load ptr, ptr %this.addr.1
   %v.1.7= alloca ptr
   store ptr %v, ptr %v.1.7
   %0 = call i32 @Array_Node.size(ptr %this.copy)
@@ -343,9 +343,9 @@ return:
 define ptr @Array_Node.pop_back(ptr %this) {
 entry:
   %ret.val= alloca ptr
-  %this.addr.1= alloca ptr
-  store ptr %this, ptr %this.addr.1
-  %this.copy = load ptr, ptr %this.addr.1
+  %this.addr.2= alloca ptr
+  store ptr %this, ptr %this.addr.2
+  %this.copy = load ptr, ptr %this.addr.2
   %0 = getelementptr %class.Array_Node, ptr %this.copy, i32 0
   %1 = getelementptr i32, ptr %0, i32 1
   %2 = load i32, ptr %1
@@ -372,9 +372,9 @@ return:
 define ptr @Array_Node.back(ptr %this) {
 entry:
   %ret.val= alloca ptr
-  %this.addr.2= alloca ptr
-  store ptr %this, ptr %this.addr.2
-  %this.copy = load ptr, ptr %this.addr.2
+  %this.addr.3= alloca ptr
+  store ptr %this, ptr %this.addr.3
+  %this.copy = load ptr, ptr %this.addr.3
   %0 = getelementptr %class.Array_Node, ptr %this.copy, i32 0
   %1 = getelementptr ptr, ptr %0, i32 0
   %2 = load ptr, ptr %1
@@ -397,9 +397,9 @@ return:
 define ptr @Array_Node.front(ptr %this) {
 entry:
   %ret.val= alloca ptr
-  %this.addr.3= alloca ptr
-  store ptr %this, ptr %this.addr.3
-  %this.copy = load ptr, ptr %this.addr.3
+  %this.addr.4= alloca ptr
+  store ptr %this, ptr %this.addr.4
+  %this.copy = load ptr, ptr %this.addr.4
   %0 = getelementptr %class.Array_Node, ptr %this.copy, i32 0
   %1 = getelementptr ptr, ptr %0, i32 0
   %2 = load ptr, ptr %1
@@ -418,9 +418,9 @@ return:
 define i32 @Array_Node.size(ptr %this) {
 entry:
   %ret.val= alloca i32
-  %this.addr.4= alloca ptr
-  store ptr %this, ptr %this.addr.4
-  %this.copy = load ptr, ptr %this.addr.4
+  %this.addr.5= alloca ptr
+  store ptr %this, ptr %this.addr.5
+  %this.copy = load ptr, ptr %this.addr.5
   %0 = getelementptr %class.Array_Node, ptr %this.copy, i32 0
   %1 = getelementptr i32, ptr %0, i32 1
   %2 = load i32, ptr %1
@@ -436,9 +436,9 @@ return:
 
 define void @Array_Node.resize(ptr %this, i32 %newSize) {
 entry:
-  %this.addr.5= alloca ptr
-  store ptr %this, ptr %this.addr.5
-  %this.copy = load ptr, ptr %this.addr.5
+  %this.addr.6= alloca ptr
+  store ptr %this, ptr %this.addr.6
+  %this.copy = load ptr, ptr %this.addr.6
   %newSize.1.8= alloca i32
   store i32 %newSize, ptr %newSize.1.8
   br label %while.cond2.0.2
@@ -473,9 +473,9 @@ return:
 define ptr @Array_Node.get(ptr %this, i32 %i) {
 entry:
   %ret.val= alloca ptr
-  %this.addr.6= alloca ptr
-  store ptr %this, ptr %this.addr.6
-  %this.copy = load ptr, ptr %this.addr.6
+  %this.addr.7= alloca ptr
+  store ptr %this, ptr %this.addr.7
+  %this.copy = load ptr, ptr %this.addr.7
   %i.1.9= alloca i32
   store i32 %i, ptr %i.1.9
   %0 = getelementptr %class.Array_Node, ptr %this.copy, i32 0
@@ -496,9 +496,9 @@ return:
 
 define void @Array_Node.set(ptr %this, i32 %i, ptr %v) {
 entry:
-  %this.addr.7= alloca ptr
-  store ptr %this, ptr %this.addr.7
-  %this.copy = load ptr, ptr %this.addr.7
+  %this.addr.8= alloca ptr
+  store ptr %this, ptr %this.addr.8
+  %this.copy = load ptr, ptr %this.addr.8
   %i.1.10= alloca i32
   store i32 %i, ptr %i.1.10
   %v.1.11= alloca ptr
@@ -521,9 +521,9 @@ return:
 
 define void @Array_Node.swap(ptr %this, i32 %i, i32 %j) {
 entry:
-  %this.addr.8= alloca ptr
-  store ptr %this, ptr %this.addr.8
-  %this.copy = load ptr, ptr %this.addr.8
+  %this.addr.9= alloca ptr
+  store ptr %this, ptr %this.addr.9
+  %this.copy = load ptr, ptr %this.addr.9
   %i.1.12= alloca i32
   store i32 %i, ptr %i.1.12
   %j.1.13= alloca i32
@@ -567,9 +567,9 @@ return:
 
 define void @Array_Node.doubleStorage(ptr %this) {
 entry:
-  %this.addr.9= alloca ptr
-  store ptr %this, ptr %this.addr.9
-  %this.copy = load ptr, ptr %this.addr.9
+  %this.addr.10= alloca ptr
+  store ptr %this, ptr %this.addr.10
+  %this.copy = load ptr, ptr %this.addr.10
   %copy.1.15= alloca ptr
   %0 = getelementptr %class.Array_Node, ptr %this.copy, i32 0
   %1 = getelementptr ptr, ptr %0, i32 0
@@ -658,9 +658,9 @@ return:
 
 define void @Heap_Node.push(ptr %this, ptr %v) {
 entry:
-  %this.addr.0= alloca ptr
-  store ptr %this, ptr %this.addr.0
-  %this.copy = load ptr, ptr %this.addr.0
+  %this.addr.1= alloca ptr
+  store ptr %this, ptr %this.addr.1
+  %this.copy = load ptr, ptr %this.addr.1
   %v.1.17= alloca ptr
   store ptr %v, ptr %v.1.17
   %0 = getelementptr %class.Heap_Node, ptr %this.copy, i32 0
@@ -729,9 +729,9 @@ return:
 define ptr @Heap_Node.pop(ptr %this) {
 entry:
   %ret.val= alloca ptr
-  %this.addr.1= alloca ptr
-  store ptr %this, ptr %this.addr.1
-  %this.copy = load ptr, ptr %this.addr.1
+  %this.addr.2= alloca ptr
+  store ptr %this, ptr %this.addr.2
+  %this.copy = load ptr, ptr %this.addr.2
   %res.1.20= alloca ptr
   %0 = getelementptr %class.Heap_Node, ptr %this.copy, i32 0
   %1 = getelementptr %class.Array_Node, ptr %0, i32 0
@@ -763,9 +763,9 @@ return:
 define ptr @Heap_Node.top(ptr %this) {
 entry:
   %ret.val= alloca ptr
-  %this.addr.2= alloca ptr
-  store ptr %this, ptr %this.addr.2
-  %this.copy = load ptr, ptr %this.addr.2
+  %this.addr.3= alloca ptr
+  store ptr %this, ptr %this.addr.3
+  %this.copy = load ptr, ptr %this.addr.3
   %0 = getelementptr %class.Heap_Node, ptr %this.copy, i32 0
   %1 = getelementptr %class.Array_Node, ptr %0, i32 0
   %2 = load ptr, ptr %1
@@ -783,9 +783,9 @@ return:
 define i32 @Heap_Node.size(ptr %this) {
 entry:
   %ret.val= alloca i32
-  %this.addr.3= alloca ptr
-  store ptr %this, ptr %this.addr.3
-  %this.copy = load ptr, ptr %this.addr.3
+  %this.addr.4= alloca ptr
+  store ptr %this, ptr %this.addr.4
+  %this.copy = load ptr, ptr %this.addr.4
   %0 = getelementptr %class.Heap_Node, ptr %this.copy, i32 0
   %1 = getelementptr %class.Array_Node, ptr %0, i32 0
   %2 = load ptr, ptr %1
@@ -803,9 +803,9 @@ return:
 define i32 @Heap_Node.lchild(ptr %this, i32 %x) {
 entry:
   %ret.val= alloca i32
-  %this.addr.4= alloca ptr
-  store ptr %this, ptr %this.addr.4
-  %this.copy = load ptr, ptr %this.addr.4
+  %this.addr.5= alloca ptr
+  store ptr %this, ptr %this.addr.5
+  %this.copy = load ptr, ptr %this.addr.5
   %x.1.21= alloca i32
   store i32 %x, ptr %x.1.21
   %0 = load i32, ptr %x.1.21
@@ -824,9 +824,9 @@ return:
 define i32 @Heap_Node.rchild(ptr %this, i32 %x) {
 entry:
   %ret.val= alloca i32
-  %this.addr.5= alloca ptr
-  store ptr %this, ptr %this.addr.5
-  %this.copy = load ptr, ptr %this.addr.5
+  %this.addr.6= alloca ptr
+  store ptr %this, ptr %this.addr.6
+  %this.copy = load ptr, ptr %this.addr.6
   %x.1.22= alloca i32
   store i32 %x, ptr %x.1.22
   %0 = load i32, ptr %x.1.22
@@ -845,9 +845,9 @@ return:
 define i32 @Heap_Node.pnt(ptr %this, i32 %x) {
 entry:
   %ret.val= alloca i32
-  %this.addr.6= alloca ptr
-  store ptr %this, ptr %this.addr.6
-  %this.copy = load ptr, ptr %this.addr.6
+  %this.addr.7= alloca ptr
+  store ptr %this, ptr %this.addr.7
+  %this.copy = load ptr, ptr %this.addr.7
   %x.1.23= alloca i32
   store i32 %x, ptr %x.1.23
   %0 = load i32, ptr %x.1.23
@@ -865,9 +865,9 @@ return:
 
 define void @Heap_Node.maxHeapify(ptr %this, i32 %x) {
 entry:
-  %this.addr.7= alloca ptr
-  store ptr %this, ptr %this.addr.7
-  %this.copy = load ptr, ptr %this.addr.7
+  %this.addr.8= alloca ptr
+  store ptr %this, ptr %this.addr.8
+  %this.copy = load ptr, ptr %this.addr.8
   %x.1.24= alloca i32
   store i32 %x, ptr %x.1.24
   %l.1.25= alloca i32

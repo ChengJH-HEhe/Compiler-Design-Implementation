@@ -13,8 +13,8 @@ public class strConst extends constant {
     return name;
   }
   @Override
-  public <T> T accept(irVisitor<T> visitor)
+  public void accept(irVisitor visitor)
       throws error {
-    return visitor.visit(this);
+    visitor.visit(this);
   }
 }

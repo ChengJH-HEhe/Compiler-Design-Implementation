@@ -42,7 +42,7 @@ public class irRoot extends irNode {
     }
     return s;
   }
-  public<T> T accept(irVisitor<T> visitor) throws error{
-    return visitor.visit(this);
+  public void accept(irVisitor visitor) throws error{
+    visitor.visit(this);
   }
 }

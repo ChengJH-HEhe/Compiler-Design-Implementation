@@ -11,7 +11,6 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 import juhuh.compiler.ast.node.astRoot;
 import juhuh.compiler.backend.asmBuilder;
-import juhuh.compiler.backend.asm.asmRoot;
 
 // import Assembly.AsmFn;
 // import Backend.AsmPrinter;
@@ -27,12 +26,13 @@ import juhuh.compiler.ir.irRoot;
 import juhuh.compiler.parser.*;
 
 import juhuh.compiler.util.*;
+import juhuh.compiler.util.error.error;
 
 
 public class Main {
     public static void main(String[] args) throws Exception{
         var input = CharStreams.fromStream(System.in);
-        // try {
+        try {
             globalScope gScope = new globalScope(null,null),
             origin = new globalScope(null,null);
             
@@ -61,21 +61,19 @@ public class Main {
                 writer.close();
             }
             asmBuilder asm = new asmBuilder();
-            asmRoot asmRoot = (asmRoot) asm.visit(rt);
+            asm.visit(rt);
             {
-                FileWriter writer = new FileWriter("src/main/java/juhuh/compiler/asm/output.s");   
-                writer.write(asmRoot.toString());
+                FileWriter writer = new FileWriter("src/main/java/juhuh/compiler/backend/output.s");   
+                writer.write(asm.getRt().toString());
                 writer.close();
             }
-            // AsmFn asmF = new AsmFn();
-            // new InstSelector(asmF).visitFn(f);
             // new RegAlloc(asmF).work();
             // new AsmPrinter(asmF, System.out).print();
-        // } 
-        // catch (error er) {
-        //     System.err.println(er.toString());
-        //     System.exit(1);
-        // }
-        // System.exit(0);
+        } 
+        catch (error er) {
+            System.err.println(er.toString());
+            System.exit(1);
+        }
+        System.exit(0);
     }
 }

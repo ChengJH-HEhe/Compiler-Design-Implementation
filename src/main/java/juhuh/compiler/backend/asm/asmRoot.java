@@ -12,7 +12,7 @@ import juhuh.compiler.util.vector;
 public class asmRoot extends asmNode {
   // .text、.bss、.data、.rodata
   private vector<asmFuncDef> text;
-  private vector<asmGlobalVarDef> data, rodata;
+  private vector<asmVarDef> data, rodata;
   @Override 
   public String toString() {
     String s = "  .section text\n";

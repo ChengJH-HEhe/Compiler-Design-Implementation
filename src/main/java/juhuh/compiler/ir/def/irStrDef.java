@@ -10,10 +10,11 @@ import juhuh.compiler.util.error.error;
 public class irStrDef extends irGlobalDef{
   String res;
   String init;
+  int size;
   public static int strNum = 0;
   @Override
   public String toString(){
-    int size = 1;
+    size = 1;
     boolean match = false;
     for(int i = 0; i < init.length(); ++i) {
       if(init.getBytes()[i] == '\\'){
@@ -33,7 +34,7 @@ public class irStrDef extends irGlobalDef{
      + init.replace("\\\"", "\\22").replace("\t","\\t").replace("\\n", "\\0A") + "\\00\"";
   }
   @Override
-  public<T> T accept(irVisitor<T> visitor) throws error{
-    return visitor.visit(this);
+  public void accept(irVisitor visitor) throws error{
+    visitor.visit(this);
   }
 }

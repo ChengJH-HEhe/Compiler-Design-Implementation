@@ -10,7 +10,7 @@ public class irGlobalDef extends irDefNode{
   public String toString(){
     return name + " = global " + type + " " + init;
   }
-  public<T> T accept(irVisitor<T> visitor) throws error{
-    return visitor.visit(this);
+  public void accept(irVisitor visitor) throws error{
+    visitor.visit(this);
   }
 }

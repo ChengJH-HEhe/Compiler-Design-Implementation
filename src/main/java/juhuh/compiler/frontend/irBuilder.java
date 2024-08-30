@@ -567,9 +567,10 @@ public class irBuilder implements astVisitor<irNode> {
   @Override
   public irNode visit(astConstrNode node) throws error {
     // a::a(ptr this) another funcdef
-    enter(node.getScope(), curS.depth + 1, curS.sonN++);
+    enter(new Scope(curS, null, ScopeType.FUNC), curS.depth + 1, curS.sonN++);
+    // TODO change1 constructor name
     curFunc = irFuncDef.builder()
-        .fName(node.getClassName() + "." + node.getClassName()) // TODO change1 constructor name
+        .fName(node.getClassName() + "." + node.getClassName()) 
         .retType("void")
         .paratypelist(new vector<String>("ptr"))
         .paravaluelist(new vector<String>("%this"))
@@ -584,6 +585,7 @@ public class irBuilder implements astVisitor<irNode> {
         .body(new vector<irBlock>())
         .build();
     curFunc.curBlock = curFunc.getEntry();
+
     curFunc.getEntry().add(irAlloca.builder()
         .res("%this.addr")
         .tp("ptr")
@@ -609,11 +611,11 @@ public class irBuilder implements astVisitor<irNode> {
 
   }
 
-  entity newArray(typeinfo tp, int id, vector<astExprNode> lengths) {
+  entity newArray(typeinfo tp, int remainLayer, vector<astExprNode> lengths) {
     // 1-D array
     // size
     
-    entity size = (entity) (lengths.get(tp.getDim() - id)).accept(this);
+    entity size = (entity) (lengths.get(lengths.size() - remainLayer)).accept(this);
     // size | ptr | ptr ... (ptr * length + 1) binary + 1
     // <- ptr
     /*
@@ -631,10 +633,10 @@ public class irBuilder implements astVisitor<irNode> {
         .build();
     // res = malloc(size)
     add(call);
-    if (id == 1) {
+    if (remainLayer == 1) {
       return res;
     }
-    // for(i 1->sz) res[i] = newArray(tp, id-1, lengths)
+    // for(i 1->sz) res[i] = newArray(tp, remainLayer-1, lengths)
     // int i = 1
     var i = loopCount++;
     curFunc.getEntry().add(irAlloca.builder()
@@ -684,7 +686,7 @@ public class irBuilder implements astVisitor<irNode> {
         .build();
     switchBlock(forBody);
 
-    var resul = (entity) (newArray(tp, id - 1, lengths));
+    var resul = (entity) (newArray(tp, remainLayer - 1, lengths));
     var reg = register.builder()
         .name(curFunc.tmprename())
         .build();
@@ -732,9 +734,9 @@ public class irBuilder implements astVisitor<irNode> {
     return res;
   }
 
-  entity ArrayConst(int id, astArrayConstExpr arrConst) throws error {
+  entity ArrayConst(int remainLayer, astArrayConstExpr arrConst) throws error {
     typeinfo tp = (typeinfo) arrConst.getType();
-    if (id == 0 || tp == SemanticChecker.nullType) {
+    if (remainLayer == 0 || tp == SemanticChecker.nullType) {
       return baseRes(new typeinfo(tp.getName(), 0), true);
     } else {
       // store
@@ -748,7 +750,7 @@ public class irBuilder implements astVisitor<irNode> {
           .val(new vector<String>(Integer.toString(arrConst.getVec().size())))
           .build());
       for (int i = 0; i < arrConst.getVec().size(); ++i) {
-        entity val = (id != 1) ? (entity) ArrayConst(id - 1, (astArrayConstExpr) (arrConst.getVec().get(i)))
+        entity val = (remainLayer != 1) ? (entity) ArrayConst(remainLayer - 1, (astArrayConstExpr) (arrConst.getVec().get(i)))
             : (entity) arrConst.getVec().get(i).accept(this);
         var reg1 = register.builder()
             .name(curFunc.tmprename())
@@ -761,7 +763,7 @@ public class irBuilder implements astVisitor<irNode> {
             .id1(Integer.toString(i))
             .build());
           add(irStore.builder()
-              .tp(id != 1 ? "ptr" : basetp(new typeinfo(tp.getName(), 0)))
+              .tp(remainLayer != 1 ? "ptr" : basetp(new typeinfo(tp.getName(), 0)))
               .res(val.toString())
               .ptr(reg1.getName())
               .build());
@@ -783,6 +785,8 @@ public class irBuilder implements astVisitor<irNode> {
       // array const
       return ArrayConst(tp.getDim(), node.getInit());
     }
+    // getDim 4 getlengths = 2
+    // 
     return (tp.getDim() == (node.getLengths() == null ? 0 : node.getLengths().size()))
         ? newArray(tp, tp.getDim(), node.getLengths())
         : newArray(SemanticChecker.nullType, node.getLengths() == null ? 0 : node.getLengths().size(),
@@ -820,15 +824,15 @@ public class irBuilder implements astVisitor<irNode> {
       while (tmpS != null && tmpS.type != Scope.ScopeType.CLASS) {
         tmpS = tmpS.parentScope();
       }
-      System.err.print("IR PROCESS ");
-      System.err.print(((astAtomExprNode) node.getFunc()).getType().getName() + " ");
+      // System.err.print("IR PROCESS ");
+      // System.err.print(((astAtomExprNode) node.getFunc()).getType().getName() + " ");
       if (tmpS != null && tmpS.containsVariable(((astAtomExprNode) node.getFunc()).getType().getName(), false) != null) {
         caller = register.builder()
         .name("%this.copy")
         .build();
-        System.err.print(((astAtomExprNode) node.getFunc()).getType().getName()); 
+        // S ystem.err.print(((astAtomExprNode) node.getFunc()).getType().getName()); 
       }
-      System.err.println(" IR ATOM");
+      // S ystem.err.println(" IR ATOM");
     }
     // callnode , add class.name
     var callnode = irCall.builder()
@@ -894,7 +898,8 @@ public class irBuilder implements astVisitor<irNode> {
   @Override
   public irNode visit(astArrayConstExpr node) throws error {
     // not expected to visit
-    throw new UnsupportedOperationException("Unimplemented method 'visit'");
+    typeinfo tp = (typeinfo)node.getType();
+    return ArrayConst(tp.getDim(), node);
   }
 
   @Override
@@ -1460,6 +1465,7 @@ public class irBuilder implements astVisitor<irNode> {
         .stmts(new vector<irStmt>())
         .endTerm(curBTerm)
         .build();
+    // cond block -> endBTerm;
     joinBlock(thenB, endBTerm);
 
     enter(new Scope(curS, null, ScopeType.BLOCK), curS.depth + 1, curS.sonN++);

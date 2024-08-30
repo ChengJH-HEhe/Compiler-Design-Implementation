@@ -7,17 +7,14 @@ import juhuh.compiler.util.vector;
 @lombok.Setter
 
 public class asmBlock extends asmNode {
-  private vector<String> prefix;
   private String label;
   private vector<asmNode> nodes;
-
+  public void add(asmNode ins) {
+    nodes.add(ins);
+  }
   @Override
   public String toString() {
-    String s = "";
-    for(var p : prefix) {
-      s += p + "\n";
-    }
-    s += label + ":\n";
+    String s = ".globl " + label + "\n .type @function\n" + label + ":\n";
     for (asmNode node : nodes) {
       s += node.toString() + "\n";
     }

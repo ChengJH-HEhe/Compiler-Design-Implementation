@@ -18,9 +18,8 @@ public class irBlock extends irStmt{
     stmts.add(stmt);
   }
   public void setTerminal(irIns stmt) {
-    if(terminalstmt != null)
-      throw new error(terminalstmt.toString());
-    terminalstmt = stmt;
+    if(terminalstmt == null)
+      terminalstmt = stmt;
   }
   @Override
   public String toString(){
@@ -39,12 +38,13 @@ public class irBlock extends irStmt{
     if(terminalstmt != null){
       s.append(super.toString() + terminalstmt.toString() + "\n");
     } else {
-      s.append(super.toString() + endTerm.toString() + "\n");
+      if(endTerm != null)
+        s.append(super.toString() + endTerm.toString() + "\n");
     }
     return s.toString();
   }
   @Override
-  public <T> T accept(irVisitor<T> visitor) throws error{
-    return visitor.visit(this);
+  public void accept(irVisitor visitor) throws error{
+    visitor.visit(this);
   }
 }

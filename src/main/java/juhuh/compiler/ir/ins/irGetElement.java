@@ -14,7 +14,7 @@ public class irGetElement extends irIns{
     (tp1 + " " + id1);  
   }
   @Override
-  public<T> T accept(irVisitor<T> visitor) throws error{
-    return visitor.visit(this);
+  public void accept(irVisitor visitor) throws error{
+    visitor.visit(this);
   }
 }

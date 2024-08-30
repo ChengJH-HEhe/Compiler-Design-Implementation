@@ -492,10 +492,10 @@ public class SemanticChecker implements astVisitor<String> {
     // System.err.println(node.getType());
     if (node.getType().getName().equals(("1custom"))) {
       // add class 
-      System.err.print(node.getValue() + " info begin " );
+      // S ystem.err.print(node.getValue() + " info begin " );
       var info = curS.containsVariable(node.getValue(), true);
       // 
-      System.err.println(" info end ");
+      // S ystem.err.println(" info end ");
       if (info == null) {
         // System.err.println(node.getValue());
         throw new error("Undefined Identifier");

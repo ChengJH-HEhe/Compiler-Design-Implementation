@@ -16,8 +16,7 @@ public class irClassDef extends irDefNode{
     throw new UnsupportedOperationException("irClassDef toString");
   }
   @Override
-  public<T> T accept(irVisitor<T> visitor) throws error{
-    return visitor.visit(this);
+  public void accept(irVisitor visitor) throws error{
+    visitor.visit(this);
   }
-  
 }

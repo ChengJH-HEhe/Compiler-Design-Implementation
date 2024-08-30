@@ -58,6 +58,7 @@ public class Scope {
       // selfN may not unique add scope regname
     return parentScope.getValPtr(name);
   }
+  // entites -> put rename 
   public String setNewVarPtr(String name) {
     // make sure not in class
     String rename = (type == ScopeType.GLOBAL?"@" :"%") + name + "." + depth + "." + getRegnum();
@@ -134,7 +135,7 @@ public class Scope {
         FuncInfo tmp = new FuncInfo((FuncInfo) method);
         if(type == ScopeType.CLASS) {
           tmp.setName(info.getName() + "." + name);
-          System.err.print(info.getName() + " " + tmp.getName() + " " + method.getName());
+          // System.err.print(info.getName() + " " + tmp.getName() + " " + method.getName());
         }
         return tmp;
       }  else {

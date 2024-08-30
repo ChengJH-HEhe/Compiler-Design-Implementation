@@ -19,7 +19,7 @@ public class irStructDef extends irDefNode{
     }
     return name + " = type { " + member + " }";
   }
-  public<T> T accept(irVisitor<T> visitor) throws error{
-    return visitor.visit(this);
+  public void accept(irVisitor visitor) throws error{
+    visitor.visit(this);
   }
 }

@@ -10,7 +10,7 @@ import juhuh.compiler.util.error.error;
 public class astConstrNode extends astStmtNode {
   private String className;
   private astBlockStmtNode block;
-  private Scope scope;
+  private Scope scope, Origin;
 
   @Override
   public String toString() {

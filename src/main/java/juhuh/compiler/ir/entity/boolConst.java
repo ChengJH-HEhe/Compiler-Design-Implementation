@@ -12,8 +12,8 @@ public class boolConst extends constant {
     return value == true ? "1" : "0";
   }
   @Override
-  public <T> T accept(irVisitor<T> visitor)
+  public void accept(irVisitor visitor)
       throws error {
-    return visitor.visit(this);
+    visitor.visit(this);
   }
 }

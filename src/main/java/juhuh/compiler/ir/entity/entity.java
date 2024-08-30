@@ -12,8 +12,8 @@ public class entity extends juhuh.compiler.ir.irNode {
     return "entity";
   }
   @Override
-  public <T> T accept(irVisitor<T> visitor)
+  public void accept(irVisitor visitor)
       throws error {
-    return visitor.visit(this);
+    visitor.visit(this);
   }
 }

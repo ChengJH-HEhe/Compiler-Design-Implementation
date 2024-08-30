@@ -12,8 +12,8 @@ public class constant extends entity {
     return name == "this"? "%this.copy" : name;
   }
   @Override
-  public <T> T accept(irVisitor<T> visitor)
+  public void accept(irVisitor visitor)
       throws error {
-    return visitor.visit(this);
+    visitor.visit(this);
   }
 }
