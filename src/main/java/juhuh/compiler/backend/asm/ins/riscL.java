@@ -10,10 +10,12 @@ public class riscL extends asmNode{
   private String op;
   private String rd;
   private String rs1;
-  private String imm;
+  private int imm;
 
   @Override
   public String toString() {
+    if(imm == -1)
+      return op + " " + rd + " " + rs1;
     return op + " " + rd + ", " + imm + "(" + rs1 + ")";
   }
 }
