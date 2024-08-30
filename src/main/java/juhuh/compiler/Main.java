@@ -10,6 +10,8 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import juhuh.compiler.ast.node.astRoot;
+import juhuh.compiler.backend.asmBuilder;
+import juhuh.compiler.backend.asm.asmRoot;
 
 // import Assembly.AsmFn;
 // import Backend.AsmPrinter;
@@ -54,11 +56,15 @@ public class Main {
             irBuilder IR = new irBuilder(origin);
             irRoot rt = (irRoot) IR.visit(ASTRoot);
             {
-                System.out.println(rt.toString());
-            }  
-            {
                 FileWriter writer = new FileWriter("src/main/java/juhuh/compiler/ir/output.ll");   
                 writer.write(rt.toString());
+                writer.close();
+            }
+            asmBuilder asm = new asmBuilder();
+            asmRoot asmRoot = (asmRoot) asm.visit(rt);
+            {
+                FileWriter writer = new FileWriter("src/main/java/juhuh/compiler/asm/output.s");   
+                writer.write(asmRoot.toString());
                 writer.close();
             }
             // AsmFn asmF = new AsmFn();
