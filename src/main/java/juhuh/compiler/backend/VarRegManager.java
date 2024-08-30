@@ -2,25 +2,29 @@ package juhuh.compiler.backend;
 
 import java.util.HashMap;
 
+import juhuh.compiler.backend.asm.asmBlock;
 import juhuh.compiler.backend.asm.asmNode;
-import juhuh.compiler.backend.asm.ins.pseudo;
-import juhuh.compiler.backend.asm.ins.riscL;
-import juhuh.compiler.backend.asm.ins.riscS;
+import juhuh.compiler.backend.asm.ins.*;
 import juhuh.compiler.util.vector;
 
 public class VarRegManager {
   // alloc %.(ptr) or %num = (val) all to sp + id * 4
   // manaager for a
   private HashMap<String, Integer> Var2Id;
-  private int size = 0;
-  public int getOffset(int ptr) {
-    return ptr;
-  }
+  private int size = 5; // t0~t4
+  private asmBlock curB;
   // local start with num = : ; start with alpha, alloca, first scan, add all
+  // first add return -1 for func sp member check
+  public void argsInc(int num) {
+    if(num > 8)
+      size += num - 8;
+  }
   public int add(String var) {
+    if(var.getBytes()[0] != '%')
+      return 0;
     if(Var2Id.containsKey(var)) 
       return Var2Id.get(var);
-    { Var2Id.put(var, (size++)); return size;}
+    { Var2Id.put(var, (size++)); return 0;}
   }
   
   // 16 multiply
@@ -30,7 +34,38 @@ public class VarRegManager {
   // difference? call: caller; define: callee 
   // before call, caller store value to the args place 
   // when calling, callee store args to the localptr
-  
+  void storeT(){
+    for(int i = 0; i < 5; ++i) {
+      curB.add(riscS.builder()
+          .op("sw")
+          .rs2("t" + i)
+          .imm(i*4)
+          .rs1("sp")
+        .build());
+    }
+  }
+  void ptr2reg(String name, String reg, String tp) {
+    if(name.getBytes()[0] == '%') {
+      // in sp + id
+      curB.add(riscL.builder()
+          .op(tp)
+          .rd(reg)
+          .imm(add(name) * 4)
+          .rs1("sp")
+        .build());  
+    } else if(name.getBytes()[0] == '@') {
+      curB.add(pseudo.builder()
+          .strs(new vector<String>("la", "t4", name.substring(1)) )
+        .build());
+      curB.add(riscL.builder()
+          .op(tp)
+          .rd(reg)
+          .imm(0)
+          .rs1("t4")
+        .build());
+    }
+  }
+
   // t0-6 loop %7 int is the reg id
   // call add args, return the vecIns add before call
   public vector<asmNode> addvec(vector<String> varArr, vector<String> vartype) {
@@ -41,26 +76,10 @@ public class VarRegManager {
       if(curId < 8)
         tmpvar = "a" + curId;
       // load to the tmpvar
-      if(arg.getBytes()[0] == '%') {
-        // in sp + id
-        var res = add(arg);
-        vec.add(riscL.builder()
-            .op(vartype.get(curId).equals("i1")?"lb":"lw")
-            .rd(tmpvar)
-            .imm(add(arg) * 4)
-            .rs1("sp")
-          .build());
-      } else if(arg.getBytes()[0] == '@') {
-        vec.add(pseudo.builder()
-            .strs(new vector<String>("la", "t4", arg.substring(1)) )
-          .build());
-        vec.add(riscL.builder()
-            .op(vartype.get(curId).equals("i1")?"lb":"lw")
-            .rd(tmpvar)
-            .imm(0)
-            .rs1("t4")
-          .build());
-      } else {
+      if(arg.getBytes()[0] == '%' || arg.getBytes()[0] == '@') {
+        ptr2reg(arg, tmpvar, vartype.get(curId).equals("i1")?"lb":"lw");
+      }
+      else {
         vec.add(pseudo.builder()
             .strs(new vector<String>("li", tmpvar, arg))
           .build());
@@ -70,7 +89,7 @@ public class VarRegManager {
         vec.add(riscS.builder()
             .op(vartype.get(curId).equals("i1")?"sb":"sw")
             .rs2(tmpvar)
-            .imm((size++)*4)
+            .imm(-(size++)*4)
             .rs1("sp")
           .build());
       }

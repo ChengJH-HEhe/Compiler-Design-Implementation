@@ -10,10 +10,10 @@ public class riscRI extends asmNode{
   private String op;
   private String rd;
   private String rs1;
-  private String imm;
+  private int imm;
 
   @Override
   public String toString() {
-    return op + " " + rd + ", " + rs1 + ", " + imm;
+    return op + " " + rd + " " + rs1 + " " + imm;
   }
 }
