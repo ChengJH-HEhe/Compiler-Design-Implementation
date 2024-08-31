@@ -19,6 +19,6 @@ public class pseudo extends asmNode{
         first = true;
         s += str + "  ";
       }
-    return s.substring(0, s.length()-2) + "\n";
+    return s.substring(0, s.length()-2);
   }
 }

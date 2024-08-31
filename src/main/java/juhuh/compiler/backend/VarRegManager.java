@@ -12,11 +12,13 @@ public class VarRegManager {
   private HashMap<String, Integer> Var2Id = new HashMap<String, Integer>();
   private int size = 0, maxArgs = 0; // t0~t4
   private asmBlock curB;
+
   // local start with num = : ; start with alpha, alloca, first scan, add all
   // first add return -1 for func sp member check
   public void setCurB(asmBlock B) {
     curB = B;
   }
+
   public int add(String var) {
     if (var.getBytes()[0] != '%')
       return 0;
@@ -27,30 +29,40 @@ public class VarRegManager {
       return 0;
     }
   }
-  public int getArgM(int i){
+
+  public int getArgM(int i) {
     return size + i - 8;
+  }
+
+  public int getCurSize() {
+    return size + maxArgs;
   }
 
   // 16 multiply
   public int getSize() {
-    maxArgs += ((size + maxArgs) % 4 == 0 ? 0 : (4 - (size + maxArgs)%4));
+    maxArgs += ((size + maxArgs) % 4 == 0 ? 0 : (4 - (size + maxArgs) % 4));
     return size + maxArgs;
   }
 
   // difference? call: caller; define: callee
   // before call, caller store value to the args place
   // when calling, callee store args to the localptr
-  void storeT() {
+  void store() {
     // curT[i] = size + i
-    for (int i = 0; i < 5; ++i) {
+    for (int i = 1; i < 6; ++i) {
       curB.add(riscS.builder()
           .op("sw")
           .rs2("t" + i)
-          .imm((-(i+1)) * 4)
+          .imm((-(i + 1)) * 4)
           .rs1("sp")
           .build());
     }
-    size += 5;
+    curB.add(riscS.builder().op("sw")
+        .rs2("ra")
+        .imm((-(1)) * 4)
+        .rs1("sp")
+        .build());
+    size += 6;
   }
 
   void storeA(vector<String> varArr) {
@@ -59,10 +71,12 @@ public class VarRegManager {
       add(arg);
     }
   }
-  void argsInc(int sz){
-    if(sz > 8)
+
+  void argsInc(int sz) {
+    if (sz > 8)
       maxArgs = Math.max(maxArgs, sz - 8);
   }
+
   void ptr2reg(String name, String reg, String tp) {
     if (name.getBytes()[0] == '%') {
       // in sp + id

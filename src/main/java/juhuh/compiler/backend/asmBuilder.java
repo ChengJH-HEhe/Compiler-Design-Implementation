@@ -59,7 +59,7 @@ public class asmBuilder implements irVisitor {
   }
 
   private void visitFunc(irFuncDef node) {
-    curFunc = node; 
+    curFunc = node;
     visit(node.getEntry());
     // entry -= size
     for (var get : node.getBody()) {
@@ -112,11 +112,8 @@ public class asmBuilder implements irVisitor {
 
   @Override
   public void visit(irAlloca node) throws error {
-    int offset = vrM.add(node.getRes());
+    vrM.add(node.getRes());
     // alloca ptr only a address
-    if (offset == 0) {
-      return;
-    }
   }
 
   public void mem2a(String name, int num, String tp) {
@@ -167,13 +164,13 @@ public class asmBuilder implements irVisitor {
       return;
     mem2a(node.getCond(), 0, "b");
     curB.add(pseudo.builder()
-        .strs(new vector<String>("beqz", "t0", ".bran.false" + branCount))
+        .strs(new vector<String>("beqz", "t0", ".false" + branCount))
         .build());
     curB.add(riscJ.builder()
         .label(node.getIftrue())
         .build());
     curB.add(pseudo.builder()
-        .strs(new vector<String>(".bran.false" + branCount + ":"))
+        .strs(new vector<String>(".false" + branCount + ":"))
         .build());
     curB.add(riscJ.builder()
         .label(node.getIffalse())
@@ -189,6 +186,9 @@ public class asmBuilder implements irVisitor {
         chkSp(node.getRes());
       return;
     }
+    curB.add(pseudo.builder()
+      .strs(new vector<String>("#Call  "))
+    .build());
     vrM.setCurB(curB);
     vrM.addvec(node.getVal(), node.getType());
     curB.add(pseudo.builder()
@@ -366,13 +366,19 @@ public class asmBuilder implements irVisitor {
     }
     // reset T, add sp
     int sz = vrM.getSize();
-    for (int i = 0; i < 5; ++i)
+    for (int i = 1; i <= 5; ++i)
       curB.add(riscL.builder()
           .op("lw")
           .rd("t" + i)
-          .imm((sz - i) * 4)
+          .imm((sz - i - 1) * 4)
           .rs1("sp")
           .build());
+    curB.add(riscL.builder()
+        .op("lw")
+        .rd("ra")
+        .imm((sz-1)*4)
+        .rs1("sp")
+        .build());
     curB.add(riscRI.builder()
         .op("addi")
         .rd("sp")
@@ -395,7 +401,7 @@ public class asmBuilder implements irVisitor {
     // branch
 
     curB.add(pseudo.builder()
-        .strs(new vector<String>("beqz", "t0", ".bran.false" + branCount))
+        .strs(new vector<String>("beqz", "t0", ".false" + branCount))
         .build());
     // store a1 -> res
     mem2a(node.getVal1(), 1, tBool(node.getTp1().equals("i1")));
@@ -406,10 +412,10 @@ public class asmBuilder implements irVisitor {
         .rs1("sp")
         .build());
     curB.add(pseudo.builder()
-        .strs(new vector<String>("j", ".bran.end" + branCount))
+        .strs(new vector<String>("j", ".end" + branCount))
         .build());
     curB.add(pseudo.builder()
-        .strs(new vector<String>(".bran.false" + branCount + ":"))
+        .strs(new vector<String>(".false" + branCount + ":"))
         .build());
     mem2a(node.getVal2(), 1, tBool(node.getTp2().equals("i1")));
     curB.add(riscS.builder()
@@ -419,10 +425,10 @@ public class asmBuilder implements irVisitor {
         .rs1("sp")
         .build());
     curB.add(pseudo.builder()
-        .strs(new vector<String>("j", ".bran.end" + branCount))
+        .strs(new vector<String>("j", ".end" + branCount))
         .build());
     curB.add(pseudo.builder()
-        .strs(new vector<String>(".bran.end" + branCount + ":"))
+        .strs(new vector<String>(".end" + branCount + ":"))
         .build());
     ++branCount;
   }
@@ -448,52 +454,69 @@ public class asmBuilder implements irVisitor {
   public void visit(irStore node) throws error {
     if (status == true)
       return;
+    curB.add(pseudo.builder()
+      .strs(new vector<String>("#Store  "))
+    .build());
     int res = 114514;
     // res starts "with” % it's ok
     var tp = tBool(node.getTp().equals("i1"));
     String addr = null;
-    for (int i = 0; i < Math.min(8, curFunc.getParavaluelist().size()); ++i)
-      if (node.getRes().equals(curFunc.getParavaluelist().get(i))) {
-        if (i < 8)
-          res = -i;
-        else {
-          res = vrM.getArgM(i);
-        }
-        break;
-      }
-    String rd;
-    if (res >= 0) {
-      if (res == 114514)
-        res = vrM.add(node.getRes());
-      rd = "t3";
-      curB.add(riscL.builder()
-          .op("l" + tp)
-          .rd(rd)
-          .imm(res * 4)
-          .rs1("sp")
+    String rd = null;
+    if (node.getRes().getBytes()[0] != '%') {
+      // imm
+      rd = "a0";
+      curB.add(pseudo.builder()
+          .strs(new vector<String>("li", rd, node.getRes()))
           .build());
-    } else {
-      rd = "a" + (-res);
     }
+    if (rd == null) {
+      for (int i = 0; i < Math.min(8, curFunc.getParavaluelist().size()); ++i)
+        if (node.getRes().equals(curFunc.getParavaluelist().get(i))) {
+          if (i < 8)
+            res = -i;
+          else {
+            res = vrM.getArgM(i);
+          }
+          break;
+        }
+      if (res >= 0) {
+        if (res == 114514)
+          res = vrM.add(node.getRes());
+        rd = "t3";
+        curB.add(riscL.builder()
+            .op("l" + tp)
+            .rd(rd)
+            .imm(res * 4)
+            .rs1("sp")
+            .build());
+      } else {
+        rd = "a" + (-res);
+      }
+    }
+    if (node.getPtr().getBytes()[0] == '@') {
+      // GLOBAL address
 
+    }
     addr = getPtr(node.getPtr()); // store res into addr “t4”
     // get res as t3
-    curB.add(riscS.builder()
-        .op("s" + tp)
-        .rs2(rd)
-        .imm(0)
-        .rs1(addr)
-        .build());
+    if (addr != null)
+      curB.add(riscS.builder()
+          .op("s" + tp)
+          .rs2(rd)
+          .imm(0)
+          .rs1(addr)
+          .build());
+
   }
 
   @Override
   public void visit(irLoad node) throws error {
+    int offset = chkSp(node.getRes()); // res starts "with” % it's ok
     if (status == true)
       return;
-    int offset = vrM.add(node.getRes()); // res starts "with” % it's ok
-    if (offset == 0) {
-      return;
-    }
+    curB.add(pseudo.builder()
+      .strs(new vector<String>("#Load  "))
+    .build());
     var tp = tBool(node.getTp().equals("i1"));
     var addr = getPtr(node.getPtr()); // store res into addr
     // get res as t3
@@ -523,11 +546,11 @@ public class asmBuilder implements irVisitor {
         // entry storeT, addi to sp
         blck.setLabel(func.getName());
         vrM.setCurB(curB);
-        vrM.storeT();
+        vrM.store(); // size currect
         curB.add(riscRI.builder()
             .op("addi")
             .rd("sp")
-            .imm(-vrM.getSize() * 4)
+            .imm(-(vrM.getSize() / 4 * 16))
             .rs1("sp")
             .build());
       }
@@ -535,9 +558,10 @@ public class asmBuilder implements irVisitor {
       for (irStmt ins : node.getStmts()) {
         ins.accept(this);
       }
-    if(node.getTerminalstmt() != null)
+    if (node.getTerminalstmt() != null)
       node.getTerminalstmt().accept(this);
-    else node.getEndTerm().accept(this);
+    else
+      node.getEndTerm().accept(this);
     if (status == false)
       func.getNodes().add(blck);
   }

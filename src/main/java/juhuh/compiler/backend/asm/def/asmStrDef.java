@@ -9,6 +9,6 @@ public class asmStrDef extends asmVarDef{
   int length;
   @Override
   public String toString() {
-    return label + ":\n  .asciz \"" + value + "\"\n  .size " + label.substring(1) + ", " + length + "\n";
+    return label.substring(1) + ":\n  .asciz \"" + value + "\"\n  .size " + label.substring(1) + ", " + length + "\n";
   }
 }

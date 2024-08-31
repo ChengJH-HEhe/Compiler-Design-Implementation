@@ -64,7 +64,7 @@ public class Main {
             asm.visit(rt);
             System.out.print(asm.getRt().toString());
             {
-                FileWriter writer = new FileWriter("output.s");   
+                FileWriter writer = new FileWriter("test.s");   
                 writer.write(asm.getRt().toString());
                 writer.close();
             }
