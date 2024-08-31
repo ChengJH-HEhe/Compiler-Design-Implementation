@@ -14,6 +14,6 @@ public class riscB extends asmNode{
 
   @Override
   public String toString() {
-    return op + " " + rs1 + ", " + rs2 + " " + label;
+    return op + " " + rs1 + ", " + rs2 + ", " + label;
   }
 }

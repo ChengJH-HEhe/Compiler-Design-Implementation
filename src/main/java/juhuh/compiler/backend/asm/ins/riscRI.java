@@ -14,6 +14,6 @@ public class riscRI extends asmNode{
 
   @Override
   public String toString() {
-    return op + " " + rd + " " + rs1 + " " + imm;
+    return op + " " + rd + ", " + rs1 + ", " + imm;
   }
 }

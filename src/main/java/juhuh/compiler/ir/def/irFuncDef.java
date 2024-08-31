@@ -13,6 +13,7 @@ import juhuh.compiler.util.error.error;
 @lombok.Setter
 public class irFuncDef extends irDefNode {
   String retType, fName;
+  int id;
   int anonyNum;
   vector<String> paratypelist, paravaluelist;
   irBlock entry, ret;

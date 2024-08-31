@@ -9,6 +9,6 @@ public class asmGlobalVarDef extends asmVarDef {
   private int size;
   @Override
   public String toString() {
-    return "  .globl " + name + "\n" + name + ":\n  .word " + size + "\n";
+    return "  .globl " + name + "\n" + name.substring(1) + ":\n  .word " + size + "\n";
   }
 }

@@ -15,15 +15,15 @@ public class asmRoot extends asmNode {
   private vector<asmVarDef> data, rodata;
   @Override 
   public String toString() {
-    String s = "  .section text\n";
+    String s = "  .text\n";
     for(var txt : text) {
       s += txt.toString() + "\n";
     }
-    s += " .section data\n";
+    s += " .section .data\n";
     for(var dat : data) {
       s += dat.toString() + "\n";
     }
-    s += " .section rodata\n";
+    s += " .section .rodata\n";
     for(var rodat : rodata) {
       s += rodat.toString() + "\n";
     }

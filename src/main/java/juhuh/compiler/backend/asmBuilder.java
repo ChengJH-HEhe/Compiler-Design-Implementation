@@ -59,7 +59,7 @@ public class asmBuilder implements irVisitor {
   }
 
   private void visitFunc(irFuncDef node) {
-    curFunc = node;
+    curFunc = node; 
     visit(node.getEntry());
     // entry -= size
     for (var get : node.getBody()) {
@@ -72,6 +72,10 @@ public class asmBuilder implements irVisitor {
   @Override
   public void visit(irFuncDef node) throws error {
     // check self arg, then brief visit first time;
+    func = asmFuncDef.builder()
+        .name(node.getFName())
+        .nodes(new vector<asmBlock>())
+        .build();
     vrM = new VarRegManager();
     // t0~t4 store into the sp + i
     status = true;
@@ -163,13 +167,13 @@ public class asmBuilder implements irVisitor {
       return;
     mem2a(node.getCond(), 0, "b");
     curB.add(pseudo.builder()
-        .strs(new vector<String>("beqz", "t0", "bran.false" + branCount))
+        .strs(new vector<String>("beqz", "t0", ".bran.false" + branCount))
         .build());
     curB.add(riscJ.builder()
         .label(node.getIftrue())
         .build());
     curB.add(pseudo.builder()
-        .strs(new vector<String>("bran.false" + branCount + ":"))
+        .strs(new vector<String>(".bran.false" + branCount + ":"))
         .build());
     curB.add(riscJ.builder()
         .label(node.getIffalse())
@@ -181,14 +185,20 @@ public class asmBuilder implements irVisitor {
   public void visit(irCall node) throws error {
     if (status == true) {
       vrM.argsInc(node.getVal().size());
-      chkSp(node.getRes());
+      if (!node.getRes().equals(""))
+        chkSp(node.getRes());
       return;
     }
-    int res = chkSp(node.getRes());
+    vrM.setCurB(curB);
     vrM.addvec(node.getVal(), node.getType());
     curB.add(pseudo.builder()
         .strs(new vector<String>("call", node.getFunc().getName()))
         .build());
+    if (node.getRes().equals("")) {
+      // call void
+      return;
+    }
+    int res = chkSp(node.getRes());
     // store retval to res
     curB.add(riscS.builder()
         .op("s" + tBool(node.getFunc().getRetType().equals(SemanticChecker.boolType)))
@@ -205,17 +215,33 @@ public class asmBuilder implements irVisitor {
       return;
     var res = chkSp(node.getRes());
     var tmp = getPtr(node.getPtrval());
-    curB.add(riscL.builder()
-        .op("l" + (node.getTp().equals("i1") ? "b" : "w"))
-        .rd("t0")
-        .rs1(tmp)
-        .imm(Integer.parseInt(node.getId1()))
+    // num or t0
+    if (node.getId1().getBytes()[0] != '%')
+      curB.add(pseudo.builder()
+          .strs(new vector<String>("li", "t0", node.getId1()))
+          .build());
+    else
+      mem2a(node.getId1(), 0, "w");
+
+    // tmp += t0; offset
+    curB.add(riscR.builder()
+        .op("add")
+        .rd(tmp)
+        .rs1("t0")
+        .rs2(tmp)
         .build());
-    // store t0 to res
+    // load ptr to t3;
+    curB.add(riscL.builder()
+        .op("lw")
+        .rd("t3")
+        .rs1(tmp)
+        .imm(0)
+        .build());
+    // store t3 to res
     curB.add(riscS.builder()
         .op("s" + (node.getTp().equals("i1") ? "b" : "w"))
-        .rs2("t0")
-        .rs1("t4")
+        .rs2("t3")
+        .rs1("sp")
         .imm(res * 4)
         .build());
   }
@@ -282,10 +308,8 @@ public class asmBuilder implements irVisitor {
             .rs1("t0")
             .rs2("t1")
             .build());
-        curB.add(riscRI.builder()
-            .op("seqz")
-            .rd("t2")
-            .rs1("t2")
+        curB.add(pseudo.builder()
+            .strs(new vector<String>("seqz", "t2", "t2"))
             .build());
         break;
       case "ne":
@@ -295,10 +319,8 @@ public class asmBuilder implements irVisitor {
             .rs1("t0")
             .rs2("t1")
             .build());
-        curB.add(riscRI.builder()
-            .op("snez")
-            .rd("t2")
-            .rs1("t2")
+        curB.add(pseudo.builder()
+            .strs(new vector<String>("snez", "t2", "t2"))
             .build());
         break;
     }
@@ -352,11 +374,14 @@ public class asmBuilder implements irVisitor {
           .rs1("sp")
           .build());
     curB.add(riscRI.builder()
+        .op("addi")
         .rd("sp")
-        .imm(sz)
+        .imm(vrM.getSize() * 4)
         .rs1("sp")
         .build());
-    curB.add(pseudo.builder().strs(new vector<>("ret")).build());
+    curB.add(pseudo.builder()
+        .strs(new vector<String>("ret   "))
+        .build());
   }
 
   @Override
@@ -368,12 +393,12 @@ public class asmBuilder implements irVisitor {
     // load cond
     mem2a(node.getCond(), 0, "b");
     // branch
-    mem2a(node.getVal1(), 1, tBool(node.getTp1().equals("i1")));
-    mem2a(node.getVal2(), 2, tBool(node.getTp2().equals("i1")));
+
     curB.add(pseudo.builder()
-        .strs(new vector<String>("beqz", "t0", "bran.false" + branCount))
+        .strs(new vector<String>("beqz", "t0", ".bran.false" + branCount))
         .build());
     // store a1 -> res
+    mem2a(node.getVal1(), 1, tBool(node.getTp1().equals("i1")));
     curB.add(riscS.builder()
         .op("s" + tBool(node.getTp1().equals("i1")))
         .rs2("t1")
@@ -381,22 +406,23 @@ public class asmBuilder implements irVisitor {
         .rs1("sp")
         .build());
     curB.add(pseudo.builder()
-        .strs(new vector<String>("j", "bran.end" + branCount))
+        .strs(new vector<String>("j", ".bran.end" + branCount))
         .build());
     curB.add(pseudo.builder()
-        .strs(new vector<String>("bran.false" + branCount + ":"))
+        .strs(new vector<String>(".bran.false" + branCount + ":"))
         .build());
+    mem2a(node.getVal2(), 1, tBool(node.getTp2().equals("i1")));
     curB.add(riscS.builder()
         .op("s" + tBool(node.getTp1().equals("i1")))
-        .rs2("t2")
+        .rs2("t1")
         .imm(res * 4)
         .rs1("sp")
         .build());
     curB.add(pseudo.builder()
-        .strs(new vector<String>("j", "bran.end" + branCount))
+        .strs(new vector<String>("j", ".bran.end" + branCount))
         .build());
     curB.add(pseudo.builder()
-        .strs(new vector<String>("bran.end" + branCount + ":"))
+        .strs(new vector<String>(".bran.end" + branCount + ":"))
         .build());
     ++branCount;
   }
@@ -408,7 +434,7 @@ public class asmBuilder implements irVisitor {
           .strs(new vector<String>("la", "t4", name.substring(1)))
           .build());
     } else {
-      curB.add(riscL.builder()
+      curB.add(riscRI.builder()
           .rd("t4")
           .op("addi")
           .imm(vrM.add(name) * 4)
@@ -443,7 +469,7 @@ public class asmBuilder implements irVisitor {
       curB.add(riscL.builder()
           .op("l" + tp)
           .rd(rd)
-          .imm(res)
+          .imm(res * 4)
           .rs1("sp")
           .build());
     } else {
@@ -480,7 +506,7 @@ public class asmBuilder implements irVisitor {
     curB.add(riscS.builder()
         .op("l" + tp)
         .rs2("t3")
-        .imm(offset)
+        .imm(offset * 4)
         .rs1("sp")
         .build());
   }
@@ -495,16 +521,23 @@ public class asmBuilder implements irVisitor {
     if (status == false)
       if (node.getLabel().equals("entry")) {
         // entry storeT, addi to sp
+        blck.setLabel(func.getName());
+        vrM.setCurB(curB);
         vrM.storeT();
         curB.add(riscRI.builder()
+            .op("addi")
             .rd("sp")
-            .imm(-vrM.getSize())
+            .imm(-vrM.getSize() * 4)
             .rs1("sp")
             .build());
       }
-    for (irStmt ins : node.getStmts()) {
-      ins.accept(this);
-    }
+    if (node.getStmts() != null)
+      for (irStmt ins : node.getStmts()) {
+        ins.accept(this);
+      }
+    if(node.getTerminalstmt() != null)
+      node.getTerminalstmt().accept(this);
+    else node.getEndTerm().accept(this);
     if (status == false)
       func.getNodes().add(blck);
   }

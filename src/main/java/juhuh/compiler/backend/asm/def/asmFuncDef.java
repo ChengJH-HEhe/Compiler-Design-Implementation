@@ -1,5 +1,6 @@
 package juhuh.compiler.backend.asm.def;
 
+import juhuh.compiler.backend.asm.asmBlock;
 import juhuh.compiler.backend.asm.asmNode;
 import juhuh.compiler.util.vector;
 
@@ -9,12 +10,12 @@ import juhuh.compiler.util.vector;
 
 public class asmFuncDef extends asmNode{
   private String name;
-  private vector<asmNode> nodes;
+  private vector<asmBlock> nodes;
   @Override
   public String toString() {
     String s = "";
-    s += "  .globl " + name + "\n" + name + ":\n";
-    // TODO entry changes name to funcname
+    s += "  .globl " + name + "\n";
+    // entry changes name to funcname
     for (asmNode node : nodes) {
       s += node.toString() + "\n";
     }

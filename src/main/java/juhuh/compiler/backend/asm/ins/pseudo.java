@@ -11,8 +11,14 @@ public class pseudo extends asmNode{
   @Override
   public String toString() {
     String s = "";
+    boolean first = false;
     for(var str : strs)
-      s += str + " ";
-    return s + "\n";
+      if(first)
+        s += str + ", ";
+      else {
+        first = true;
+        s += str + "  ";
+      }
+    return s.substring(0, s.length()-2) + "\n";
   }
 }

@@ -3,19 +3,20 @@ package juhuh.compiler.backend;
 import java.util.HashMap;
 
 import juhuh.compiler.backend.asm.asmBlock;
-import juhuh.compiler.backend.asm.asmNode;
 import juhuh.compiler.backend.asm.ins.*;
 import juhuh.compiler.util.vector;
 
 public class VarRegManager {
   // alloc %.(ptr) or %num = (val) all to sp + id * 4
   // manaager for a
-  private HashMap<String, Integer> Var2Id;
+  private HashMap<String, Integer> Var2Id = new HashMap<String, Integer>();
   private int size = 0, maxArgs = 0; // t0~t4
   private asmBlock curB;
   // local start with num = : ; start with alpha, alloca, first scan, add all
   // first add return -1 for func sp member check
-
+  public void setCurB(asmBlock B) {
+    curB = B;
+  }
   public int add(String var) {
     if (var.getBytes()[0] != '%')
       return 0;
@@ -27,12 +28,12 @@ public class VarRegManager {
     }
   }
   public int getArgM(int i){
-    return size + maxArgs + i - 8;
+    return size + i - 8;
   }
 
   // 16 multiply
   public int getSize() {
-    maxArgs += ((size + maxArgs) % 4 == 0 ? 0 : 4 - (size + maxArgs)%4);
+    maxArgs += ((size + maxArgs) % 4 == 0 ? 0 : (4 - (size + maxArgs)%4));
     return size + maxArgs;
   }
 
@@ -45,7 +46,7 @@ public class VarRegManager {
       curB.add(riscS.builder()
           .op("sw")
           .rs2("t" + i)
-          .imm((-i) * 4)
+          .imm((-(i+1)) * 4)
           .rs1("sp")
           .build());
     }
@@ -86,8 +87,7 @@ public class VarRegManager {
 
   // t0-6 loop %7 int is the reg id
   // call add args, return the vecIns add before call
-  public vector<asmNode> addvec(vector<String> varArr, vector<String> vartype) {
-    vector<asmNode> vec = new vector<asmNode>();
+  public void addvec(vector<String> varArr, vector<String> vartype) {
     for (int curId = 0; curId < varArr.size(); ++curId) {
       var arg = varArr.get(curId);
       String tmpvar = "t3";
@@ -97,13 +97,13 @@ public class VarRegManager {
       if (arg.getBytes()[0] == '%' || arg.getBytes()[0] == '@') {
         ptr2reg(arg, tmpvar, vartype.get(curId).equals("i1") ? "lb" : "lw");
       } else {
-        vec.add(pseudo.builder()
+        curB.add(pseudo.builder()
             .strs(new vector<String>("li", tmpvar, arg))
             .build());
       }
       if (curId >= 8) {
         // store tmpvar to sp + (curId - 8) * 4
-        vec.add(riscS.builder()
+        curB.add(riscS.builder()
             .op(vartype.get(curId).equals("i1") ? "sb" : "sw")
             .rs2(tmpvar)
             .imm((curId - 8) * 4)
@@ -111,7 +111,6 @@ public class VarRegManager {
             .build());
       }
     }
-    return vec;
   }
 
   // callee do nothing knows the args & the sp+i

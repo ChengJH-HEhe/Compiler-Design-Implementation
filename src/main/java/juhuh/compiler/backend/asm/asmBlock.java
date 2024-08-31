@@ -14,9 +14,9 @@ public class asmBlock extends asmNode {
   }
   @Override
   public String toString() {
-    String s = ".globl " + label + "\n .type @function\n" + label + ":\n";
+    String s = label + ":\n";
     for (asmNode node : nodes) {
-      s += node.toString() + "\n";
+      s += "  " + node.toString() + "\n";
     }
     return s;
   }
