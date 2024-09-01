@@ -303,7 +303,7 @@ public class SemanticChecker implements astVisitor<String> {
         node.setType(method);
          // but name is changing class_name old / 
         node.getType().setName(newName);
-        System.err.println(method.getName() + " " + newName);
+        // System.err.println(method.getName() + " " + newName);
         return null;
       }
     }

@@ -73,6 +73,7 @@ public class asmBuilder implements irVisitor {
     curB.add(pseudo.builder()
         .strs(new vector<String>("la", reg, label))
         .build());
+    if(label.charAt(0) != '.')
     curB.add(riscL.builder()
         .op(type)
         .rd(reg)
@@ -154,12 +155,7 @@ public class asmBuilder implements irVisitor {
     int res = vrM.add(node.getRes());
     vrM.add(node.getRes() + ".RESULT");
     if (status == false) {
-      curB.add(riscRI.builder()
-          .op("addi")
-          .rd("t0")
-          .imm(res * 4 + 4)
-          .rs1("sp")
-          .build());
+      curB.adS("t0", "sp", res * 4 + 4);
       curB.add(riscS.builder()
           .op("sw")
           .rs2("t0")
@@ -175,7 +171,8 @@ public class asmBuilder implements irVisitor {
   public void mem2a(String name, int num, String tp) {
     if (name.getBytes()[0] != '%' && name.getBytes()[0] != '@') {
       curB.add(pseudo.builder()
-          .strs(new vector<String>("li", "t" + num, name))
+          .strs(new vector<String>("li", "t" + num, name.equals("false") ? "0" : name.equals("true") ? "1" :
+           name.equals("null")?"0":name))
           .build());
     } else if (name.charAt(0) == '%') {
       int op1 = vrM.add(name);
@@ -188,7 +185,8 @@ public class asmBuilder implements irVisitor {
   public void mem2aS(String name, String num, String tp) {
     if (name.getBytes()[0] != '%' && name.getBytes()[0] != '@') {
       curB.add(pseudo.builder()
-          .strs(new vector<String>("li", num, name))
+          .strs(new vector<String>("li", "t" + num, name.equals("false") ? "0" : name.equals("true") ? "1" :
+           name.equals("null")?"0":name))
           .build());
     } else if (name.charAt(0) == '%') {
       int op1 = vrM.add(name);
@@ -220,12 +218,18 @@ public class asmBuilder implements irVisitor {
           .rs2("t1")
           .build());
     } else {
-      curB.add(riscR.builder()
+      var cmd = riscR.builder()
           .op(node.getOp())
           .rd("t2")
           .rs1("t0")
           .rs2("t1")
-          .build());
+          .build();
+      if (node.getOp().equals("shl")) {
+        cmd.setOp("sll");
+      } else if (node.getOp().equals("ashr")) {
+        cmd.setOp("sra");
+      }
+      curB.add(cmd);
     }
     // store to res
     curB.add(riscS.builder()
@@ -234,7 +238,6 @@ public class asmBuilder implements irVisitor {
         .imm(res * 4)
         .rs1("sp")
         .build());
-
   }
 
   @Override
@@ -294,7 +297,8 @@ public class asmBuilder implements irVisitor {
         mem2aS(arg, tmpvar, vartype.get(curId).equals("i1") ? "b" : "w");
       } else {
         curB.add(pseudo.builder()
-            .strs(new vector<String>("li", tmpvar, arg.equals("false") ? "0" : arg.equals("true") ? "1" : arg))
+            .strs(new vector<String>("li", tmpvar, arg.equals("false") ? "0" : arg.equals("true") ? "1" : 
+            arg.equals("null")?"0":arg))
             .build());
       }
       if (curId >= 8) {
@@ -513,13 +517,8 @@ public class asmBuilder implements irVisitor {
           .rs1("sp")
           .build());
     }
-    
-    curB.add(riscRI.builder()
-        .op("addi")
-        .rd("sp")
-        .imm(vrM.getSize() * 4)
-        .rs1("sp")
-        .build());
+
+    curB.adS("sp", "sp", vrM.getSize() * 4);
     curB.add(pseudo.builder()
         .strs(new vector<String>("ret   "))
         .build());
@@ -610,9 +609,13 @@ public class asmBuilder implements irVisitor {
       rd = "t0";
       curB.add(pseudo.builder()
           .strs(new vector<String>("li", rd,
-              node.getRes().equals("false") ? "0" : node.getRes().equals("true") ? "1" : node.getRes()))
+              node.getRes().equals("false") ? "0" : node.getRes().equals("true") ? "1" : node.getRes().equals("null")?"0":node.getRes()))
           .build());
-    }
+    } else if(node.getRes().charAt(0) == '@') {
+      // global str
+      rd = "t0";
+      global2ValReg(node.getRes().substring(1), rd, "l" + tp);
+    } else
     if (rd == null) {
       for (int i = 0; i < curFunc.getParavaluelist().size(); ++i)
         if (node.getRes().equals(curFunc.getParavaluelist().get(i))) {
@@ -695,16 +698,11 @@ public class asmBuilder implements irVisitor {
     curB = blck;
     if (status == false)
       if (node.getLabel().equals("entry")) {
-        // entry storeT, addi to sp
+        // entry storeT
         blck.setLabel(func.getName());
         vrM.setCurB(curB);
         vrM.store(); // size currect
-        curB.add(riscRI.builder()
-            .op("addi")
-            .rd("sp")
-            .imm(-(vrM.getSize() / 4 * 16))
-            .rs1("sp")
-            .build());
+        curB.adS("sp", "sp", -(vrM.getSize() / 4 * 16));
       }
     if (node.getStmts() != null)
       for (irStmt ins : node.getStmts()) {

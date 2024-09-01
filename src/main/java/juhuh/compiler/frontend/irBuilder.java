@@ -492,7 +492,7 @@ public class irBuilder implements astVisitor<irNode> {
       irFuncDef result = (irFuncDef) method.accept(this);
       result.setFName(node.getInfo().getName() + "." + result.getFName());
       cls.getFuncDefs().add(result);
-      System.err.println(result.getFName());
+      // System.err.println(result.getFName());
     }
     exit();
     return cls;
