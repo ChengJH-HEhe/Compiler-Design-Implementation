@@ -143,12 +143,21 @@ public class asmBuilder implements irVisitor {
     mem2a(node.getOp1(), 0, tp);
     mem2a(node.getOp2(), 1, tp);
     // calc t0 t1 to t2
-    curB.add(riscR.builder()
-        .op(node.getOp())
-        .rd("t2")
-        .rs1("t0")
-        .rs2("t1")
-        .build());
+    if(node.getOp().equals("sdiv") || node.getOp().equals("srem")) {
+      curB.add(riscR.builder()
+          .op(node.getOp().substring(1))
+          .rd("t2")
+          .rs1("t0")
+          .rs2("t1")
+          .build());
+    } else {
+      curB.add(riscR.builder()
+          .op(node.getOp())
+          .rd("t2")
+          .rs1("t0")
+          .rs2("t1")
+          .build());
+    }
     // store to res
     curB.add(riscS.builder()
         .op("s" + tp)
@@ -192,14 +201,14 @@ public class asmBuilder implements irVisitor {
     .build());
     vrM.setCurB(curB);
     // maxargs , maxargs + 7
-    for(int i = 0; i < 8; ++i) {
-      curB.add(riscS.builder()
-        .op("sw")
-        .rs2("a" + i)
-        .imm((vrM.getMaxargs() + i) * 4)
-        .rs1("sp")
-      .build());
-    }
+    // for(int i = 0; i < 8; ++i) {
+    //   curB.add(riscS.builder()
+    //     .op("sw")
+    //     .rs2("a" + i)
+    //     .imm((vrM.getMaxargs() + i) * 4)
+    //     .rs1("sp")
+    //   .build());
+    // }
     vrM.addvec(node.getVal(), node.getType());
 
     curB.add(pseudo.builder()
@@ -217,23 +226,23 @@ public class asmBuilder implements irVisitor {
           .rs1("sp")
           .build());
     }
-    for(int i = 0; i < 8; ++i) {
-      curB.add(riscL.builder()
-        .op("lw")
-        .rd("a" + i)
-        .imm((vrM.getMaxargs() + i) * 4)
-        .rs1("sp")
-      .build());
-    }
+    // for(int i = 0; i < 8; ++i) {
+    //   curB.add(riscL.builder()
+    //     .op("lw")
+    //     .rd("a" + i)
+    //     .imm((vrM.getMaxargs() + i) * 4)
+    //     .rs1("sp")
+    //   .build());
+    // }
 
     // store args
   }
 
   @Override
   public void visit(irGetElement node) throws error {
+    var res = chkSp(node.getRes());
     if (status == true)
       return;
-    var res = chkSp(node.getRes());
     var tmp = getPtr(node.getPtrval());
     // num or t0
     if (node.getId1().getBytes()[0] != '%')
@@ -347,7 +356,7 @@ public class asmBuilder implements irVisitor {
 
     // store to res
     curB.add(riscS.builder()
-        .op("s" + tBool(node.getTp().equals("i1")))
+        .op("sb")
         .rs2("t2")
         .imm(res * 4)
         .rs1("sp")
@@ -484,9 +493,10 @@ public class asmBuilder implements irVisitor {
     String rd = null;
     if (node.getRes().getBytes()[0] != '%') {
       // imm
-      rd = "a0";
+      rd = "t0";
       curB.add(pseudo.builder()
-          .strs(new vector<String>("li", rd, node.getRes()))
+          .strs(new vector<String>("li", rd, node.getRes().equals("false")?"0":
+          node.getRes().equals("true")?"1":node.getRes()))
           .build());
     }
     if (rd == null) {
@@ -513,10 +523,7 @@ public class asmBuilder implements irVisitor {
         rd = "a" + (-res);
       }
     }
-    if (node.getPtr().getBytes()[0] == '@') {
-      // GLOBAL address
 
-    }
     addr = getPtr(node.getPtr()); // store res into addr “t4”
     // get res as t3
     if (addr != null)
@@ -526,7 +533,6 @@ public class asmBuilder implements irVisitor {
           .imm(0)
           .rs1(addr)
           .build());
-
   }
 
   @Override

@@ -94,12 +94,18 @@ public class VarRegManager {
       curB.add(pseudo.builder()
           .strs(new vector<String>("la", "t4", name.substring(1)))
           .build());
-      curB.add(riscL.builder()
-          .op(tp)
-          .rd(reg)
-          .imm(0)
-          .rs1("t4")
+      if(name.getBytes()[1] == '.')
+        curB.add(pseudo.builder()
+            .strs(new vector<String>("mv", reg, "t4"))
           .build());
+      else {
+        curB.add(riscL.builder()
+            .op(tp)
+            .rd(reg)
+            .imm(0)
+            .rs1("t4")        
+        .build());
+      }
     }
   }
 
