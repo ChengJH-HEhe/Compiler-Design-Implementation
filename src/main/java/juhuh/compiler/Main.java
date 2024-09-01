@@ -55,19 +55,19 @@ public class Main {
             //System.err.println("Sema successfully");
             irBuilder IR = new irBuilder(origin);
             irRoot rt = (irRoot) IR.visit(ASTRoot);
-            {
-                FileWriter writer = new FileWriter("output.ll");   
-                writer.write(rt.toString());
-                writer.close();
-            }
+            // {
+            //     FileWriter writer = new FileWriter("output.ll");   
+            //     writer.write(rt.toString());
+            //     writer.close();
+            // }
             asmBuilder asm = new asmBuilder();
             asm.visit(rt);
             System.out.print(asm.getRt().toString());
-            {
-                FileWriter writer = new FileWriter("test.s");   
-                writer.write(asm.getRt().toString());
-                writer.close();
-            }
+            // {
+            //     FileWriter writer = new FileWriter("test.s");   
+            //     writer.write(asm.getRt().toString());
+            //     writer.close();
+            // }
             // new RegAlloc(asmF).work();
             // new AsmPrinter(asmF, System.out).print();
         } 
