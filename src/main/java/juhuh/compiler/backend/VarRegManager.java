@@ -23,7 +23,7 @@ public class VarRegManager {
     if (var.getBytes()[0] != '%')
       return 0;
     if (Var2Id.containsKey(var))
-      return Var2Id.get(var) + maxArgs;
+      return Var2Id.get(var) + maxArgs + 8;
     {
       Var2Id.put(var, (size++));
       return 0;
@@ -35,13 +35,17 @@ public class VarRegManager {
   }
 
   public int getCurSize() {
-    return size + maxArgs;
+    return size + maxArgs + 8;
   }
 
   // 16 multiply
   public int getSize() {
     maxArgs += ((size + maxArgs) % 4 == 0 ? 0 : (4 - (size + maxArgs) % 4));
-    return size + maxArgs;
+    return size + maxArgs + 8;
+  }
+
+  public int getMaxargs() {
+    return maxArgs;
   }
 
   // difference? call: caller; define: callee
@@ -59,7 +63,7 @@ public class VarRegManager {
     }
     curB.add(riscS.builder().op("sw")
         .rs2("ra")
-        .imm((-(1)) * 4)
+        .imm((-1) * 4)
         .rs1("sp")
         .build());
     size += 6;

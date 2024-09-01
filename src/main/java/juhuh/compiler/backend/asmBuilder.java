@@ -186,26 +186,46 @@ public class asmBuilder implements irVisitor {
         chkSp(node.getRes());
       return;
     }
+    // TODO BUG: a0~a7 preserved by call node
     curB.add(pseudo.builder()
       .strs(new vector<String>("#Call  "))
     .build());
     vrM.setCurB(curB);
+    // maxargs , maxargs + 7
+    for(int i = 0; i < 8; ++i) {
+      curB.add(riscS.builder()
+        .op("sw")
+        .rs2("a" + i)
+        .imm((vrM.getMaxargs() + i) * 4)
+        .rs1("sp")
+      .build());
+    }
     vrM.addvec(node.getVal(), node.getType());
+
     curB.add(pseudo.builder()
         .strs(new vector<String>("call", node.getFunc().getName()))
         .build());
-    if (node.getRes().equals("")) {
+    
+    if (!node.getRes().equals("")) {
       // call void
-      return;
+      int res = chkSp(node.getRes());
+      // store retval to res
+      curB.add(riscS.builder()
+          .op("s" + tBool(node.getFunc().getRetType().equals(SemanticChecker.boolType)))
+          .rs2("a0")
+          .imm(res * 4)
+          .rs1("sp")
+          .build());
     }
-    int res = chkSp(node.getRes());
-    // store retval to res
-    curB.add(riscS.builder()
-        .op("s" + tBool(node.getFunc().getRetType().equals(SemanticChecker.boolType)))
-        .rs2("a0")
-        .imm(res * 4)
+    for(int i = 0; i < 8; ++i) {
+      curB.add(riscL.builder()
+        .op("lw")
+        .rd("a" + i)
+        .imm((vrM.getMaxargs() + i) * 4)
         .rs1("sp")
-        .build());
+      .build());
+    }
+
     // store args
   }
 
@@ -527,7 +547,7 @@ public class asmBuilder implements irVisitor {
         .rs1(addr)
         .build());
     curB.add(riscS.builder()
-        .op("l" + tp)
+        .op("s" + tp)
         .rs2("t3")
         .imm(offset * 4)
         .rs1("sp")
