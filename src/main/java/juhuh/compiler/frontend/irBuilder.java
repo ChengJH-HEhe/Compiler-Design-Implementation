@@ -573,7 +573,7 @@ public class irBuilder implements astVisitor<irNode> {
   public irNode visit(astConstrNode node) throws error {
     // a::a(ptr this) another funcdef
     enter(new Scope(curS, null, ScopeType.FUNC), curS.depth + 1, curS.sonN++);
-    // TODO change1 constructor name
+    // change1 constructor name
     curFunc = irFuncDef.builder()
         .fName(node.getClassName() + "." + node.getClassName()) 
         .retType("void")

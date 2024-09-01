@@ -34,7 +34,7 @@ public class ClassInfo extends Info {
     if(cstr != null) {
       this.funcs.put(name, new FuncInfo(name + "." + name, SemanticChecker.voidType));
     }
-    size = vars.size(); // TODO size*4
+    size = vars.size(); // size*4
   }
   public ClassInfo(String name, vector<FuncInfo> funcs) {
     super(name);

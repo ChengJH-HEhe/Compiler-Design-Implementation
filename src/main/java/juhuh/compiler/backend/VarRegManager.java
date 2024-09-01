@@ -18,6 +18,7 @@ public class VarRegManager {
   public void setCurB(asmBlock B) {
     curB = B;
   }
+
   public int add(String var) {
     if (var.getBytes()[0] != '%')
       return 0;
@@ -30,7 +31,7 @@ public class VarRegManager {
   }
 
   public int getArgM(int i) {
-    return size + i - 8;
+    return i - 8;
   }
 
   public int getCurSize() {
@@ -89,53 +90,33 @@ public class VarRegManager {
           .imm(add(name) * 4)
           .rs1("sp")
           .build());
+      curB.add(riscL.builder()
+          .op(tp)
+          .rd(reg)
+          .imm(0)
+          .rs1(reg)
+          .build());
     } else if (name.getBytes()[0] == '@') {
       curB.add(pseudo.builder()
           .strs(new vector<String>("la", "t4", name.substring(1)))
           .build());
-      if(name.getBytes()[1] == '.')
+      if (name.getBytes()[1] == '.')
         curB.add(pseudo.builder()
             .strs(new vector<String>("mv", reg, "t4"))
-          .build());
+            .build());
       else {
         curB.add(riscL.builder()
             .op(tp)
             .rd(reg)
             .imm(0)
-            .rs1("t4")        
-        .build());
+            .rs1("t4")
+            .build());
       }
     }
   }
 
   // t0-6 loop %7 int is the reg id
-  // call add args, return the vecIns add before call
-  public void addvec(vector<String> varArr, vector<String> vartype) {
-    for (int curId = 0; curId < varArr.size(); ++curId) {
-      var arg = varArr.get(curId);
-      String tmpvar = "t3";
-      if (curId < 8)
-        tmpvar = "a" + curId;
-      // load to the tmpvar
-      if (arg.getBytes()[0] == '%' || arg.getBytes()[0] == '@') {
-        ptr2reg(arg, tmpvar, vartype.get(curId).equals("i1") ? "lb" : "lw");
-
-      } else {
-        curB.add(pseudo.builder()
-            .strs(new vector<String>("li", tmpvar, arg))
-            .build());
-      }
-      if (curId >= 8) {
-        // store tmpvar to sp + (curId - 8) * 4
-        curB.add(riscS.builder()
-            .op(vartype.get(curId).equals("i1") ? "sb" : "sw")
-            .rs2(tmpvar)
-            .imm((curId - 8) * 4)
-            .rs1("sp")
-            .build());
-      }
-    }
-  }
+  // call add args, add before call
 
   // callee do nothing knows the args & the sp+i
 

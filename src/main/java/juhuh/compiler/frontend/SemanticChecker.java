@@ -187,7 +187,7 @@ public class SemanticChecker implements astVisitor<String> {
   public String visit(astCallExprNode node) throws error {
     // funcscope name argstype
     // func -> funcinfo
-    // TODO node.getFunc add classname.
+    // node.getFunc add classname.
     node.getFunc().accept(this);
     // System.err.println("ln157" + node.getFunc());
     var funcinfo = node.getFunc().getType();
@@ -291,8 +291,8 @@ public class SemanticChecker implements astVisitor<String> {
         node.setLValue(true);
         return null;
       }
-      // TODO change method name only in scope memberexpr has redeclared
-      // TODO method
+      // change method name only in scope memberexpr has redeclared
+      // method
       FuncInfo tmpp = (classinfo.getFuncs().get(node.getMember()));
       if (tmpp == null) {
         throw new error("Undefined Identifier");

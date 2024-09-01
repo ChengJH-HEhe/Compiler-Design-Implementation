@@ -37,7 +37,7 @@ public class irFuncDef extends irDefNode {
         {
           curBlock.add(terminalstmt);
           curBlock.setEndTerm(irJump.builder()
-          .dest("return")
+          .dest("return" + id)
           .build());
         }
       } else {

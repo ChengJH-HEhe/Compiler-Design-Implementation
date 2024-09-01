@@ -14,8 +14,11 @@ public class riscL extends asmNode{
 
   @Override
   public String toString() {
-    if(imm == -1)
-      return op + " " + rd + ", " + rs1;
+    // if(imm > 2047 || imm < -2048) {
+    //   return "li" + " " + "t6" + ", " + imm + "\n  " +
+    //       "add" + " " + "t6" + ", " + rs1 + ", " + "t6\n" +
+    //       op + " " + rd + ", " + "0(t6)";
+    // }
     return op + " " + rd + ", " + imm + "(" + rs1 + ")";
   }
 }

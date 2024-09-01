@@ -8,7 +8,7 @@ import juhuh.compiler.ir.def.*;
 import juhuh.compiler.util.error.error;
 
 public interface irVisitor {
-  // TODO add remaining instruction e.g. icmp 
+  // add remaining instruction e.g. icmp 
   public void visit(irNode node) throws error;
   public void visit(irRoot node) throws error;
 
