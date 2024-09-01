@@ -1,6 +1,5 @@
 package juhuh.compiler;
 
-import java.io.FileWriter;
 
 // import java.io.FileInputStream;
 // import java.io.InputStream;
@@ -72,7 +71,7 @@ public class Main {
             // new AsmPrinter(asmF, System.out).print();
         } 
         catch (error er) {
-            System.err.println(er.toString());
+            System.out.println(er.toString());
             System.exit(1);
         }
         System.exit(0);
