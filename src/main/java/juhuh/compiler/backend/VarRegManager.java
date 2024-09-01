@@ -18,7 +18,6 @@ public class VarRegManager {
   public void setCurB(asmBlock B) {
     curB = B;
   }
-
   public int add(String var) {
     if (var.getBytes()[0] != '%')
       return 0;
@@ -120,7 +119,7 @@ public class VarRegManager {
       // load to the tmpvar
       if (arg.getBytes()[0] == '%' || arg.getBytes()[0] == '@') {
         ptr2reg(arg, tmpvar, vartype.get(curId).equals("i1") ? "lb" : "lw");
-        
+
       } else {
         curB.add(pseudo.builder()
             .strs(new vector<String>("li", tmpvar, arg))

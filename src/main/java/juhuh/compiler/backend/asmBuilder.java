@@ -112,8 +112,25 @@ public class asmBuilder implements irVisitor {
 
   @Override
   public void visit(irAlloca node) throws error {
-    vrM.add(node.getRes());
+    int res = vrM.add(node.getRes());
+    vrM.add(node.getRes() + ".RESULT");
+    if(status == false) {
+      curB.add(riscRI.builder()
+        .op("addi")
+        .rd("a0")
+        .imm(res * 4 + 4)
+        .rs1("sp")
+        .build());
+      curB.add(riscS.builder()
+        .op("sw")
+        .rs2("a0")
+        .imm(res * 4)
+        .rs1("sp")
+      .build());
+      
+    }
     // alloca ptr only a address
+
   }
 
   public void mem2a(String name, int num, String tp) {
@@ -240,20 +257,14 @@ public class asmBuilder implements irVisitor {
 
   @Override
   public void visit(irGetElement node) throws error {
+    var res = chkSp(node.getRes());
     if (status == true)
       return;
     // TODO should change neme -> id
-    var res = chkSp(node.getRes());
     curB.add(pseudo.builder()
       .strs(new vector<String>("#getElement"))
     .build());
-    var tmp = getPtr(node.getPtrval()); // 已经是存放sp + tmp 的这个tmp 的指针了
-    curB.add(riscL.builder()
-        .op("lw")
-        .rd(tmp)
-        .imm(0)
-        .rs1(tmp)
-        .build());
+    var tmp = getPtr(node.getPtrval()); // 存放地址寄存器
 
     // t0
     if (node.getId1().getBytes()[0] != '%')
@@ -476,18 +487,22 @@ public class asmBuilder implements irVisitor {
 
   // result in 't4'
   public String getPtr(String name) {
+
+    // problem is global? 
+
     if (name.getBytes()[0] == '@') {
       curB.add(pseudo.builder()
           .strs(new vector<String>("la", "t4", name.substring(1)))
           .build());
     } else {
-      // TODO: get sp variable
-      curB.add(riscRI.builder()
+      // 
+      curB.add(riscL.builder()
+          .op("lw")
           .rd("t4")
-          .op("addi")
           .imm(vrM.add(name) * 4)
           .rs1("sp")
           .build());
+      // t4
     }
     return "t4";
   }
@@ -539,8 +554,7 @@ public class asmBuilder implements irVisitor {
 
     addr = getPtr(node.getPtr()); // store res into addr “t4”
     // get res as t3
-    if (addr != null)
-      curB.add(riscS.builder()
+    curB.add(riscS.builder()
           .op("s" + tp)
           .rs2(rd)
           .imm(0)
