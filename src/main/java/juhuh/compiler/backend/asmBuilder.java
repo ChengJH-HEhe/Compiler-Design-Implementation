@@ -195,7 +195,7 @@ public class asmBuilder implements irVisitor {
         chkSp(node.getRes());
       return;
     }
-    // TODO BUG: a0~a7 preserved by call node
+    // BUG:a0~a7 preserved by call node
     curB.add(pseudo.builder()
       .strs(new vector<String>("#Call  "))
     .build());
@@ -240,35 +240,47 @@ public class asmBuilder implements irVisitor {
 
   @Override
   public void visit(irGetElement node) throws error {
-    var res = chkSp(node.getRes());
     if (status == true)
       return;
-    var tmp = getPtr(node.getPtrval());
-    // num or t0
+    // TODO should change neme -> id
+    var res = chkSp(node.getRes());
+    curB.add(pseudo.builder()
+      .strs(new vector<String>("#getElement"))
+    .build());
+    var tmp = getPtr(node.getPtrval()); // 已经是存放sp + tmp 的这个tmp 的指针了
+    curB.add(riscL.builder()
+        .op("lw")
+        .rd(tmp)
+        .imm(0)
+        .rs1(tmp)
+        .build());
+
+    // t0
     if (node.getId1().getBytes()[0] != '%')
       curB.add(pseudo.builder()
           .strs(new vector<String>("li", "t0", node.getId1()))
           .build());
     else
       mem2a(node.getId1(), 0, "w");
-
-    // tmp += t0; offset
-    curB.add(riscR.builder()
-        .op("add")
-        .rd(tmp)
+    // t0 <<= 2; offset
+    curB.add(riscRI.builder()
+        .op("slli")
+        .rd("t0")
         .rs1("t0")
-        .rs2(tmp)
+        .imm(2)
         .build());
+
+    // tmp += t0
+    curB.add(riscR.builder()
+      .op("add")
+      .rd("t3")
+      .rs1(tmp)
+      .rs2("t0")
+    .build());
     // load ptr to t3;
-    curB.add(riscL.builder()
-        .op("lw")
-        .rd("t3")
-        .rs1(tmp)
-        .imm(0)
-        .build());
     // store t3 to res
     curB.add(riscS.builder()
-        .op("s" + (node.getTp().equals("i1") ? "b" : "w"))
+        .op("sw")
         .rs2("t3")
         .rs1("sp")
         .imm(res * 4)
@@ -469,6 +481,7 @@ public class asmBuilder implements irVisitor {
           .strs(new vector<String>("la", "t4", name.substring(1)))
           .build());
     } else {
+      // TODO: get sp variable
       curB.add(riscRI.builder()
           .rd("t4")
           .op("addi")

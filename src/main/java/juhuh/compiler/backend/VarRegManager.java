@@ -120,6 +120,7 @@ public class VarRegManager {
       // load to the tmpvar
       if (arg.getBytes()[0] == '%' || arg.getBytes()[0] == '@') {
         ptr2reg(arg, tmpvar, vartype.get(curId).equals("i1") ? "lb" : "lw");
+        
       } else {
         curB.add(pseudo.builder()
             .strs(new vector<String>("li", tmpvar, arg))
