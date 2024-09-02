@@ -32,6 +32,7 @@ public class irBuilder implements astVisitor<irNode> {
   // count update
   private int binaryCount = 0, loopCount = 0;
   private int funCount = 0;
+  private boolean defStatus = false;
   // add label String
 
   private void enter(Scope scope, int depth, int selfN) {
@@ -308,6 +309,7 @@ public class irBuilder implements astVisitor<irNode> {
         rt.add(globalvar);
         if ((Def).getUnit() != null) {
           var init = (Def).getUnit().accept(this);
+          curS.setVal(globalvar.getName(), init.toString());
           add(irStore.builder()
               .tp(globalvar.getType())
               .res(init.toString())
@@ -413,6 +415,7 @@ public class irBuilder implements astVisitor<irNode> {
           .res(ptr)
           .tp(tp(para.getType().getInfo()))
           .build());
+      curS.setVal(ptr, "%" + para.getName());
       add(irStore.builder()
           .tp(tp(para.getType().getInfo()))
           .res("%" + para.getName())
@@ -531,6 +534,7 @@ public class irBuilder implements astVisitor<irNode> {
             .res((init).toString())
             .ptr(tmpname)
             .build());
+      curS.setVal(tmpname, (init).toString());
     }
     curS.defineVariable(node.getName(), node.getType().getInfo());
     return null;
@@ -1350,22 +1354,43 @@ public class irBuilder implements astVisitor<irNode> {
     // calc lhs.ptr, calc rhs.val , store to lhs.ptr
     entity res2 = (entity) (node.getRhs()).accept(this);
     entity res1 = (entity) (node.getLhs()).accept(this);
+    curS.setVal(((register) res1).getPtr(), res2.toString());
     add(irStore.builder()
         .tp(tp((typeinfo) node.getLhs().getType()))
         .res(res2.toString())
         .ptr(((register) res1).getPtr())
         .build());
+    
     return register.builder()
         .name(res2.toString())
         .ptr(((register) res1).getPtr())
         .build();
   }
-
+  /*
+   * change atom load -> if value is needed load it's val a = b, b is lvalue 
+   * but doesn't need to load 
+   * block ptr is unique add in funcdef block
+   * TODO add global init a unique func
+   */
+  private void LoadLvalue(register reg) {
+    var tmpS = curS;
+    while(tmpS.parentScope() != gScope)
+      tmpS = tmpS.parentScope();
+    if(defStatus) {
+      tmpS.setVal(reg.getPtr(), reg.getName());
+    } else {
+      reg.setName(tmpS.findVal(reg.getPtr()));
+    }
+  }
   @Override
   public irNode visit(astAtomExprNode node) throws error {
     // use astAtom res to return a const or stringconst (or a funccall x)
     // register ? Lvalue = true
-    // get the ptr where it is pre-located except for this.i
+    /*
+      can't load value for Lvalue in atomexpr
+      when define / assign a ptr defstatus = true  change ptr's reg
+      other times get ptr -> reg directly from map
+    */
     if (node.isLValue()) {
       // Consider (this.)?
       String ptr = curS.getValPtr(node.getValue());
@@ -1384,7 +1409,6 @@ public class irBuilder implements astVisitor<irNode> {
             .build();
         add(gep);
         var resul1 = curFunc.tmprename();
-        reg.setName(curFunc.tmprename());
         var gep1 = irGetElement.builder()
             .res(resul1)
             .tp(basetp((typeinfo) node.getType()))
@@ -1394,15 +1418,8 @@ public class irBuilder implements astVisitor<irNode> {
             .build();
         reg.setPtr(resul1);
         add(gep1);
-      } else {
-        reg.setName(curFunc.tmprename());
-      }
-
-      add(irLoad.builder()
-          .res(reg.getName())
-          .tp(tp((typeinfo) node.getType()))
-          .ptr(reg.getPtr())
-          .build());
+      } 
+      LoadLvalue(reg);
       return reg;
     } else {
       if (node.getType().equals(SemanticChecker.thisType)) {
