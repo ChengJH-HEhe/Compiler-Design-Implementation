@@ -509,14 +509,14 @@ public class asmBuilder implements irVisitor {
         .rs1("sp")
         .build());
 
-    for (int i = 1; i <= 5; ++i) {
-      curB.add(riscL.builder()
-          .op("lw")
-          .rd("t" + i)
-          .imm((sz - i - 1) * 4)
-          .rs1("sp")
-          .build());
-    }
+    // for (int i = 1; i <= 5; ++i) {
+    //   curB.add(riscL.builder()
+    //       .op("lw")
+    //       .rd("t" + i)
+    //       .imm((sz - i - 1) * 4)
+    //       .rs1("sp")
+    //       .build());
+    // }
 
     curB.adS("sp", "sp", vrM.getSize() * 4);
     curB.add(pseudo.builder()
