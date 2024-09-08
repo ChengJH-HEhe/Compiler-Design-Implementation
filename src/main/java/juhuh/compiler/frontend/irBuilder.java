@@ -32,7 +32,6 @@ public class irBuilder implements astVisitor<irNode> {
   // count update
   private int binaryCount = 0, loopCount = 0;
   private int funCount = 0;
-  private boolean defStatus = false;
   // add label String
 
   private void enter(Scope scope, int depth, int selfN) {
@@ -42,6 +41,7 @@ public class irBuilder implements astVisitor<irNode> {
   }
 
   Stack<irIns> termStack;
+  private boolean defStatus = false;
 
   private void exit() {
     curS = curS.parentScope();
@@ -239,6 +239,9 @@ public class irBuilder implements astVisitor<irNode> {
      * 
      */
     this.rt = rt;
+
+    // global init
+    Scope InitScope = new Scope(gScope, null, ScopeType.FUNC);
     // branch, return? curFunc.curBlock not needed
     irFuncDef globalInit = irFuncDef.builder()
         .fName("__init__")
@@ -265,7 +268,6 @@ public class irBuilder implements astVisitor<irNode> {
     astNode mainNode = null;
 
     builtinDef();
-
     for (var def : node.getDefs()) {
       if (def instanceof astFuncDefNode) {
         if (((astFuncDefNode) def).getInfo().getName().equals("main")) {
@@ -285,6 +287,7 @@ public class irBuilder implements astVisitor<irNode> {
         var Def = (astVarDefNode) def;
         var ptrName = curS.setNewVarPtr(Def.getName());
         curFunc = globalInit;
+        enter(InitScope, 1, curS.sonN++);
         irGlobalDef globalvar = null;
         if (!(Def).getType().getInfo().equals(SemanticChecker.intType)
             && !(Def).getType().getInfo().equals(SemanticChecker.boolType)) {
@@ -309,13 +312,16 @@ public class irBuilder implements astVisitor<irNode> {
         rt.add(globalvar);
         if ((Def).getUnit() != null) {
           var init = (Def).getUnit().accept(this);
-          curS.setVal(globalvar.getName(), init.toString());
+          curFunc.curBlock.setVal(globalvar.getName(), init.toString());
           add(irStore.builder()
               .tp(globalvar.getType())
               .res(init.toString())
               .ptr(globalvar.getName())
               .build());
+        } else {
+          curFunc.curBlock.setVal(ptrName, null);
         }
+        exit();
         curS.defineVariable(def.getName(), ((astVarDefNode) def).getType().getInfo());
       }
     }
@@ -415,7 +421,6 @@ public class irBuilder implements astVisitor<irNode> {
           .res(ptr)
           .tp(tp(para.getType().getInfo()))
           .build());
-      curS.setVal(ptr, "%" + para.getName());
       add(irStore.builder()
           .tp(tp(para.getType().getInfo()))
           .res("%" + para.getName())
@@ -528,14 +533,13 @@ public class irBuilder implements astVisitor<irNode> {
     }
     if (node.getUnit() != null) {
       var init = (node.getUnit()).accept(this);
-      if (init != null)
-        add(irStore.builder()
-            .tp(tp(node.getType().getInfo()))
-            .res((init).toString())
-            .ptr(tmpname)
-            .build());
-      curS.setVal(tmpname, (init).toString());
-    }
+      add(irStore.builder()
+          .tp(tp(node.getType().getInfo()))
+          .res((init).toString())
+          .ptr(tmpname)
+          .build());
+      curFunc.curBlock.setVal(tmpname, (init).toString());
+    } 
     curS.defineVariable(node.getName(), node.getType().getInfo());
     return null;
   }
@@ -1091,6 +1095,7 @@ public class irBuilder implements astVisitor<irNode> {
     } else if (node.getOp().equals("Increment") || node.getOp().equals("Decrement")) {
       String resul = curFunc.tmprename(),
           resul1 = curFunc.tmprename();
+      
       add(irBinary.builder()
           .op("add")
           .res(resul)
@@ -1105,6 +1110,7 @@ public class irBuilder implements astVisitor<irNode> {
           .op1(((register) res).getName())
           .op2("1")
           .build());
+      curFunc.curBlock.setVal(((register) res).getPtr(), resul1);
       add(irStore.builder()
           .tp("i32")
           .res(resul1)
@@ -1133,6 +1139,7 @@ public class irBuilder implements astVisitor<irNode> {
         .op1(((register) res).getName())
         .op2("1")
         .build());
+    curFunc.curBlock.setVal(((register) res).getPtr(), resul);
     add(irStore.builder()
         .tp("i32")
         .res(resul)
@@ -1353,8 +1360,12 @@ public class irBuilder implements astVisitor<irNode> {
   public irNode visit(astAssignExprNode node) throws error {
     // calc lhs.ptr, calc rhs.val , store to lhs.ptr
     entity res2 = (entity) (node.getRhs()).accept(this);
+    // only consider a = 1; or a = b + c this.a = 1;
+    if(node.getLhs() instanceof astAtomExprNode) defStatus = true;
     entity res1 = (entity) (node.getLhs()).accept(this);
-    curS.setVal(((register) res1).getPtr(), res2.toString());
+    defStatus = false;
+
+    curFunc.curBlock.setVal(((register) res1).getPtr(), res2.toString());
     add(irStore.builder()
         .tp(tp((typeinfo) node.getLhs().getType()))
         .res(res2.toString())
@@ -1370,17 +1381,32 @@ public class irBuilder implements astVisitor<irNode> {
    * change atom load -> if value is needed load it's val a = b, b is lvalue 
    * but doesn't need to load 
    * block ptr is unique add in funcdef block
-   * TODO add global init a unique func
+   * add global init a unique func, 
    */
-  private void LoadLvalue(register reg) {
-    var tmpS = curS;
-    while(tmpS.parentScope() != gScope)
-      tmpS = tmpS.parentScope();
-    if(defStatus) {
-      tmpS.setVal(reg.getPtr(), reg.getName());
-    } else {
-      reg.setName(tmpS.findVal(reg.getPtr()));
+  private void LoadLvalue(register reg, String tp) {
+    // curB ptr -> reg;
+    // var res = curFunc.curBlock.findVal(reg.getPtr());
+    if(defStatus)
+      return;
+    var name = curFunc.curBlock.findVal(reg.getPtr());
+    if(name != null) {
+      reg.setName(name);
+      return;
     }
+    reg.setName(curFunc.tmprename());
+    add(irLoad.builder()
+        .res(reg.getName())
+        .tp(tp)
+        .ptr(reg.getPtr())
+        .build());
+    curFunc.curBlock.setVal(reg.getPtr(), reg.getName());
+    // if(defStatus) { // % = const
+    //   tmpS.setVal(reg.getPtr(), reg.getName());
+    // } else {
+    //   reg.setName(tmpS.findVal(reg.getPtr()));
+    //   if(reg.getName() == null ) {
+    //   }
+    // }
   }
   @Override
   public irNode visit(astAtomExprNode node) throws error {
@@ -1418,8 +1444,16 @@ public class irBuilder implements astVisitor<irNode> {
             .build();
         reg.setPtr(resul1);
         add(gep1);
+        reg.setName(curFunc.tmprename());
+        add(irLoad.builder()
+            .res(reg.getName())
+            .tp(tp((typeinfo) node.getType()))
+            .ptr(reg.getPtr())
+            .build());
+      } else {
+        // only consider lhs is directly alloca's result
+        LoadLvalue(reg, tp((typeinfo) node.getType()));
       } 
-      LoadLvalue(reg);
       return reg;
     } else {
       if (node.getType().equals(SemanticChecker.thisType)) {
