@@ -1,160 +1,306 @@
-@.str.true = private unnamed_addr constant [5 x i8] c"true\00"
-@.str.false = private unnamed_addr constant [6 x i8] c"false\00"
-@n.0.0 = global i32 0
-@p.0.1 = global i32 0
-@k.0.2 = global i32 0
-@i.0.3 = global i32 0
-@.str.0 = private unnamed_addr constant [4 x i8] c"<< \00"
-@.str.1 = private unnamed_addr constant [2 x i8] c"(\00"
-@.str.2 = private unnamed_addr constant [3 x i8] c") \00"
-@.str.3 = private unnamed_addr constant [2 x i8] c" \00"
-@.str.4 = private unnamed_addr constant [4 x i8] c">> \00"
-%class.string = type {  }
-declare i32 @string.length(ptr %this)
-declare ptr @string.substring(ptr %this, i32 %.int0, i32 %.int1)
-declare i32 @string.parseInt(ptr %this)
-declare i32 @string.ord(ptr %this, i32 %.int0)
-declare i32 @_arr_size(ptr %array)
-declare ptr @_malloc(i32 %size)
-declare ptr @_arr_init(i32 %size)
-declare ptr @_add(ptr %str1, ptr %str2)
-declare i32 @_strcmp(ptr %str1, ptr %str2)
-declare ptr @toString(i32 %i)
-declare void @print(ptr %str)
-declare void @println(ptr %str)
-declare void @printInt(i32 %i)
-declare void @printlnInt(i32 %i)
-declare ptr @getString()
-declare i32 @getInt()
-define void @__init__() {
-entry:
-  br label %return
+  .text
+  .globl __init__
+__init__:
+  sw ra, -4(sp)
+  addi sp, sp, -64
+  j return0
+
+return0:
+  lw ra, 60(sp)
+  addi sp, sp, 64
+  ret   
 
 
-return:
-  ret void
 
-}
-
-define i32 @main() {
-entry:
-  call void @__init__()
-  %ret.val= alloca i32
-  %0 = call i32 @getInt()
-  %1 = load i32, ptr @n.0.0
-  store i32 %0, ptr @n.0.0
-  %2 = call i32 @getInt()
-  %3 = load i32, ptr @p.0.1
-  store i32 %2, ptr @p.0.1
-  %4 = call i32 @getInt()
-  %5 = load i32, ptr @k.0.2
-  store i32 %4, ptr @k.0.2
-  %6 = load i32, ptr @p.0.1
-  %7 = load i32, ptr @k.0.2
-  %8 = sub i32 %6, %7
-  %9 = icmp sgt i32 %8, 1
-  br i1 %9, label %if.then2.0.0, label %if.else2.0.0
+  .globl main
+main:
+  sw ra, -4(sp)
+  addi sp, sp, -144
+  #Call  
+  call  __init__
+  addi t0, sp, 44
+  sw t0, 40(sp)
+  #Call  
+  call  getInt
+  sw a0, 48(sp)
+  #Store  
+  la  t4, n.0.0
+  lw t3, 48(sp)
+  sw t3, 0(t4)
+  #Call  
+  call  getInt
+  sw a0, 52(sp)
+  #Store  
+  la  t4, p.0.1
+  lw t3, 52(sp)
+  sw t3, 0(t4)
+  #Call  
+  call  getInt
+  sw a0, 56(sp)
+  #Store  
+  la  t4, k.0.2
+  lw t3, 56(sp)
+  sw t3, 0(t4)
+  lw t0, 52(sp)
+  lw t1, 56(sp)
+  sub t2, t0, t1
+  sw t2, 60(sp)
+  lw t0, 60(sp)
+  li  t1, 1
+  slt t2, t1, t0
+  sb t2, 64(sp)
+  lb t0, 64(sp)
+  beqz  t0, .false0
+  j if.then2.0.0
+  .false0:
+  j if.else2.0.0
 
 if.then2.0.0:
-  call void @print(ptr @.str.0)
-  br label %if.end2.0.0
+  #Call  
+  # @.str.0
+  la  a0, .str.0
+  call  print
+  j if.end2.0.0
 
 if.else2.0.0:
-  br label %if.end2.0.0
+  j if.end2.0.0
 
 if.end2.0.0:
-  %10 = load i32, ptr @p.0.1
-  %11 = load i32, ptr @k.0.2
-  %12 = sub i32 %10, %11
-  %13 = load i32, ptr @i.0.3
-  store i32 %12, ptr @i.0.3
-  br label %for.cond2.3.0
+  lw t0, 52(sp)
+  lw t1, 56(sp)
+  sub t2, t0, t1
+  sw t2, 68(sp)
+  #Store  
+  la  t4, i.0.3
+  lw t3, 68(sp)
+  sw t3, 0(t4)
+  j for.cond2.3.0
 
 for.cond2.3.0:
-  %14 = load i32, ptr @i.0.3
-  %15 = load i32, ptr @p.0.1
-  %16 = load i32, ptr @k.0.2
-  %17 = add i32 %15, %16
-  %18 = icmp sle i32 %14, %17
-  br i1 %18, label %for.body2.3.0, label %for.end2.3.0
+  lw t0, 52(sp)
+  lw t1, 56(sp)
+  add t2, t0, t1
+  sw t2, 72(sp)
+  lw t0, 68(sp)
+  lw t1, 72(sp)
+  slt t2, t1, t0
+  xori t2, t2, 1
+  sb t2, 76(sp)
+  lb t0, 76(sp)
+  beqz  t0, .false1
+  j for.body2.3.0
+  .false1:
+  j for.end2.3.0
 
 for.body2.3.0:
-  br label %log.lhs1
+  j log.lhs1
 
 log.lhs1:
-  %19 = load i32, ptr @i.0.3
-  %20 = icmp sle i32 1, %19
-  br i1 %20, label %log.rhs1, label %log.end1
+  li  t0, 1
+  lw t1, 68(sp)
+  slt t2, t1, t0
+  xori t2, t2, 1
+  sb t2, 80(sp)
+  lb t0, 80(sp)
+  beqz  t0, .false2
+  j log.rhs1
+  .false2:
+  j log.end1
 
 log.rhs1:
-  %21 = load i32, ptr @i.0.3
-  %22 = load i32, ptr @n.0.0
-  %23 = icmp sle i32 %21, %22
-  br label %log.end1
+  lw t0, 68(sp)
+  lw t1, 48(sp)
+  slt t2, t1, t0
+  xori t2, t2, 1
+  sb t2, 84(sp)
+  j log.end1
 
 log.end1:
-  %24 = select i1 %20, i1 %23, i1 %20
-  br i1 %24, label %if.then4.0.2, label %if.else4.0.2
+  lb t0, 80(sp)
+  beqz  t0, .false3
+  lb t1, 84(sp)
+  sb t1, 88(sp)
+  j  .end3
+  .false3:
+  lb t1, 80(sp)
+  sb t1, 88(sp)
+  j  .end3
+  .end3:
+  lb t0, 88(sp)
+  beqz  t0, .false4
+  j if.then4.0.2
+  .false4:
+  j if.else4.0.2
 
 if.then4.0.2:
-  %25 = load i32, ptr @i.0.3
-  %26 = load i32, ptr @p.0.1
-  %27 = icmp eq i32 %25, %26
-  br i1 %27, label %if.then6.0.3, label %if.else6.0.3
+  lw t0, 68(sp)
+  lw t1, 52(sp)
+  xor t2, t0, t1
+  seqz  t2, t2
+  sb t2, 92(sp)
+  lb t0, 92(sp)
+  beqz  t0, .false5
+  j if.then6.0.3
+  .false5:
+  j if.else6.0.3
 
 if.then6.0.3:
-  call void @print(ptr @.str.1)
-  %28 = load i32, ptr @i.0.3
-  %29 = call ptr @toString(i32 %28)
-  call void @print(ptr %29)
-  call void @print(ptr @.str.2)
-  br label %if.end6.0.3
+  #Call  
+  # @.str.1
+  la  a0, .str.1
+  call  print
+  #Call  
+  # %5
+  lw a0, 68(sp)
+  call  toString
+  sw a0, 96(sp)
+  #Call  
+  # %12
+  lw a0, 96(sp)
+  call  print
+  #Call  
+  # @.str.2
+  la  a0, .str.2
+  call  print
+  j if.end6.0.3
 
 if.else6.0.3:
-  %30 = load i32, ptr @i.0.3
-  call void @printInt(i32 %30)
-  call void @print(ptr @.str.3)
-  br label %if.end6.0.3
+  #Call  
+  # %5
+  lw a0, 68(sp)
+  call  printInt
+  #Call  
+  # @.str.3
+  la  a0, .str.3
+  call  print
+  j if.end6.0.3
 
 if.end6.0.3:
-  br label %if.end4.0.2
+  j if.end4.0.2
 
 if.else4.0.2:
-  br label %if.end4.0.2
+  j if.end4.0.2
 
 if.end4.0.2:
-  br label %for.inc2.3.0
+  j for.inc2.3.0
 
 for.inc2.3.0:
-  %31 = load i32, ptr @i.0.3
-  %32 = add i32 %31, 0
-  %33 = add i32 %31, 1
-  store i32 %33, ptr @i.0.3
-  br label %for.cond2.3.0
+  lw t0, 68(sp)
+  li  t1, 0
+  add t2, t0, t1
+  sw t2, 100(sp)
+  lw t0, 68(sp)
+  li  t1, 1
+  add t2, t0, t1
+  sw t2, 104(sp)
+  #Store  
+  la  t4, i.0.3
+  lw t3, 104(sp)
+  sw t3, 0(t4)
+  j for.cond2.3.0
 
 for.end2.3.0:
-  %34 = load i32, ptr @p.0.1
-  %35 = load i32, ptr @k.0.2
-  %36 = add i32 %34, %35
-  %37 = load i32, ptr @n.0.0
-  %38 = icmp slt i32 %36, %37
-  br i1 %38, label %if.then2.4.4, label %if.else2.4.4
+  lw t0, 52(sp)
+  lw t1, 56(sp)
+  add t2, t0, t1
+  sw t2, 108(sp)
+  lw t0, 108(sp)
+  lw t1, 48(sp)
+  slt t2, t0, t1
+  sb t2, 112(sp)
+  lb t0, 112(sp)
+  beqz  t0, .false6
+  j if.then2.4.4
+  .false6:
+  j if.else2.4.4
 
 if.then2.4.4:
-  call void @print(ptr @.str.4)
-  br label %if.end2.4.4
+  #Call  
+  # @.str.4
+  la  a0, .str.4
+  call  print
+  j if.end2.4.4
 
 if.else2.4.4:
-  br label %if.end2.4.4
+  j if.end2.4.4
 
 if.end2.4.4:
-  store i32 0, ptr %ret.val
-  br label %return
+  #Store  
+  lw t4, 40(sp)
+  li  t0, 0
+  sw t0, 0(t4)
+  j return1
+
+return1:
+  #Load  
+  lw t4, 40(sp)
+  lw t4, 0(t4)
+  sw t4, 116(sp)
+  lw a0, 116(sp)
+  lw ra, 140(sp)
+  addi sp, sp, 144
+  ret   
 
 
-return:
-  %39 = load i32, ptr %ret.val
-  ret i32 %39
 
-}
+ .section .data
+  .globl n.0.0
+  .p2align 2
+n.0.0:
+  .word 0
+.size @n.0.0, 4
+
+  .globl p.0.1
+  .p2align 2
+p.0.1:
+  .word 0
+.size @p.0.1, 4
+
+  .globl k.0.2
+  .p2align 2
+k.0.2:
+  .word 0
+.size @k.0.2, 4
+
+  .globl i.0.3
+  .p2align 2
+i.0.3:
+  .word 0
+.size @i.0.3, 4
+
+ .section .rodata
+.p2align 2
+.str.true:
+  .asciz "true"
+  .size .str.true, 5
+
+.p2align 2
+.str.false:
+  .asciz "false"
+  .size .str.false, 6
+
+.p2align 2
+.str.0:
+  .asciz "<< "
+  .size .str.0, 4
+
+.p2align 2
+.str.1:
+  .asciz "("
+  .size .str.1, 2
+
+.p2align 2
+.str.2:
+  .asciz ") "
+  .size .str.2, 3
+
+.p2align 2
+.str.3:
+  .asciz " "
+  .size .str.3, 2
+
+.p2align 2
+.str.4:
+  .asciz ">> "
+  .size .str.4, 4
 

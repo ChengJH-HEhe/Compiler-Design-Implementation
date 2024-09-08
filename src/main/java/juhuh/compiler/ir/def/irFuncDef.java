@@ -22,7 +22,7 @@ public class irFuncDef extends irDefNode {
   vector<irBlock> body;
 
   public String tmprename() {
-    return "%" + (anonyNum++);
+    return "%_" + (anonyNum++);
   }
 
   public void add(irBlock b) {

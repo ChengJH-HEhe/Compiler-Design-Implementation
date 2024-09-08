@@ -47,20 +47,21 @@ public class VarRegManager {
   public int getMaxargs() {
     return maxArgs;
   }
-
+  // private vector<Integer> t;
   // difference? call: caller; define: callee
   // before call, caller store value to the args place
   // when calling, callee store args to the localptr
   void store() {
     // curT[i] = size + i
-    for (int i = 1; i < 6; ++i) {
-      curB.add(riscS.builder()
-          .op("sw")
-          .rs2("t" + i)
-          .imm((-(i + 1)) * 4)
-          .rs1("sp")
-          .build());
-    }
+
+    // for (int i = 1; i < 6; ++i) {
+    //   curB.add(riscS.builder()
+    //       .op("sw")
+    //       .rs2("t" + i)
+    //       .imm((-(i + 1)) * 4)
+    //       .rs1("sp")
+    //       .build());
+    // }
     curB.add(riscS.builder().op("sw")
         .rs2("ra")
         .imm((-1) * 4)

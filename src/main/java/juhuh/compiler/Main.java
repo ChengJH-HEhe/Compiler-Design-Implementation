@@ -1,6 +1,8 @@
 package juhuh.compiler;
 
 
+import java.io.FileWriter;
+
 // import java.io.FileInputStream;
 // import java.io.InputStream;
 
@@ -53,12 +55,13 @@ public class Main {
             new SemanticChecker(gScope).visit(ASTRoot);
             //System.err.println("Sema successfully");
             irBuilder IR = new irBuilder(origin);
+
             irRoot rt = (irRoot) IR.visit(ASTRoot);
-            // {
-            //     FileWriter writer = new FileWriter("output.ll");   
-            //     writer.write(rt.toString());
-            //     writer.close();
-            // }
+            {
+                FileWriter writer = new FileWriter("output.ll");   
+                writer.write(rt.toString());
+                writer.close();
+            }
             asmBuilder asm = new asmBuilder();
             asm.visit(rt);
             System.out.print(asm.getRt().toString());

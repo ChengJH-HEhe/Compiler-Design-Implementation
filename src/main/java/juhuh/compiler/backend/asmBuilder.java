@@ -121,9 +121,9 @@ public class asmBuilder implements irVisitor {
     status = true;
     visitFunc(node);
     status = false;
-    // TODO entry storeA > 8, store T
+    // entry storeA > 8, store T
     visitFunc(node);
-    // TODO ret resetT value
+    // ret resetT value
     Rt.getText().add(func);
   }
 

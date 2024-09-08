@@ -25,6 +25,7 @@ public class Scope {
   public String loopbr, loopct; // for while
   // scope to manage the rename job
   public int regnum = 0, depth = 0, sonN = 0, selfN = 0;
+  
   public int getRegnum() {
     Scope tmp = this;
     while(tmp.parentScope() != null) tmp = tmp.parentScope();

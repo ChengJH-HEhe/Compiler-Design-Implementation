@@ -1393,7 +1393,9 @@ public class irBuilder implements astVisitor<irNode> {
       reg.setName(name);
       return;
     }
+    // first load
     reg.setName(curFunc.tmprename());
+    curFunc.curBlock.setFirstLoad(reg.getPtr(), reg.getName());
     add(irLoad.builder()
         .res(reg.getName())
         .tp(tp)

@@ -1,7 +1,10 @@
 package juhuh.compiler.ir.stmt;
 
+import java.util.HashMap;
+import java.util.HashSet;
+
 import juhuh.compiler.frontend.irVisitor;
-import juhuh.compiler.ir.ins.irIns;
+import juhuh.compiler.ir.ins.*;
 import juhuh.compiler.util.Scope;
 import juhuh.compiler.util.vector;
 import juhuh.compiler.util.error.error;
@@ -14,6 +17,45 @@ public class irBlock extends irStmt{
   String label; // label & terminalstmt must add;
   Scope scope; // scope.parent == parent.scope -> hold back
   irIns terminalstmt, endTerm;
+  // this-phi -> this'lst-def, this-lst def -> domF's phi 
+  HashMap<String, irPhi> phi; // those phi added first
+  // stack stored in the block? curBlock's new Phi add in the ptr2reg
+  // when exited ptr2reg is exited too
+  private HashMap<String, String> regs; // store the last def
+
+  private HashMap<String, String> ptr2reg; // store the first def
+
+  public void setFirstLoad(String ptr, String reg) {
+    if(ptr2reg == null) 
+      ptr2reg = new HashMap<>();
+    ptr2reg.put(reg, ptr); 
+    // if not DomF, replace it by faBlock's lastDef
+  }
+  public String findFirstLoad(String reg) {
+    if(ptr2reg == null) 
+      ptr2reg = new HashMap<>();
+    if(ptr2reg.containsKey(reg))
+      return ptr2reg.get(reg);
+    else {
+      // find val
+      return null;
+    }
+  }
+  public void setVal(String ptr, String reg) {
+    if(regs == null) 
+      regs = new HashMap<>();
+    regs.put(ptr, reg);
+  }
+  public String findVal(String ptr) {
+    if(regs == null) 
+      regs = new HashMap<>();
+    if(regs.containsKey(ptr))
+      return regs.get(ptr);
+    else {
+      // find val
+      return null;
+    }
+  }
   public void add(irStmt stmt) {
     stmts.add(stmt);
   }

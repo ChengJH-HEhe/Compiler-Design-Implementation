@@ -1,74 +1,46 @@
 /*
 Test Package: Codegen
-Author: 14' Xingyuan Sun
-Time: 2020-02-03
+Author: Pikachu
+Time: 2020-02-02
 Input:
 === input ===
+8
+11 12 1 2 13 14 3 4
 === end ===
 Output:
 === output ===
-(0, 0, 0)
-28716325
-7421636
-9980404
-38464544
-1854392
-(7616, 1666188, -1232986)
-(-508, 4119, 3390)
-(562, 1584, 2144)
-(-920, 768, -524)
-(612, -469, -630)
-
+2
 === end ===
 ExitCode: 0
 InstLimit: -1
-Origin Package: Codegen Pretest-901
+Origin Package: Codeforces 1145A #52445759
 */
-class point {
-	int x;
-	int y;
-	int z;
-	point() {
-		x = 0;
-		y = 0;
-		z = 0;
+int n;
+int[] a = new int[20];
+int jud(int x){
+	int i,j;
+	for(i=0;i<n/x;i++){
+		bool flag=false;
+		for(j=0;j<x-1;j++){
+		if(a[i*x+j]>a[i*x+j+1])flag=true;
+		}
+		if(!flag)return 1;
 	}
-	void set(int a_x, int a_y, int a_z){
-		x = a_x;
-		y = a_y;
-		z = a_z;
+	return 0;
+}
+int i;
+int main(){
+   int j;
+   j = 1;
+   i = j;
+	n = getInt();
+	for(i=0;i<n;i++) {
+		a[i] = getInt();		
 	}
-	int sqrLen(){
-		return x * x + y * y + z * z;
-	}
-	int sqrDis(point other) {
-		return (x - other.x) * (x - other.x) + (y - other.y) * (y - other.y) + (z - other.z) * (z - other.z);
-	}
-	int dot(point other) {
-		return x * other.x + y * other.y + z * other.z;
-	}
-	point cross(point other) {
-		point retval = new point;
-		retval.set(y * other.z - z * other.y, z * other.x - x * other.z, x * other.y - y * other.x);
-		return retval;
-	}
-	point add(point other) {
-		x = x + other.x;
-		y = y + other.y;
-		z = z + other.z;
-		return this;
-	}
-	point sub(point other) {
-		x = x - other.x;
-		y = y - other.y;
-		z = z - other.z;
-		return this;
-	}
-	void printPoint() {
-		println("(" + toString(x) + ", " + toString(y) + ", " + toString(z) + ")");
-	}
-};
-
-int main() {
+	for(i=n; i > 0;i = i / 2)
+        if(jud(i) > 0){
+            print(toString(i));
+            return 0;
+        }
 	return 0;
 }
