@@ -23,7 +23,7 @@ public class irBlock extends irStmt{
   // when exited ptr2reg is exited too
   private HashMap<String, String> regs; // store the last def
 
-  private HashMap<String, String> ptr2reg; // store the first def
+  private HashMap<String, String> ptr2reg; // store the first load
 
   public void setFirstLoad(String ptr, String reg) {
     if(ptr2reg == null) 

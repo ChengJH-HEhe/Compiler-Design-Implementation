@@ -8,6 +8,7 @@ import juhuh.compiler.ir.*;
 import juhuh.compiler.ir.def.*;
 import juhuh.compiler.ir.ins.*;
 import juhuh.compiler.ir.stmt.irBlock;
+import juhuh.compiler.ir.stmt.irStmt;
 import juhuh.compiler.util.vector;
 import juhuh.compiler.util.error.error;
 
@@ -162,37 +163,82 @@ public class domBuilder implements irVisitor {
   boolean isTmpName(String name) {
     return name.length() >= 2 && name.charAt(0) == '%' && name.charAt(1) == '_';
   }
+
   HashMap<String, String> curName;
-  private void placePhi(irBlock block) {
+
+  private void renameReg(int index) {
     // entry block has alloca need to neglect
-    // this' lst-def -> domF's prePhi
+    irBlock block = id2B.get(index);
     path.add(block);
     curName = new HashMap<>();
-    // upd thisblock's firstload
-    // reg->ptr
+    // upd thisblock's firstload reg->ptr replace vecStmt
     var vecStmt = block.getStmts();
-    // replace vecStmt
-    vector<irIns> vec = new vector<irIns>();
-    if (vecStmt == null)
-      return;
-    for (int i = 0; i < vecStmt.size(); ++i) {
-      var stmt = (irIns) (vecStmt.get(i));
-      if ((stmt instanceof irLoad && isTmpName(((irLoad) stmt).getPtr())) ||
-          (stmt instanceof irStore && isTmpName(((irStore) stmt).getPtr()))) {
-        ++i;
-        continue;
+    if (vecStmt != null) {
+      vector<irStmt> vec = new vector<irStmt>();
+      for (int i = 0; i < vecStmt.size(); ++i) {
+        var stmt = (irIns) (vecStmt.get(i));
+        if (stmt instanceof irAlloca ||
+            (stmt instanceof irLoad && isTmpName(((irLoad) stmt).getPtr())) ||
+            (stmt instanceof irStore && isTmpName(((irStore) stmt).getPtr()))) {
+          ++i;
+          continue;
+        }
+        // distinguish from phi or from lastBlock?
+        // stmt's val
+        stmt.accept(this);
+        vec.add(stmt);
+        // if from phi then replace it by thisBlock's phi
+        // if from lastBlock then replace it by lastBlock's lastDef
       }
-      // distinguish from phi or from lastBlock?
-      // stmt's val
-      stmt.accept(this);
-      vec.add(stmt);
-      // if from phi then replace it by thisBlock's phi
-      // if from lastBlock then replace it by lastBlock's lastDef
+      // upd block's lastdef equals firstload
+      for (HashMap.Entry<String, String> entry : block.getRegs().entrySet()) {
+        if (block.findFirstLoad(entry.getValue()) != null) {
+          // lastdef = firstdef
+          entry.setValue(replace(block, entry.getValue()));
+        }
+      }
+      block.setStmts(vec);
     }
-    // TODO: this Block's phi ptr->phiIns map
-    // upd block's lastdef withPHI
+    // ENSURE: regs correct(lstdef)
+    // upd domF's Phi's rhs using def
+    for(var domf : doms.get(index).getDomF()) {
+      // set this domf's def
+      var setPhi = id2B.get(domf).getPhi();
+      for(var entry : block.getRegs().entrySet()) {
+        if(setPhi.containsKey(entry.getKey())) {
+          setPhi.get(entry.getKey())
+            .getLabel2val().put(block.getLabel(), entry.getValue());
+        }
+      }
+    }
+    for (var child : ch[id.get(block.getLabel())]) {
+      renameReg(child);
+    }
+    path.rmlst();
+  }
 
-    // TODO: upd domF's Phi
+  private void placePhi() {
+    // upd this' lst-def -> domF's prePhi, 
+    // add phi only, lhs & blockname is it really helpful? add phi
+    
+    for(int i = 1; i < cnt; ++i) {
+      var block = id2B.get(i);
+      // if ptr2reg's reg equals lastDef, i.e. no actual def, not add phi
+      for(var domf : doms.get(i).getDomF()) {
+        var domF = id2B.get(domf);
+        for(var entry : block.getRegs().entrySet()) {
+          if(!block.getPtr2reg().containsKey(entry.getValue())) {
+            // new irPhi
+            domF.getPhi().put(entry.getKey(),
+              irPhi.builder()
+              .labl(domF.getLabel())
+              .res(entry.getKey())
+              .label2val(new HashMap<String, String>())
+              .build());
+          }
+        }
+      }
+    }
   }
 
   @Override
@@ -207,9 +253,15 @@ public class domBuilder implements irVisitor {
     // reverse postRev
     Collections.reverse(postRev);
     getDom();
-    path = new vector<>();
     // place PHI cmd
-    placePhi(node.getEntry());
+    placePhi();
+    // rename regs
+    path = new vector<>();
+    renameReg(0);
+    // reset phi: add 0, xi -> opt phi 
+    
+    // TODO : add phi to add 0 then spj in asmBuilder
+    // problem: critical edge? domF must have more than one pred,(endpoint ok) but thisblock's outdeg may be one(startpoint)
   }
 
   @Override
@@ -226,26 +278,29 @@ public class domBuilder implements irVisitor {
   public void visit(irStrDef node) throws error {
     // do nothing
   }
-  private String findPre(String Ptr) throws error{
-    for(int i = path.size() - 2; i >= 0; --i) {
+
+  private String findPre(String Ptr) throws error {
+    for (int i = path.size() - 2; i >= 0; --i) {
       var res = path.get(i).findVal(Ptr);
-      if(res != null)
+      if (res != null)
         return res;
     }
     throw new error("**** there is no pre-Def !!!!");
   }
+
   private String replace(irBlock block, String oldReg) {
-    if(curName.containsKey(oldReg))
+    if (curName.containsKey(oldReg))
       return curName.get(oldReg);
     var res = block.findFirstLoad(oldReg);
     String ans = "";
     if (res != null) {
-      if(block.getPhi().containsKey(res))
-        ans = res + "." + block.getLabel();
+      if (block.getPhi().containsKey(res))
+        ans = res + "." + block.getLabel(); // phi has contain the ptr name if needed
       else {
-        ans = findPre(res); 
+        ans = findPre(res);
       }
-    } else ans = oldReg;    
+    } else
+      ans = oldReg;
     curName.put(oldReg, ans);
     return ans;
   }
