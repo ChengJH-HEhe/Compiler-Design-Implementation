@@ -13,4 +13,9 @@ public class dom {
     this.iDom = iDom;
     this.domF = new vector<Integer>();
   }
+  public dom(Integer iDom, Integer domF) {
+    assert(domF == null);
+    this.iDom = iDom;
+    this.domF = null;
+  }
 }

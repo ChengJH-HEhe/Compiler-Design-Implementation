@@ -17,17 +17,7 @@ Origin Package: Codeforces 1145A #52445759
 */
 int n;
 int[] a = new int[20];
-int jud(int x){
-	int i,j;
-	for(i=0;i<n/x;i++){
-		bool flag=false;
-		for(j=0;j<x-1;j++){
-		if(a[i*x+j]>a[i*x+j+1])flag=true;
-		}
-		if(!flag)return 1;
-	}
-	return 0;
-}
+
 int i;
 int main(){
    int j;
@@ -38,7 +28,7 @@ int main(){
 		a[i] = getInt();		
 	}
 	for(i=n; i > 0;i = i / 2)
-        if(jud(i) > 0){
+        {
             print(toString(i));
             return 0;
         }

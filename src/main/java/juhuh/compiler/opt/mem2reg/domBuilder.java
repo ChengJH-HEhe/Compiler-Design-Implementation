@@ -16,13 +16,13 @@ import java.util.Collections;
 
 public class domBuilder implements irVisitor {
   private vector<dom> doms;
-  private HashMap<String, Integer> id = new HashMap<>();
-  private vector<irBlock> id2B = new vector<irBlock>();
+  private HashMap<String, Integer> id;
+  private vector<irBlock> id2B;
   private int cnt = 0;
   private vector<Integer>[] preds, dom;
   private vector<Integer>[] ch;
-  private vector<Integer> postRev = new vector<Integer>();
-  BitSet[] domFlag = new BitSet[cnt];
+  private vector<Integer> postRev;
+  BitSet[] domFlag;
 
   public void delPhi(irRoot root) {
     for (var def : root.getFDef())
@@ -37,22 +37,27 @@ public class domBuilder implements irVisitor {
 
   private void initBlock(irBlock block) {
     // consider block.name == "entry", it will be put at first
+    System.err.println("init block " + block.getLabel() + " " + cnt);
     id.put(block.getLabel(), cnt);
     id2B.add(block);
     ++cnt;
   }
 
   private boolean visitBlock(int idx) {
-    if (doms.size() < idx) {
+    // System.err.println(idx + " " + id2B.get(idx).getLabel() + (doms.get(idx).getDomF() == null));
+    if (doms.get(idx).getDomF() != null) {
       return false;
     }
-    doms.add(new dom(null));
+    doms.set(idx, new dom(null));
     return true;
   }
 
   private void initFunc(irFuncDef node) {
     // init doms
     cnt = 0;
+    id2B = new vector<irBlock>();
+    id = new HashMap<>();
+    postRev = new vector<Integer>();
     initBlock(node.getEntry());
     for (var block : node.getBody()) {
       initBlock(block);
@@ -68,24 +73,27 @@ public class domBuilder implements irVisitor {
     for (int i = 0; i < cnt; ++i) {
       preds[i] = new vector<>();
       dom[i] = new vector<>();
+      doms.add(new dom(null, null));
     }
   }
 
   @SuppressWarnings("unchecked")
   private void getDom() {
     BitSet tmp = new BitSet(cnt);
+    domFlag = new BitSet[cnt];
     for (int i = 0; i < cnt; ++i) {
       domFlag[i] = new BitSet(cnt);
-      domFlag[i].set(0, cnt);
     }
-    domFlag[0].set(0, true);
     boolean changed = true;
     while (changed) {
       changed = false;
       for (var i : postRev) {
         tmp.clear();
-        tmp.set(0, cnt);
+        if(i != 0)
+          tmp.set(0, cnt);
+        System.err.println(i + ": ");
         for (var pred : preds[i]) {
+          System.err.println(i + " pred " + pred);
           tmp.and(domFlag[pred]);
         }
         tmp.set(i, true);
@@ -93,17 +101,22 @@ public class domBuilder implements irVisitor {
           domFlag[i] = (BitSet) tmp.clone();
           changed = true;
         }
+        System.err.println(i + domFlag[i].toString());
       }
     }
     for (int i = 0; i < cnt; ++i) {
       for (int j = 0; j < cnt; ++j) {
         if (domFlag[i].get(j)) {
           dom[i].add(j);
+          System.err.println(i + " dom " + j);
         }
       }
     }
     // fix idom && build dom tree
     ch = new vector[cnt];
+    for (int i = 0; i < cnt; ++i) {
+      ch[i] = new vector<>();
+    }
     for (int i = 1; i < cnt; ++i) {
       boolean flag = false;
       for (var idom : dom[i])
@@ -111,6 +124,7 @@ public class domBuilder implements irVisitor {
           doms.get(i).setIDom(idom);
           flag = true;
           ch[idom].add(i);
+          break;
         }
       if (flag == false) {
         throw new error("invalid dom tree");
@@ -141,23 +155,28 @@ public class domBuilder implements irVisitor {
     } else {
       endT = block.getEndTerm();
     }
+    System.err.println(endT.toString());
     if (endT instanceof irJump) {
       // label -> block
       var idx = id.get(((irJump) endT).getDest());
       preds[idx].add(idS);
+      System.err.println("jump to " + idx);
       if (visitBlock(idx))
         Visit(idx, id2B.get(idx));
     } else if (endT instanceof irBranch) {
       var idx = id.get(((irBranch) endT).iftrue);
       preds[idx].add(idS);
+      System.err.println("branch to " + idx);
       if (visitBlock(idx))
         Visit(idx, id2B.get(idx));
       idx = id.get(((irBranch) endT).iffalse);
       preds[idx].add(idS);
+      System.err.println("branch to " + idx);
       if (visitBlock(idx))
         Visit(idx, id2B.get(idx));
     } else {
-      throw new error("invalid terminal statement");
+      if(!(endT instanceof irRet))
+        throw new error("invalid terminal statement");
     }
     postRev.add(idS);
   }
@@ -195,12 +214,13 @@ public class domBuilder implements irVisitor {
         // if from lastBlock then replace it by lastBlock's lastDef
       }
       // upd block's lastdef equals firstload
-      for (HashMap.Entry<String, String> entry : block.getRegs().entrySet()) {
-        if (block.findFirstLoad(entry.getValue()) != null) {
-          // lastdef = firstdef
-          entry.setValue(replace(block, entry.getValue()));
+      if(block.getRegs() != null)
+        for (var entry : block.getRegs().entrySet()) {
+          if (block.findFirstLoad(entry.getValue()) != null) {
+            // lastdef = firstdef
+            entry.setValue(replace(block, entry.getValue()));
+          }
         }
-      }
       block.setStmts(vec);
     }
     // ENSURE: regs correct(lstdef)
@@ -300,9 +320,11 @@ public class domBuilder implements irVisitor {
   @Override
   public void visit(irFuncDef node) throws error {
     // cnt only acccesible in this function
+    System.err.println("visit func " + node.getFName());
     initFunc(node);
     // build graph postReverseOrder
     initPreds(node);
+
     visitBlock(0);
     Visit(0, node.getEntry());
     // build dominator tree using postReverseOrder
