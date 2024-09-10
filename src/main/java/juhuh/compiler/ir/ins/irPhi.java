@@ -3,7 +3,6 @@ package juhuh.compiler.ir.ins;
 import java.util.HashMap;
 
 import juhuh.compiler.frontend.irVisitor;
-import juhuh.compiler.util.vector;
 import juhuh.compiler.util.error.error;
 
 @lombok.experimental.SuperBuilder
@@ -17,7 +16,7 @@ public class irPhi extends irIns{
   public String toString(){
     String s = res + "." + labl + " = phi " + tp ;
     for(var entry : label2val.entrySet()){ 
-      s += " [ " + entry.getValue() + " , %" + entry.getValue() + "],";  
+      s += " [ " + entry.getValue() + " , %" + entry.getKey() + "],";  
     }
     return s;
   }

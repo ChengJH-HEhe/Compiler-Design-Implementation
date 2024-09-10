@@ -1,7 +1,6 @@
 package juhuh.compiler.ir.stmt;
 
 import java.util.HashMap;
-import java.util.HashSet;
 
 import juhuh.compiler.frontend.irVisitor;
 import juhuh.compiler.ir.ins.*;

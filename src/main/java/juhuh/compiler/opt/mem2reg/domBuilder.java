@@ -1,7 +1,6 @@
 package juhuh.compiler.opt.mem2reg;
 
 import java.util.HashMap;
-import java.util.Stack;
 
 import juhuh.compiler.frontend.irVisitor;
 import juhuh.compiler.ir.*;
@@ -24,6 +23,11 @@ public class domBuilder implements irVisitor {
   private vector<Integer>[] ch;
   private vector<Integer> postRev;
   BitSet[] domFlag = new BitSet[cnt];
+
+  public void delPhi(irRoot root) {
+    for (var def : root.getFDef())
+      delPhi(def);
+  }
 
   public void visit(irRoot node) throws error {
     for (var def : node.getFDef()) {
@@ -201,13 +205,13 @@ public class domBuilder implements irVisitor {
     }
     // ENSURE: regs correct(lstdef)
     // upd domF's Phi's rhs using def
-    for(var domf : doms.get(index).getDomF()) {
+    for (var domf : doms.get(index).getDomF()) {
       // set this domf's def
       var setPhi = id2B.get(domf).getPhi();
-      for(var entry : block.getRegs().entrySet()) {
-        if(setPhi.containsKey(entry.getKey())) {
+      for (var entry : block.getRegs().entrySet()) {
+        if (setPhi.containsKey(entry.getKey())) {
           setPhi.get(entry.getKey())
-            .getLabel2val().put(block.getLabel(), entry.getValue());
+              .getLabel2val().put(block.getLabel(), entry.getValue());
         }
       }
     }
@@ -218,25 +222,77 @@ public class domBuilder implements irVisitor {
   }
 
   private void placePhi() {
-    // upd this' lst-def -> domF's prePhi, 
+    // upd this' lst-def -> domF's prePhi,
     // add phi only, lhs & blockname is it really helpful? add phi
-    
-    for(int i = 1; i < cnt; ++i) {
+
+    for (int i = 1; i < cnt; ++i) {
       var block = id2B.get(i);
       // if ptr2reg's reg equals lastDef, i.e. no actual def, not add phi
-      for(var domf : doms.get(i).getDomF()) {
+      for (var domf : doms.get(i).getDomF()) {
         var domF = id2B.get(domf);
-        for(var entry : block.getRegs().entrySet()) {
-          if(!block.getPtr2reg().containsKey(entry.getValue())) {
+        for (var entry : block.getRegs().entrySet()) {
+          if (!block.getPtr2reg().containsKey(entry.getValue())) {
             // new irPhi
             domF.getPhi().put(entry.getKey(),
-              irPhi.builder()
-              .labl(domF.getLabel())
-              .res(entry.getKey())
-              .label2val(new HashMap<String, String>())
-              .build());
+                irPhi.builder()
+                    .labl(domF.getLabel())
+                    .res(entry.getKey())
+                    .label2val(new HashMap<String, String>())
+                    .build());
           }
         }
+      }
+    }
+  }
+
+  private void delPhi(irFuncDef curFunc) {
+    //  phi -> add 0 : spj in asmBuilder
+    // problem: critical edge? domF must have more than one pred,(endpoint ok) but
+    // thisblock's outdeg may be one(startpoint)
+    // only need to add 1 bb for st is many-child
+    // if st is one-child, then add 0 in this block
+    // else add 0 in a new created block
+    boolean[] isOnly = new boolean[cnt];
+    isOnly[0] = true;
+    for (int i = 0; i < cnt; ++i) {
+      if (ch[i].size() == 1) {
+        isOnly[ch[i].get(0)] = true;
+      }
+    }
+    // st not only-child, -> endterm is still certain
+    // add 0 in asmbuilder
+    for (int i = 0; i < cnt; ++i) {
+      var block = id2B.get(i);
+      if (isOnly[i]) {
+        // add 0 in new block
+        block.setTerminal(block.getEndTerm());
+        var newBlock = irBlock.builder()
+            .label("_phi" + block.getLabel())
+            .stmts(new vector<irStmt>())
+            .terminalstmt(block.getTerminalstmt())
+            .build();
+        block.setTerminalstmt(irJump.builder().dest(newBlock.getLabel()).build());
+        block = newBlock;
+      }
+
+      // directly add 0 in this block
+      for (var domf : doms.get(i).getDomF()) {
+        var domF = id2B.get(domf);
+        // domF block's find this block's value should add 0 in this block
+        for (var phiLhs : domF.getPhi().entrySet()) {
+          if (phiLhs.getValue().getLabel2val().containsKey(block.getLabel())) {
+            block.getStmts().add(irBinary.builder()
+                .res(phiLhs.getKey() + "." + domF.getLabel())
+                .op("add")
+                .op1(phiLhs.getValue().getLabel2val().get(block.getLabel()))
+                .op2("0")
+                .build());
+          }
+        }
+      }
+
+      if(!isOnly[i]) {
+        curFunc.add(block);
       }
     }
   }
@@ -258,10 +314,8 @@ public class domBuilder implements irVisitor {
     // rename regs
     path = new vector<>();
     renameReg(0);
-    // reset phi: add 0, xi -> opt phi 
-    
-    // TODO : add phi to add 0 then spj in asmBuilder
-    // problem: critical edge? domF must have more than one pred,(endpoint ok) but thisblock's outdeg may be one(startpoint)
+    // reset phi: add 0, xi -> opt phi
+    // ir should be right
   }
 
   @Override
