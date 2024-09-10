@@ -33,7 +33,6 @@ public class irFuncDef extends irDefNode {
     // irStore?
     if(curBlock.getTerminalstmt() == null) 
       if(terminalstmt instanceof irStore) {
-        
         {
           curBlock.add(terminalstmt);
           curBlock.setEndTerm(irJump.builder()

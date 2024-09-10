@@ -17,11 +17,11 @@ import java.util.Collections;
 public class domBuilder implements irVisitor {
   private vector<dom> doms;
   private HashMap<String, Integer> id = new HashMap<>();
-  private vector<irBlock> id2B;
+  private vector<irBlock> id2B = new vector<irBlock>();
   private int cnt = 0;
   private vector<Integer>[] preds, dom;
   private vector<Integer>[] ch;
-  private vector<Integer> postRev;
+  private vector<Integer> postRev = new vector<Integer>();
   BitSet[] domFlag = new BitSet[cnt];
 
   public void delPhi(irRoot root) {

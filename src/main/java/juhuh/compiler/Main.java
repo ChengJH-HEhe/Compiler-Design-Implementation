@@ -21,6 +21,7 @@ import juhuh.compiler.backend.asmBuilder;
 
 import juhuh.compiler.frontend.*;
 import juhuh.compiler.ir.irRoot;
+import juhuh.compiler.opt.mem2reg.domBuilder;
 
 // import MIR.mainFn;
 
@@ -57,6 +58,8 @@ public class Main {
             irBuilder IR = new irBuilder(origin);
 
             irRoot rt = (irRoot) IR.visit(ASTRoot);
+            var dom = new domBuilder();
+            dom.visit(rt);
             {
                 FileWriter writer = new FileWriter("output.ll");   
                 writer.write(rt.toString());

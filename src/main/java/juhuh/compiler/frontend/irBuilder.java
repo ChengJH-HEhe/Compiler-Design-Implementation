@@ -434,12 +434,16 @@ public class irBuilder implements astVisitor<irNode> {
           break;
         stmt.accept(this);
       }
-    if (curFunc.getFName().equals("main"))
+      // if !def add firstdef for main ret.val
+    if (curFunc.getFName().equals("main")) {
+      if(curFunc.curBlock.findVal("%ret.val") == null)
+        curFunc.curBlock.setVal("%ret.val", "0");
       curFunc.checkRet(irStore.builder()
-          .tp("i32")
-          .res("0")
-          .ptr("%ret.val")
-          .build());
+        .tp("i32")
+        .res("0")
+        .ptr("%ret.val")
+        .build());
+    }
     else
       curFunc.checkRet(irJump.builder()
           .dest("return" + curFunc.getId())
