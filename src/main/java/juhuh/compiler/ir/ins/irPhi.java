@@ -15,10 +15,11 @@ public class irPhi extends irIns{
   @Override
   public String toString(){
     String s = res + "." + labl + " = phi " + tp ;
+
     for(var entry : label2val.entrySet()){ 
       s += " [ " + entry.getValue() + " , %" + entry.getKey() + "],";  
     }
-    return s;
+    return s.substring(0, s.length() - 1);
   }
   @Override
   public void accept(irVisitor visitor) throws error{

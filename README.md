@@ -1,4 +1,4 @@
-current phase: preparing for Mem2reg
+current phase: debugging Mem2reg
 
 1.basic block (BB)
 get out[] , in[] 
@@ -15,13 +15,19 @@ def[]: entry block vardef
   - Dom: visit v -> visit u => u dom v
   - Idom: nearest u && u dom v && u != v
   - Dom Frontier: y is dom frontier of x <=> x dom y's pred & ! x dom y
+  different pattern to solve DOMT:
+  1. 数据流迭代法：n^2, get label->id & id->label, then use reverse_postorder to iterate until dom bacomes unchanged -> get domset
+  1. 5-> get idom, domF 
+  2. Tarjan
 
-3.5 construct a Dom Tree
-
-4. CFG: label ->  jump: 1-out; || branch: 2-out; use struct{label,irblocknode} as a map to construct CFG
-  construct a global stack to maintain the ptr's {label->name} pair
+4. construct a Dom Tree (1st visit IR)
+  - funcdef's block, irBlock add a struct<label, irnode, domFrontier> 
+  - CFG: label ->  jump: 1-out; || branch: 2-out; use struct{label,irblocknode} as a map to construct CFG
+  - build Dom's idom, domF
+    - idom: 
 5. place phi-Ins (2nd visit IR)
-  - collect defName(%defName = alloca)
+  construct a global stack to maintain the ptr's {ptr->name} pair
+  - collect defName(%defName = alloca) problem is: nxt block's first use, shouldn't load, vector(first load) -> phi or ? ? 
   - search for the defName's defBlock (assignExpr) (add . to pure num reg)
   - place phi in the defBlock's domFrontier -> place phi into (defBlock's domFrontier)'s domFrontier... until domFrontier has been visited or no domFrontier, also redefine the "ptr->regname" pair
 6. rename atomExpr usage of ptr -> (3rd visit IR) (alloca's ptr starts with '%' + 'alpha')
@@ -35,6 +41,13 @@ def[]: entry block vardef
 7. del phi Ins
   - critical edge: s->t more than one in&out then insert a new block, change the j ins ->s & t->
   - normal: put in the end of new block
+  - TODO : modify asmBuilder (%2 = add %1 0 -> mv %2, %1)
+
+p1: func args: in irBuilder, I copy a0~a7, and store them in the real pointer. when calling another subroutine, (first def) a0~a7 will be invalid. how can i store the args in a temporary space? no other ways, except saving a0~a7.
+
+p2: why ret.val won't place phi in ret block?
+
+
 
 
 

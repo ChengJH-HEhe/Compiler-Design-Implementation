@@ -60,7 +60,8 @@ public class irFuncDef extends irDefNode {
     String body = "";
     if (this.body != null) 
       for (var b : this.body) {
-          body += b.toString() + "\n";
+        if(b.isUnreachable()) continue;
+        body += b.toString() + "\n";
       }
     return "define " + retType + " @" + fName + "(" + paralist + ") {\n" +
         entry.toString() + "\n" + body + "\n" + ret.toString() + "\n}\n";

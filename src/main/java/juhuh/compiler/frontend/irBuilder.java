@@ -52,7 +52,7 @@ public class irBuilder implements astVisitor<irNode> {
     // var terminalTmp = curFunc.curBlock.getTerminalstmt();
     // actual true -> mustn't be changed
     irIns endTerm = curFunc.curBlock.getEndTerm();
-    if(curFunc.curBlock.getTerminalstmt() == null) {
+    if (curFunc.curBlock.getTerminalstmt() == null) {
       curFunc.curBlock.setTerminal(irJump.builder()
           .dest(thenB.getLabel())
           .build());
@@ -136,7 +136,7 @@ public class irBuilder implements astVisitor<irNode> {
         .member(new vector<String>())
         .build());
     for (var decl : stringInfo) {
-      decl.setName("string." +decl.getName());
+      decl.setName("string." + decl.getName());
       var func = irFuncDecl.builder()
           .info(decl)
           .paratypelist(new vector<String>("ptr"))
@@ -312,15 +312,13 @@ public class irBuilder implements astVisitor<irNode> {
         rt.add(globalvar);
         if ((Def).getUnit() != null) {
           var init = (Def).getUnit().accept(this);
-          curFunc.curBlock.setVal(globalvar.getName(), init.toString());
+          curFunc.curBlock.setVal(globalvar.getName(), init.toString(), globalvar.getType());
           add(irStore.builder()
               .tp(globalvar.getType())
               .res(init.toString())
               .ptr(globalvar.getName())
               .build());
-        } else {
-          curFunc.curBlock.setVal(ptrName, null);
-        }
+        } // set null is unimportant
         exit();
         curS.defineVariable(def.getName(), ((astVarDefNode) def).getType().getInfo());
       }
@@ -413,6 +411,7 @@ public class irBuilder implements astVisitor<irNode> {
       // func.setFName("@" + curS.parentScope().info.getName() + "." +
       // node.getInfo().getName());
     }
+    // para? % + _? 
     for (var para : node.getArgs()) {
       curFunc.getParatypelist().add(tp(para.getType().getInfo()));
       curFunc.getParavaluelist().add("%" + para.getName());
@@ -430,21 +429,21 @@ public class irBuilder implements astVisitor<irNode> {
     if (node.getBlock() != null)
       for (var stmt : node.getBlock().getStmts()) {
         // body stmt when to use curFunc.curBlock? before any label
-        if(curS.flowTag)
+        if (curS.flowTag)
           break;
         stmt.accept(this);
       }
-      // if !def add firstdef for main ret.val
+    // if !def add firstdef for main ret.val
     if (curFunc.getFName().equals("main")) {
-      if(curFunc.curBlock.findVal("%ret.val") == null)
-        curFunc.curBlock.setVal("%ret.val", "0");
+      if (curFunc.curBlock.findVal("%ret.val") == null)
+        curFunc.curBlock.setVal("%ret.val", "0", "i32");
+        // store tp
       curFunc.checkRet(irStore.builder()
-        .tp("i32")
-        .res("0")
-        .ptr("%ret.val")
-        .build());
-    }
-    else
+          .tp("i32")
+          .res("0")
+          .ptr("%ret.val")
+          .build());
+    } else
       curFunc.checkRet(irJump.builder()
           .dest("return" + curFunc.getId())
           .build());
@@ -458,19 +457,21 @@ public class irBuilder implements astVisitor<irNode> {
           .build());
     } else {
       var result = curFunc.tmprename();
-      curFunc.setRet(
-          irBlock.builder()
-              .label("return" + curFunc.getId())
-              .stmts(new vector<irStmt>(
-                  irLoad.builder()
-                      .tp(tp(node.getInfo().getRetType()))
-                      .res(result)
-                      .ptr("%ret.val")
-                      .build()))
-              .endTerm(irRet.builder().tp(tp(node.getInfo().getRetType())).val(result).build())
-              .build());
+      var ret = irBlock.builder()
+          .label("return" + curFunc.getId())
+          .stmts(new vector<irStmt>(
+              irLoad.builder()
+                  .tp(tp(node.getInfo().getRetType()))
+                  .res(result)
+                  .ptr("%ret.val")
+                  .build()))
+          .endTerm(irRet.builder().tp(tp(node.getInfo().getRetType())).val(result).build())
+          .build();
+      ret.setFirstLoad("%ret.val", result);
+      // regs
+      ret.setVal("%ret.val", result, tp(node.getInfo().getRetType()));
+      curFunc.setRet(ret);
     }
-
     exit();
     return curFunc;
   }
@@ -488,8 +489,7 @@ public class irBuilder implements astVisitor<irNode> {
     // fields
     if (node.getConstructor() != null) {
       cls.getFuncDefs().add((irFuncDef) (node.getConstructor()).accept(this));
-    }
-    else {
+    } else {
       // why not add a default constructor
       cls.getFuncDefs().add((irFuncDef) (astConstrNode.builder()
           .className(node.getInfo().getName())
@@ -542,8 +542,8 @@ public class irBuilder implements astVisitor<irNode> {
           .res((init).toString())
           .ptr(tmpname)
           .build());
-      curFunc.curBlock.setVal(tmpname, (init).toString());
-    } 
+      curFunc.curBlock.setVal(tmpname, (init).toString(), tp(node.getType().getInfo()));
+    }
     curS.defineVariable(node.getName(), node.getType().getInfo());
     return null;
   }
@@ -587,7 +587,7 @@ public class irBuilder implements astVisitor<irNode> {
     enter(new Scope(curS, null, ScopeType.FUNC), curS.depth + 1, curS.sonN++);
     // change1 constructor name
     curFunc = irFuncDef.builder()
-        .fName(node.getClassName() + "." + node.getClassName()) 
+        .fName(node.getClassName() + "." + node.getClassName())
         .retType("void")
         .id(funCount)
         .paratypelist(new vector<String>("ptr"))
@@ -633,7 +633,7 @@ public class irBuilder implements astVisitor<irNode> {
   entity newArray(typeinfo tp, int remainLayer, vector<astExprNode> lengths) {
     // 1-D array
     // size
-    
+
     entity size = (entity) (lengths.get(lengths.size() - remainLayer)).accept(this);
     // size | ptr | ptr ... (ptr * length + 1) binary + 1
     // <- ptr
@@ -769,7 +769,8 @@ public class irBuilder implements astVisitor<irNode> {
           .val(new vector<String>(Integer.toString(arrConst.getVec().size())))
           .build());
       for (int i = 0; i < arrConst.getVec().size(); ++i) {
-        entity val = (remainLayer != 1) ? (entity) ArrayConst(remainLayer - 1, (astArrayConstExpr) (arrConst.getVec().get(i)))
+        entity val = (remainLayer != 1)
+            ? (entity) ArrayConst(remainLayer - 1, (astArrayConstExpr) (arrConst.getVec().get(i)))
             : (entity) arrConst.getVec().get(i).accept(this);
         var reg1 = register.builder()
             .name(curFunc.tmprename())
@@ -781,11 +782,11 @@ public class irBuilder implements astVisitor<irNode> {
             .tp1("i32")
             .id1(Integer.toString(i))
             .build());
-          add(irStore.builder()
-              .tp(remainLayer != 1 ? "ptr" : basetp(new typeinfo(tp.getName(), 0)))
-              .res(val.toString())
-              .ptr(reg1.getName())
-              .build());
+        add(irStore.builder()
+            .tp(remainLayer != 1 ? "ptr" : basetp(new typeinfo(tp.getName(), 0)))
+            .res(val.toString())
+            .ptr(reg1.getName())
+            .build());
       }
       return reg;
     }
@@ -805,12 +806,13 @@ public class irBuilder implements astVisitor<irNode> {
       return ArrayConst(tp.getDim(), node.getInit());
     }
     // getDim 4 getlengths = 2
-    // 
+    //
     return (tp.getDim() == (node.getLengths() == null ? 0 : node.getLengths().size()))
         ? newArray(tp, tp.getDim(), node.getLengths())
         : newArray(SemanticChecker.nullType, node.getLengths() == null ? 0 : node.getLengths().size(),
             node.getLengths());
   }
+
   // node.getFunc.name correct
   @Override
   public irNode visit(astCallExprNode node) throws error {
@@ -844,12 +846,14 @@ public class irBuilder implements astVisitor<irNode> {
         tmpS = tmpS.parentScope();
       }
       // System.err.print("IR PROCESS ");
-      // System.err.print(((astAtomExprNode) node.getFunc()).getType().getName() + " ");
-      if (tmpS != null && tmpS.containsVariable(((astAtomExprNode) node.getFunc()).getType().getName(), false) != null) {
+      // System.err.print(((astAtomExprNode) node.getFunc()).getType().getName() + "
+      // ");
+      if (tmpS != null
+          && tmpS.containsVariable(((astAtomExprNode) node.getFunc()).getType().getName(), false) != null) {
         caller = register.builder()
-        .name("%this.copy")
-        .build();
-        // S ystem.err.print(((astAtomExprNode) node.getFunc()).getType().getName()); 
+            .name("%this.copy")
+            .build();
+        // S ystem.err.print(((astAtomExprNode) node.getFunc()).getType().getName());
       }
       // S ystem.err.println(" IR ATOM");
     }
@@ -917,7 +921,7 @@ public class irBuilder implements astVisitor<irNode> {
   @Override
   public irNode visit(astArrayConstExpr node) throws error {
     // not expected to visit
-    typeinfo tp = (typeinfo)node.getType();
+    typeinfo tp = (typeinfo) node.getType();
     return ArrayConst(tp.getDim(), node);
   }
 
@@ -966,7 +970,7 @@ public class irBuilder implements astVisitor<irNode> {
     var VecStr = new vector<String>();
     // @.str.true
 
-    if(node.getVecExpr().size() == 0) {
+    if (node.getVecExpr().size() == 0) {
       String def = ("@.str." + (irStrDef.strNum++));
       rt.add(irStrDef.builder()
           .res(VecStr.get(0))
@@ -1014,7 +1018,7 @@ public class irBuilder implements astVisitor<irNode> {
     // call string add
     // if vecStr 1
     var resul = "%.str." + (irStrDef.strNum++);
-    if(VecExpr.size() > 0)
+    if (VecExpr.size() > 0)
       add(irCall.builder()
           .res(resul)
           .func(SemanticChecker.stringAddFunc)
@@ -1041,11 +1045,11 @@ public class irBuilder implements astVisitor<irNode> {
       if (i < VecExpr.size()) {
         resul1 = "%.str." + (irStrDef.strNum++);
         add(irCall.builder()
-        .res(resul1)
-        .func(SemanticChecker.stringAddFunc)
-        .type(new vector<String>("ptr", "ptr"))
-        .val(new vector<String>(resul, VecExpr.get(i)))
-        .build());
+            .res(resul1)
+            .func(SemanticChecker.stringAddFunc)
+            .type(new vector<String>("ptr", "ptr"))
+            .val(new vector<String>(resul, VecExpr.get(i)))
+            .build());
         resul = resul1;
       }
     }
@@ -1099,7 +1103,7 @@ public class irBuilder implements astVisitor<irNode> {
     } else if (node.getOp().equals("Increment") || node.getOp().equals("Decrement")) {
       String resul = curFunc.tmprename(),
           resul1 = curFunc.tmprename();
-      
+
       add(irBinary.builder()
           .op("add")
           .res(resul)
@@ -1114,7 +1118,7 @@ public class irBuilder implements astVisitor<irNode> {
           .op1(((register) res).getName())
           .op2("1")
           .build());
-      curFunc.curBlock.setVal(((register) res).getPtr(), resul1);
+      curFunc.curBlock.setVal(((register) res).getPtr(), resul1, "i32");
       add(irStore.builder()
           .tp("i32")
           .res(resul1)
@@ -1143,7 +1147,7 @@ public class irBuilder implements astVisitor<irNode> {
         .op1(((register) res).getName())
         .op2("1")
         .build());
-    curFunc.curBlock.setVal(((register) res).getPtr(), resul);
+    curFunc.curBlock.setVal(((register) res).getPtr(), resul, "i32");
     add(irStore.builder()
         .tp("i32")
         .res(resul)
@@ -1296,13 +1300,13 @@ public class irBuilder implements astVisitor<irNode> {
     // select cmd rvalue
     entity cond = (entity) (node.getCond()).accept(this);
     String[] label = { "cond.true" + binaryCount, "cond.false" + binaryCount, "cond.end" + binaryCount,
-        };
+    };
     binaryCount++;
     // then else 都会算，只是最后要不要跳过的问题 ? conditionbegin
     // ->end last option
     // 链接上一个block 的 endBTerm
 
-    // 再加入一个点 
+    // 再加入一个点
 
     irIns endBTerm = curFunc.curBlock.getEndTerm();
     irIns curBTerm = irJump.builder().dest(label[2]).build();
@@ -1317,9 +1321,9 @@ public class irBuilder implements astVisitor<irNode> {
         .stmts(new vector<irStmt>())
         .endTerm(curBTerm)
         .build();
-    joinBlock(thenB, curBTerm);    
+    joinBlock(thenB, curBTerm);
     var val1 = (node.getLhs()).accept(this); // terminal stmt change if not -> thenB.label
-    
+
     irBlock elseB = irBlock.builder()
         .label(label[1])
         .stmts(new vector<irStmt>())
@@ -1365,35 +1369,36 @@ public class irBuilder implements astVisitor<irNode> {
     // calc lhs.ptr, calc rhs.val , store to lhs.ptr
     entity res2 = (entity) (node.getRhs()).accept(this);
     // only consider a = 1; or a = b + c this.a = 1;
-    if(node.getLhs() instanceof astAtomExprNode) defStatus = true;
+    if (node.getLhs() instanceof astAtomExprNode)
+      defStatus = true;
     entity res1 = (entity) (node.getLhs()).accept(this);
     defStatus = false;
-
-    curFunc.curBlock.setVal(((register) res1).getPtr(), res2.toString());
+    curFunc.curBlock.setVal(((register) res1).getPtr(), res2.toString(), tp((typeinfo) node.getLhs().getType()));
     add(irStore.builder()
         .tp(tp((typeinfo) node.getLhs().getType()))
         .res(res2.toString())
         .ptr(((register) res1).getPtr())
         .build());
-    
+
     return register.builder()
         .name(res2.toString())
         .ptr(((register) res1).getPtr())
         .build();
   }
+
   /*
-   * change atom load -> if value is needed load it's val a = b, b is lvalue 
-   * but doesn't need to load 
+   * change atom load -> if value is needed load it's val a = b, b is lvalue
+   * but doesn't need to load
    * block ptr is unique add in funcdef block
-   * add global init a unique func, 
+   * add global init a unique func,
    */
   private void LoadLvalue(register reg, String tp) {
     // curB ptr -> reg;
     // var res = curFunc.curBlock.findVal(reg.getPtr());
-    if(defStatus)
+    if (defStatus)
       return;
     var name = curFunc.curBlock.findVal(reg.getPtr());
-    if(name != null) {
+    if (name != null) {
       reg.setName(name);
       return;
     }
@@ -1405,24 +1410,25 @@ public class irBuilder implements astVisitor<irNode> {
         .tp(tp)
         .ptr(reg.getPtr())
         .build());
-    curFunc.curBlock.setVal(reg.getPtr(), reg.getName());
+    curFunc.curBlock.setVal(reg.getPtr(), reg.getName(), tp);
     // if(defStatus) { // % = const
-    //   tmpS.setVal(reg.getPtr(), reg.getName());
+    // tmpS.setVal(reg.getPtr(), reg.getName());
     // } else {
-    //   reg.setName(tmpS.findVal(reg.getPtr()));
-    //   if(reg.getName() == null ) {
-    //   }
+    // reg.setName(tmpS.findVal(reg.getPtr()));
+    // if(reg.getName() == null ) {
+    // }
     // }
   }
+
   @Override
   public irNode visit(astAtomExprNode node) throws error {
     // use astAtom res to return a const or stringconst (or a funccall x)
     // register ? Lvalue = true
     /*
-      can't load value for Lvalue in atomexpr
-      when define / assign a ptr defstatus = true  change ptr's reg
-      other times get ptr -> reg directly from map
-    */
+     * can't load value for Lvalue in atomexpr
+     * when define / assign a ptr defstatus = true change ptr's reg
+     * other times get ptr -> reg directly from map
+     */
     if (node.isLValue()) {
       // Consider (this.)?
       String ptr = curS.getValPtr(node.getValue());
@@ -1459,7 +1465,7 @@ public class irBuilder implements astVisitor<irNode> {
       } else {
         // only consider lhs is directly alloca's result
         LoadLvalue(reg, tp((typeinfo) node.getType()));
-      } 
+      }
       return reg;
     } else {
       if (node.getType().equals(SemanticChecker.thisType)) {
@@ -1494,7 +1500,7 @@ public class irBuilder implements astVisitor<irNode> {
   public irNode visit(astBlockStmtNode node) throws error {
     enter(new Scope(curS, null, ScopeType.BLOCK), curS.depth + 1, curS.sonN++);
     for (var stmt : node.getStmts()) {
-      if(curS.findTAG())
+      if (curS.findTAG())
         break;
       visit(stmt);
     }
@@ -1719,6 +1725,7 @@ public class irBuilder implements astVisitor<irNode> {
     }
     if (node.getExpr() != null) {
       entity res = (entity) (node.getExpr()).accept(this);
+      curFunc.curBlock.setVal("%ret.val", res.toString(), tp((typeinfo) node.getExpr().getType()));
       add(irStore.builder()
           .tp(tp((typeinfo) node.getExpr().getType()))
           .ptr("%ret.val")

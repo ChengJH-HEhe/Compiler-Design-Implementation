@@ -63,6 +63,7 @@ public class asmBuilder implements irVisitor {
     visit(node.getEntry());
     // entry -= size
     for (var get : node.getBody()) {
+      if(get.isUnreachable()) continue;
       get.accept(this);
     }
     // ret += size;
@@ -274,14 +275,14 @@ public class asmBuilder implements irVisitor {
         .build());
     vrM.setCurB(curB);
     // maxargs , maxargs + 7
-    // for(int i = 0; i < 8; ++i) {
-    // curB.add(riscS.builder()
-    // .op("sw")
-    // .rs2("a" + i)
-    // .imm((vrM.getMaxargs() + i) * 4)
-    // .rs1("sp")
-    // .build());
-    // }
+    for(int i = 0; i < 8; ++i) {
+      curB.add(riscS.builder()
+      .op("sw")
+      .rs2("a" + i)
+      .imm((vrM.getMaxargs() + i) * 4)
+      .rs1("sp")
+      .build());
+    }
     var varArr = node.getVal();
     var vartype = node.getType();
     for (int curId = 0; curId < varArr.size(); ++curId) {
@@ -326,14 +327,14 @@ public class asmBuilder implements irVisitor {
           .rs1("sp")
           .build());
     }
-    // for(int i = 0; i < 8; ++i) {
-    // curB.add(riscL.builder()
-    // .op("lw")
-    // .rd("a" + i)
-    // .imm((vrM.getMaxargs() + i) * 4)
-    // .rs1("sp")
-    // .build());
-    // }
+    for(int i = 0; i < 8; ++i) {
+      curB.add(riscL.builder()
+      .op("lw")
+      .rd("a" + i)
+      .imm((vrM.getMaxargs() + i) * 4)
+      .rs1("sp")
+      .build());
+    }
 
     // store args
   }
