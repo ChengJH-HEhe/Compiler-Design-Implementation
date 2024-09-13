@@ -14,7 +14,6 @@ import juhuh.compiler.util.vector;
 import juhuh.compiler.util.error.error;
 
 import java.util.BitSet;
-import java.util.Collections;
 
 public class domBuilder implements irVisitor {
   private vector<dom> doms;
@@ -200,9 +199,9 @@ public class domBuilder implements irVisitor {
       }
       postRev.add(idS);
     }
-    for (int i = 1; i < cnt; ++i) {
-      System.err.println(i + " pred :" + preds[i].toString());
-    }
+    // for (int i = 1; i < cnt; ++i) {
+    //   System.err.println(i + " pred :" + preds[i].toString());
+    // }
   }
 
   vector<irBlock> path;
@@ -224,6 +223,7 @@ public class domBuilder implements irVisitor {
     curName = new HashMap<>();
     // upd thisblock's firstload reg->ptr replace vecStmt
     var vecStmt = block.getStmts();
+    // replace stmts
     if (vecStmt != null) {
       vector<irStmt> vec = new vector<irStmt>();
       if (block.getRegs() != null)
@@ -238,7 +238,6 @@ public class domBuilder implements irVisitor {
         if (stmt instanceof irAlloca ||
             (stmt instanceof irLoad && isTmpName(((irLoad) stmt).getPtr())) ||
             (stmt instanceof irStore && isTmpName(((irStore) stmt).getPtr()))) {
-          ++i;
           continue;
         }
         // distinguish from phi or from lastBlock?
@@ -250,22 +249,23 @@ public class domBuilder implements irVisitor {
       }
       // upd block's lastdef equals firstload
       block.setStmts(vec);
-      if(block.getTerminalstmt() != null)
+      if (block.getTerminalstmt() != null)
         block.getTerminalstmt().accept(this);
-      else block.getEndTerm().accept(this);
+      else
+        block.getEndTerm().accept(this);
     }
     // ENSURE: regs correct(lstdef)
     // upd domF's Phi's rhs using def
     for (var domf : doms.get(index).getDomF()) {
       // set this domf's def
       var setPhi = id2B.get(domf).getPhi();
-      if(block.getRegs() != null)
-      for (var entry : block.getRegs().entrySet()) {
-        if (setPhi.containsKey(entry.getKey())) {
-          setPhi.get(entry.getKey())
-              .getLabel2val().put(block.getLabel(), entry.getValue());
+      if (block.getRegs() != null)
+        for (var entry : block.getRegs().entrySet()) {
+          if (setPhi.containsKey(entry.getKey())) {
+            setPhi.get(entry.getKey())
+                .getLabel2val().put(block.getLabel(), entry.getValue());
+          }
         }
-      }
     }
     for (var child : ch[id.get(block.getLabel())]) {
       renameReg(child);
@@ -280,17 +280,33 @@ public class domBuilder implements irVisitor {
       var block = id2B.get(i);
       block.setPhi(new HashMap<String, irPhi>());
     }
+    // put phi should be in domF order
+    for (int i = 1; i < cnt; ++i) {
+      visitPhi(i);
+    }
+    // update last regs
     for (int i = 1; i < cnt; ++i) {
       var block = id2B.get(i);
-      if (block.isUnreachable())
-        continue;
-      // if ptr2reg's reg equals lastDef, i.e. no actual def, not add phi
-      for (var domf : doms.get(i).getDomF()) {
-        var domF = id2B.get(domf);
-        // regs may only contain firstload result
-        if(block.getRegs() != null)
+      for (var entry : block.getPhi().entrySet()) {
+        if (block.findVal(entry.getKey()) == null)
+          block.setVal(entry.getKey(), entry.getValue().getReg(), entry.getValue().getTp());
+      }
+    }
+  }
+
+  private void visitPhi(int i) {
+
+    var block = id2B.get(i);
+    if (block.isUnreachable())
+      return;
+    // if ptr2reg's reg equals lastDef, i.e. no actual def, not add phi
+    for (var domf : doms.get(i).getDomF()) {
+      var domF = id2B.get(domf);
+      // regs may only contain firstload result
+      if (block.getRegs() != null)
         for (var entry : block.getRegs().entrySet()) {
-          if (entry.getValue() != null && (isConst(entry.getValue()) || block.findFirstLoad(entry.getValue()) != null)) {
+          if (entry.getValue() != null
+              && (isConst(entry.getValue()) || block.findFirstLoad(entry.getValue()) != null)) {
             // new irPhi
             domF.getPhi().put(entry.getKey(),
                 irPhi.builder()
@@ -301,8 +317,10 @@ public class domBuilder implements irVisitor {
                     .build());
           }
         }
-      }
     }
+    // curBlocks regs should update with curBlock's phi-lhs
+    // find-first-load only store %_
+    
   }
 
   private void delPhi(irFuncDef curFunc) {

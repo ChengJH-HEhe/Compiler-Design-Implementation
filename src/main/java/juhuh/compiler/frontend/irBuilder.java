@@ -342,9 +342,8 @@ public class irBuilder implements astVisitor<irNode> {
     for (var stmt : entry.getStmts()) {
       entry1.add(stmt);
     }
-    entry1.setEndTerm(entry.getEndTerm());
-    entry1.setTerminalstmt(entry.getTerminalstmt());
-    main.setEntry(entry1);
+    main.getEntry().setStmts(entry1.getStmts());
+    
     if (globalInit.curBlock != globalInit.getEntry())
       globalInit.add(globalInit.curBlock);
     globalInit.checkRet(irJump.builder()
@@ -397,6 +396,7 @@ public class irBuilder implements astVisitor<irNode> {
           .res("%this.addr." + curS.selfN)
           .tp("ptr")
           .build());
+      curFunc.getEntry().setVal("%this.addr." + curS.selfN, "%this", "ptr");
       add(irStore.builder()
           .tp("ptr")
           .res("%this")
@@ -420,6 +420,7 @@ public class irBuilder implements astVisitor<irNode> {
           .res(ptr)
           .tp(tp(para.getType().getInfo()))
           .build());
+      curFunc.getEntry().setVal(ptr, "%" + para.getName(), tp(para.getType().getInfo()));
       add(irStore.builder()
           .tp(tp(para.getType().getInfo()))
           .res("%" + para.getName())
@@ -449,7 +450,6 @@ public class irBuilder implements astVisitor<irNode> {
           .build());
     if (curFunc.curBlock != curFunc.getEntry())
       curFunc.add(curFunc.curBlock);
-
     if (((FuncInfo) node.getInfo()).getRetType().equals(SemanticChecker.voidType)) {
       curFunc.setRet(irBlock.builder()
           .label("return" + curFunc.getId())
@@ -609,6 +609,7 @@ public class irBuilder implements astVisitor<irNode> {
         .res("%this.addr")
         .tp("ptr")
         .build());
+    curFunc.getEntry().setVal("%this.addr." + curS.selfN, "%this", "ptr");
     add(irStore.builder()
         .tp("ptr")
         .res("%this")

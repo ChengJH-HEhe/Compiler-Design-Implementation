@@ -11,10 +11,12 @@ import juhuh.compiler.util.error.error;
 public class irPhi extends irIns{
   String res, labl, tp;
   private HashMap<String, String> label2val;
-
+  public String getReg() {
+    return res + "." + labl;
+  }
   @Override
   public String toString(){
-    String s = res + "." + labl + " = phi " + tp ;
+    String s = getReg() + " = phi " + tp ;
 
     for(var entry : label2val.entrySet()){ 
       s += " [ " + entry.getValue() + " , %" + entry.getKey() + "],";  

@@ -1,4 +1,6 @@
-current phase: debugging Mem2reg
+current phase: 
+9.13 debugging Mem2reg partI: get phi-lhs, phi-rhs's source-Block mistakes remain.
+
 
 1.basic block (BB)
 get out[] , in[] 
