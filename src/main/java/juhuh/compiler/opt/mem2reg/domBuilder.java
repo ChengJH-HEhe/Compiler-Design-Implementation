@@ -281,11 +281,11 @@ public class domBuilder implements irVisitor {
       block.setPhi(new HashMap<String, irPhi>());
     }
     // put phi should be in domF order
-    for (int i = 1; i < cnt; ++i) {
+    for (int i = 0; i < cnt; ++i) {
       visitPhi(i);
     }
     // update last regs
-    for (int i = 1; i < cnt; ++i) {
+    for (int i = 0; i < cnt; ++i) {
       var block = id2B.get(i);
       for (var entry : block.getPhi().entrySet()) {
         if (block.findVal(entry.getKey()) == null)

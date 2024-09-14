@@ -58,8 +58,8 @@ public class Main {
             irBuilder IR = new irBuilder(origin);
 
             irRoot rt = (irRoot) IR.visit(ASTRoot);
-            var dom = new domBuilder();
-            dom.visit(rt);
+            // var dom = new domBuilder();
+            // dom.visit(rt);
             {
                 FileWriter writer = new FileWriter("output.ll");   
                 writer.write(rt.toString());

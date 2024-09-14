@@ -1,6 +1,13 @@
 current phase: 
 9.13 debugging Mem2reg partI: get phi-lhs, phi-rhs's source-Block mistakes remain.
-
+upd 9.13: phi-rhs remove unreachable 
+9.14 debugging simple forStmt: domT's structure still wrong! 
+: entry->cond->body->inc->cond->...->body->inc
+upd 9.14 find llvm opt. domF error
+p.s. things to do in domBuilder;
+ 1. place phi if preds has def; 
+ 2. rename firstload to phi or preName(path's regs)
+ 3. upd regs if regs still equals firstload.
 
 1.basic block (BB)
 get out[] , in[] 
