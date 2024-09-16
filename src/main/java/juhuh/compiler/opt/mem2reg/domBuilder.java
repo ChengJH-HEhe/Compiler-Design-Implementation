@@ -140,17 +140,19 @@ public class domBuilder implements irVisitor {
       }
     }
     // set domFrontier in preds.dom \ i.dom
-    for (int i = 1; i < cnt; ++i) {
+    for (int i = 0; i < cnt; ++i) {
       if (id2B.get(i).isUnreachable())
         continue;
       System.err.println(domFlag[i]);
       tmp.clear();
+      var tmp1 = (BitSet) domFlag[i].clone();
+      tmp1.flip(i);
+
       for (var pred : preds[i]) {
         // double true -> false
         tmp.or(domFlag[pred]);
       }
-      tmp.xor(domFlag[i]);
-      tmp.set(i, false);
+      tmp.xor(tmp1);
       // TODO: domF for a block to be unreachable?
       for (int j = tmp.nextSetBit(0); j >= 0; j = tmp.nextSetBit(j + 1)) {
         doms.get(j).getDomF().add(i);
@@ -200,7 +202,7 @@ public class domBuilder implements irVisitor {
       postRev.add(idS);
     }
     // for (int i = 1; i < cnt; ++i) {
-    //   System.err.println(i + " pred :" + preds[i].toString());
+    // System.err.println(i + " pred :" + preds[i].toString());
     // }
   }
 
@@ -249,23 +251,31 @@ public class domBuilder implements irVisitor {
       }
       // upd block's lastdef equals firstload
       block.setStmts(vec);
-      if (block.getTerminalstmt() != null)
-        block.getTerminalstmt().accept(this);
-      else
-        block.getEndTerm().accept(this);
+    }
+    irIns endT;
+    if (block.getTerminalstmt() != null) {
+      block.getTerminalstmt().accept(this);
+      endT = block.getTerminalstmt();
+    } else {
+      block.getEndTerm().accept(this);
+      endT = block.getEndTerm();
     }
     // ENSURE: regs correct(lstdef)
-    // upd domF's Phi's rhs using def
-    for (var domf : doms.get(index).getDomF()) {
+    // upd CFG's nxt Phi's rhs using def
+    var vec = new vector<Integer>();
+    if (endT instanceof irJump) {
+      vec.add(id.get(((irJump) endT).getDest()));
+    } else if (endT instanceof irBranch) {
+      vec.add(id.get(((irBranch) endT).iftrue));
+      vec.add(id.get(((irBranch) endT).iffalse));
+    }
+    for (var domf : vec) {
       // set this domf's def
       var setPhi = id2B.get(domf).getPhi();
-      if (block.getRegs() != null)
-        for (var entry : block.getRegs().entrySet()) {
-          if (setPhi.containsKey(entry.getKey())) {
-            setPhi.get(entry.getKey())
-                .getLabel2val().put(block.getLabel(), entry.getValue());
-          }
-        }
+      for (var entry : setPhi.entrySet()) {
+        entry.getValue().getLabel2val().put(block.getLabel(), replace(block, 
+          block.findVal(entry.getKey())));
+      }
     }
     for (var child : ch[id.get(block.getLabel())]) {
       renameReg(child);
@@ -276,7 +286,7 @@ public class domBuilder implements irVisitor {
   private void placePhi() {
     // upd this' lst-def -> domF's prePhi,
     // add phi only, lhs & blockname is it really helpful? add phi
-    for (int i = 1; i < cnt; ++i) {
+    for (int i = 0; i < cnt; ++i) {
       var block = id2B.get(i);
       block.setPhi(new HashMap<String, irPhi>());
     }
@@ -284,7 +294,7 @@ public class domBuilder implements irVisitor {
     for (int i = 0; i < cnt; ++i) {
       visitPhi(i);
     }
-    // update last regs
+    // update lastdef if no actual def
     for (int i = 0; i < cnt; ++i) {
       var block = id2B.get(i);
       for (var entry : block.getPhi().entrySet()) {
@@ -308,6 +318,9 @@ public class domBuilder implements irVisitor {
           if (entry.getValue() != null
               && (isConst(entry.getValue()) || block.findFirstLoad(entry.getValue()) != null)) {
             // new irPhi
+            // upd: lhs only local variables
+            if(!isTmpName(entry.getKey())) 
+                continue;
             domF.getPhi().put(entry.getKey(),
                 irPhi.builder()
                     .labl(domF.getLabel())
@@ -320,7 +333,7 @@ public class domBuilder implements irVisitor {
     }
     // curBlocks regs should update with curBlock's phi-lhs
     // find-first-load only store %_
-    
+
   }
 
   private void delPhi(irFuncDef curFunc) {
@@ -422,7 +435,8 @@ public class domBuilder implements irVisitor {
       if (res != null)
         return res;
     }
-    throw new error("**** there is no pre-Def for " + Ptr + " !!!!");
+    System.err.println("**** there is no pre-Def for " + Ptr + " !!!!");
+    return null;
   }
 
   private String replace(irBlock block, String oldReg) {

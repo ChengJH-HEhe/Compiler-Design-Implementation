@@ -1102,21 +1102,13 @@ public class irBuilder implements astVisitor<irNode> {
           .name(resul)
           .build();
     } else if (node.getOp().equals("Increment") || node.getOp().equals("Decrement")) {
-      String resul = curFunc.tmprename(),
-          resul1 = curFunc.tmprename();
-
-      add(irBinary.builder()
-          .op("add")
-          .res(resul)
-          .tp("i32")
-          .op1(((register) res).getName())
-          .op2("0")
-          .build());
+      String resul1 = curFunc.tmprename();
+      // fix : should store res.tostring
       add(irBinary.builder()
           .op(node.getOp().equals("Increment") ? "add" : "sub")
           .res(resul1)
           .tp("i32")
-          .op1(((register) res).getName())
+          .op1(res.toString())
           .op2("1")
           .build());
       curFunc.curBlock.setVal(((register) res).getPtr(), resul1, "i32");
@@ -1126,7 +1118,7 @@ public class irBuilder implements astVisitor<irNode> {
           .ptr(((register) res).getPtr())
           .build());
       return register.builder()
-          .name(resul)
+          .name(res.toString())
           .ptr(((register) res).getPtr())
           .build();
     } else {
