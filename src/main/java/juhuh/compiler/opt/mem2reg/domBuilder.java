@@ -216,25 +216,24 @@ public class domBuilder implements irVisitor {
     return !(reg.charAt(0) == '%' || reg.charAt(0) == '@');
   }
 
-  HashMap<String, String> curName;
-
   private void renameReg(int index) {
     // entry block has alloca need to neglect
     irBlock block = id2B.get(index);
     path.add(block);
-    curName = new HashMap<>();
     // upd thisblock's firstload reg->ptr replace vecStmt
     var vecStmt = block.getStmts();
     // replace stmts
+    
+    if (block.getRegs() != null)
+        for (var entry : block.getRegs().entrySet()) {
+          if (entry.getValue() != null)
+            if(!isConst(entry.getValue()) && block.findFirstLoad(entry.getValue()) != null) {
+              // lastdef = firstdef
+              entry.setValue(replace(block, entry.getValue()));
+            }
+        }
     if (vecStmt != null) {
       vector<irStmt> vec = new vector<irStmt>();
-      if (block.getRegs() != null)
-        for (var entry : block.getRegs().entrySet()) {
-          if (entry.getValue() != null && !isConst(entry.getValue()) && block.findFirstLoad(entry.getValue()) != null) {
-            // lastdef = firstdef
-            entry.setValue(replace(block, entry.getValue()));
-          }
-        }
       for (int i = 0; i < vecStmt.size(); ++i) {
         var stmt = (irIns) (vecStmt.get(i));
         if (stmt instanceof irAlloca ||
@@ -273,8 +272,8 @@ public class domBuilder implements irVisitor {
       // set this domf's def
       var setPhi = id2B.get(domf).getPhi();
       for (var entry : setPhi.entrySet()) {
-        entry.getValue().getLabel2val().put(block.getLabel(), replace(block, 
-          block.findVal(entry.getKey())));
+        entry.getValue().getLabel2val().put(block.getLabel(), replacePtr(block, 
+          entry.getKey()));
       }
     }
     for (var child : ch[id.get(block.getLabel())]) {
@@ -315,8 +314,9 @@ public class domBuilder implements irVisitor {
       // regs may only contain firstload result
       if (block.getRegs() != null)
         for (var entry : block.getRegs().entrySet()) {
+          // fix: entry's reg not first load
           if (entry.getValue() != null
-              && (isConst(entry.getValue()) || block.findFirstLoad(entry.getValue()) != null)) {
+              && (isConst(entry.getValue()) || block.findFirstLoad(entry.getValue()) == null)) {
             // new irPhi
             // upd: lhs only local variables
             if(!isTmpName(entry.getKey())) 
@@ -440,8 +440,6 @@ public class domBuilder implements irVisitor {
   }
 
   private String replace(irBlock block, String oldReg) {
-    if (curName.containsKey(oldReg))
-      return curName.get(oldReg);
     var res = block.findFirstLoad(oldReg);
     String ans = "";
     if (res != null) {
@@ -452,7 +450,13 @@ public class domBuilder implements irVisitor {
       }
     } else
       ans = oldReg;
-    curName.put(oldReg, ans);
+    return ans;
+  }
+  private String replacePtr(irBlock block, String res) {
+    String ans = block.findVal(res);
+    if (ans == null) {
+      ans = findPre(res);
+    }
     return ans;
   }
 
