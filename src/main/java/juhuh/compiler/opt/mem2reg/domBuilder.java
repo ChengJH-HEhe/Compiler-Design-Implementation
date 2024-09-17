@@ -346,7 +346,7 @@ public class domBuilder implements irVisitor {
     // find-first-load only store %_
 
   }
-
+  // TODO: redef critical edge
   private void delPhi(irFuncDef curFunc) {
     // phi -> add 0 : spj in asmBuilder
     // problem: critical edge? domF must have more than one pred,(endpoint ok) but
@@ -388,8 +388,8 @@ public class domBuilder implements irVisitor {
             block.getStmts().add(irBinary.builder()
                 .res(phiLhs.getKey() + "." + domF.getLabel())
                 .op("add")
-                .op1(phiLhs.getValue().getLabel2val().get(block.getLabel()))
-                .op2("0")
+                .op2(phiLhs.getValue().getLabel2val().get(block.getLabel()))
+                .op1("0")
                 .build());
           }
         }

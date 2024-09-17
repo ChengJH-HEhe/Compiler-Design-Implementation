@@ -210,6 +210,9 @@ public class asmBuilder implements irVisitor {
     String tp = tBool(node.getTp().equals("i1"));
     mem2a(node.getOp1(), 0, tp);
     mem2a(node.getOp2(), 1, tp);
+    if(node.getOp().equals("add") && node.getOp1().equals("0")) {
+      // TODO: spj res = add 0, x1
+    }
     // calc t0 t1 to t2
     if (node.getOp().equals("sdiv") || node.getOp().equals("srem")) {
       curB.add(riscR.builder()
