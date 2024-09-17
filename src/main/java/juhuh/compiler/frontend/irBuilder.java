@@ -343,7 +343,7 @@ public class irBuilder implements astVisitor<irNode> {
       entry1.add(stmt);
     }
     main.getEntry().setStmts(entry1.getStmts());
-    
+
     if (globalInit.curBlock != globalInit.getEntry())
       globalInit.add(globalInit.curBlock);
     globalInit.checkRet(irJump.builder()
@@ -404,14 +404,14 @@ public class irBuilder implements astVisitor<irNode> {
           .build());
       add(irLoad.builder()
           .tp("ptr")
-          .res("%this.copy")
+          .res("%this")
           .ptr("%this.addr." + curS.selfN)
           .build());
       // unused has set in symbol collector
       // func.setFName("@" + curS.parentScope().info.getName() + "." +
       // node.getInfo().getName());
     }
-    // para? % + _? 
+    // para? % + _?
     for (var para : node.getArgs()) {
       curFunc.getParatypelist().add(tp(para.getType().getInfo()));
       curFunc.getParavaluelist().add("%" + para.getName());
@@ -438,7 +438,7 @@ public class irBuilder implements astVisitor<irNode> {
     if (curFunc.getFName().equals("main")) {
       if (curFunc.curBlock.findVal("%ret.val") == null)
         curFunc.curBlock.setVal("%ret.val", "0", "i32");
-        // store tp
+      // store tp
       curFunc.checkRet(irStore.builder()
           .tp("i32")
           .res("0")
@@ -617,7 +617,7 @@ public class irBuilder implements astVisitor<irNode> {
         .build());
     add(irLoad.builder()
         .tp("ptr")
-        .res("%this.copy")
+        .res("%this")
         .ptr("%this.addr")
         .build());
     if (node.getBlock() != null)
@@ -693,6 +693,8 @@ public class irBuilder implements astVisitor<irNode> {
                 .iffalse("for.end." + i)
                 .build())
         .build();
+    forCond.setFirstLoad("%." + i, resCond);
+    forCond.setVal("%." + i, resCond, "i32");
     var endBTerm = switchBlock(forCond);
 
     var forBody = irBlock.builder()
@@ -710,6 +712,7 @@ public class irBuilder implements astVisitor<irNode> {
     var reg = register.builder()
         .name(curFunc.tmprename())
         .build();
+    forBody.setFirstLoad("%." + i, resCond);
     add(irGetElement.builder()
         .res(reg.getName())
         .tp("ptr")
@@ -722,6 +725,7 @@ public class irBuilder implements astVisitor<irNode> {
         .res(resul.toString())
         .ptr(reg.getName())
         .build());
+
     var resInc = curFunc.tmprename();
     var forInc = irBlock.builder()
         .label("for.inc." + i)
@@ -744,6 +748,8 @@ public class irBuilder implements astVisitor<irNode> {
                 .build())
 
         .build();
+    forInc.setFirstLoad("%." + i, resCond);
+    forInc.setVal("%." + i, resInc, "i32");
     switchBlock(forInc);
     var forEnd = irBlock.builder()
         .label("for.end." + i)
@@ -852,7 +858,7 @@ public class irBuilder implements astVisitor<irNode> {
       if (tmpS != null
           && tmpS.containsVariable(((astAtomExprNode) node.getFunc()).getType().getName(), false) != null) {
         caller = register.builder()
-            .name("%this.copy")
+            .name("%this")
             .build();
         // S ystem.err.print(((astAtomExprNode) node.getFunc()).getType().getName());
       }
@@ -1435,7 +1441,7 @@ public class irBuilder implements astVisitor<irNode> {
         var gep = irGetElement.builder()
             .res(resul)
             .tp("%class." + curS.findCLASS().getName())
-            .ptrval("%this.copy") // this -> this.addr -> this.copy
+            .ptrval("%this") // this -> this.addr -> this
             .tp1("i32").id1("0")
             .build();
         add(gep);
@@ -1443,7 +1449,7 @@ public class irBuilder implements astVisitor<irNode> {
         var gep1 = irGetElement.builder()
             .res(resul1)
             .tp(basetp((typeinfo) node.getType()))
-            .ptrval(resul) // this -> this.addr -> this.copy
+            .ptrval(resul) // this -> this.addr -> this
             .tp1("i32")
             .id1(ptr.substring(2))
             .build();
@@ -1462,9 +1468,9 @@ public class irBuilder implements astVisitor<irNode> {
       return reg;
     } else {
       if (node.getType().equals(SemanticChecker.thisType)) {
-        // this -> this.addr -> this.copy
+        // this -> this.addr -> this
         return register.builder()
-            .name("%this.copy")
+            .name("%this")
             .build();
       }
       if (!node.getType().equals(SemanticChecker.stringType))

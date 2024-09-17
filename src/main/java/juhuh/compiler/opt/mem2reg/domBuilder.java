@@ -146,13 +146,12 @@ public class domBuilder implements irVisitor {
       System.err.println(domFlag[i]);
       tmp.clear();
       var tmp1 = (BitSet) domFlag[i].clone();
-      tmp1.flip(i);
-
       for (var pred : preds[i]) {
         // double true -> false
         tmp.or(domFlag[pred]);
       }
       tmp.xor(tmp1);
+      tmp.set(i, false);
       // TODO: domF for a block to be unreachable?
       for (int j = tmp.nextSetBit(0); j >= 0; j = tmp.nextSetBit(j + 1)) {
         doms.get(j).getDomF().add(i);
@@ -223,15 +222,15 @@ public class domBuilder implements irVisitor {
     // upd thisblock's firstload reg->ptr replace vecStmt
     var vecStmt = block.getStmts();
     // replace stmts
-    
+
     if (block.getRegs() != null)
-        for (var entry : block.getRegs().entrySet()) {
-          if (entry.getValue() != null)
-            if(!isConst(entry.getValue()) && block.findFirstLoad(entry.getValue()) != null) {
-              // lastdef = firstdef
-              entry.setValue(replace(block, entry.getValue()));
-            }
-        }
+      for (var entry : block.getRegs().entrySet()) {
+        if (entry.getValue() != null)
+          if (!isConst(entry.getValue()) && block.findFirstLoad(entry.getValue()) != null) {
+            // lastdef = firstdef
+            entry.setValue(replace(block, entry.getValue()));
+          }
+      }
     if (vecStmt != null) {
       vector<irStmt> vec = new vector<irStmt>();
       for (int i = 0; i < vecStmt.size(); ++i) {
@@ -272,8 +271,8 @@ public class domBuilder implements irVisitor {
       // set this domf's def
       var setPhi = id2B.get(domf).getPhi();
       for (var entry : setPhi.entrySet()) {
-        entry.getValue().getLabel2val().put(block.getLabel(), replacePtr(block, 
-          entry.getKey()));
+        entry.getValue().getLabel2val().put(block.getLabel(), replacePtr(block,
+            entry.getKey()));
       }
     }
     for (var child : ch[id.get(block.getLabel())]) {
@@ -309,18 +308,30 @@ public class domBuilder implements irVisitor {
     if (block.isUnreachable())
       return;
     // if ptr2reg's reg equals lastDef, i.e. no actual def, not add phi
-    for (var domf : doms.get(i).getDomF()) {
-      var domF = id2B.get(domf);
-      // regs may only contain firstload result
-      if (block.getRegs() != null)
-        for (var entry : block.getRegs().entrySet()) {
-          // fix: entry's reg not first load
-          if (entry.getValue() != null
-              && (isConst(entry.getValue()) || block.findFirstLoad(entry.getValue()) == null)) {
-            // new irPhi
-            // upd: lhs only local variables
-            if(!isTmpName(entry.getKey())) 
-                continue;
+    BitSet visited = new BitSet(cnt);
+    Queue<Integer> q = new LinkedList<>();
+    q.offer(i);
+    while (!q.isEmpty()) {
+      var cur = q.poll();
+      for (var domf : doms.get(cur).getDomF()) {
+        if (!visited.get(domf)) {
+          visited.set(domf);
+          q.offer(domf);
+        }
+      }
+    }
+    // regs may only contain firstload result
+    if (block.getRegs() != null)
+      for (var entry : block.getRegs().entrySet()) {
+        // fix: entry's reg not first load
+        if (entry.getValue() != null
+            && (isConst(entry.getValue()) || !entry.getKey().equals(block.findFirstLoad(entry.getValue()))) ) {
+          // new irPhi
+          // upd: lhs only local variables
+          if (!isTmpName(entry.getKey()))
+            continue;
+          for (var domf = visited.nextSetBit(0); domf >= 0; domf = visited.nextSetBit(domf + 1)) {
+            var domF = id2B.get(domf);
             domF.getPhi().put(entry.getKey(),
                 irPhi.builder()
                     .labl(domF.getLabel())
@@ -330,7 +341,7 @@ public class domBuilder implements irVisitor {
                     .build());
           }
         }
-    }
+      }
     // curBlocks regs should update with curBlock's phi-lhs
     // find-first-load only store %_
 
@@ -452,6 +463,7 @@ public class domBuilder implements irVisitor {
       ans = oldReg;
     return ans;
   }
+
   private String replacePtr(irBlock block, String res) {
     String ans = block.findVal(res);
     if (ans == null) {
@@ -518,17 +530,24 @@ public class domBuilder implements irVisitor {
     //
     var block = path.getlst();
     node.setPtrval(replace(block, node.getPtrval()));
+    node.setId1(replace(block, node.getId1()));
   }
 
   @Override
   public void visit(irLoad node) throws error {
     // done previously
+    var block = path.getlst();
+    node.setPtr(replace(block, node.getPtr()));
+    node.setRes(replace(block, node.getRes()));
   }
 
   @Override
   public void visit(irStore node) throws error {
     // getelementptr's result should be added too
-    // but if not
+    // but if not? 
+    var block = path.getlst();
+    node.setPtr(replace(block, node.getPtr()));
+    node.setRes(replace(block, node.getRes()));
   }
 
   @Override

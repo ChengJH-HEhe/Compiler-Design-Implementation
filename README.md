@@ -9,6 +9,12 @@ p.s. things to do in domBuilder;
  2. rename firstload to phi or preName(path's regs)
  3. upd regs if regs still equals firstload.
 
+9.17 cfg's nxt! not domT's nxt
+  1. placePhi: should add domF, domF's domF ..
+  2. firstload upd in arr_init
+
+definition:
+
 1.basic block (BB)
 get out[] , in[] 
 
@@ -54,7 +60,8 @@ def[]: entry block vardef
 
 p1: func args: in irBuilder, I copy a0~a7, and store them in the real pointer. when calling another subroutine, (first def) a0~a7 will be invalid. how can i store the args in a temporary space? no other ways, except saving a0~a7.
 
-p2: why ret.val won't place phi in ret block?
+p2: why ret.val won't place phi in ret block? 
+  block's info is not correct.
 
 
 

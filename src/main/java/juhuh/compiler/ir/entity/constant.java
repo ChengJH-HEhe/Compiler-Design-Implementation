@@ -9,7 +9,7 @@ public class constant extends entity {
   String name;
   @Override
   public String toString() {
-    return name == "this"? "%this.copy" : name;
+    return name == "this"? "%this" : name;
   }
   @Override
   public void accept(irVisitor visitor)
