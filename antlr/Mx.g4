@@ -35,7 +35,7 @@ primary
     | This
     ;
 stmt
-    : block #blockStmt
+    : block #blockStmte
     | vardefstmt #vardefStmt
     | If '(' expr ')' thenStmt = stmt 
         (Else elseStmt = stmt)? #ifStmt
@@ -155,7 +155,6 @@ formatStr: // to the first $
 WhiteSpace: [\t\r\n ]+ -> skip;
 LineComment: '//' ~[\r\n]* -> skip;
 ParaComment: '/*' .*? '*/' -> skip;
-Non_s : ~[$] | Escape;
 
 
 

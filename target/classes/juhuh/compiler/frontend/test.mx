@@ -1,0 +1,23 @@
+/*
+Test Package: Codegen
+Author: Pikachu
+Time: 2020-02-02
+Input:
+=== input ===
+8
+11 12 1 2 13 14 3 4
+=== end ===
+Output:
+=== output ===
+2
+=== end ===
+ExitCode: 0
+InstLimit: -1
+Origin Package: Codeforces 1145A #52445759
+*/
+int main(){
+    for(int i = 1; i < 10; ++i){
+        
+    }
+	return 0;
+}

@@ -170,6 +170,7 @@ public class asmBuilder implements irVisitor {
 
   // for usual anonymous variable
   public void mem2a(String name, int num, String tp) {
+    if(name != null)
     if (name.getBytes()[0] != '%' && name.getBytes()[0] != '@') {
       curB.add(pseudo.builder()
           .strs(new vector<String>("li", "t" + num, name.equals("false") ? "0" : name.equals("true") ? "1" :
@@ -184,6 +185,7 @@ public class asmBuilder implements irVisitor {
   }
 
   public void mem2aS(String name, String num, String tp) {
+    if(name != null)
     if (name.getBytes()[0] != '%' && name.getBytes()[0] != '@') {
       curB.add(pseudo.builder()
           .strs(new vector<String>("li", "t" + num, name.equals("false") ? "0" : name.equals("true") ? "1" :
@@ -208,11 +210,13 @@ public class asmBuilder implements irVisitor {
     if (status == true)
       return;
     String tp = tBool(node.getTp().equals("i1"));
+    if(node.getOp1() != null)
+    if(node.getOp().equals("add") && node.getOp1().equals("0")) {
+      // special: res = add 0, x1 const: li, res, mv
+      
+    }
     mem2a(node.getOp1(), 0, tp);
     mem2a(node.getOp2(), 1, tp);
-    if(node.getOp().equals("add") && node.getOp1().equals("0")) {
-      // TODO: spj res = add 0, x1
-    }
     // calc t0 t1 to t2
     if (node.getOp().equals("sdiv") || node.getOp().equals("srem")) {
       curB.add(riscR.builder()
@@ -297,7 +301,9 @@ public class asmBuilder implements irVisitor {
       if (curId < 8)
         tmpvar = "a" + curId;
       // load to the tmpvar
-      if (arg.getBytes()[0] == '%' || arg.getBytes()[0] == '@') {
+      if(arg == null) {
+        mem2aS("null", tmpvar, vartype.get(curId).equals("i1") ? "b" : "w");
+      }else  if (arg.getBytes()[0] == '%' || arg.getBytes()[0] == '@') {
         mem2aS(arg, tmpvar, vartype.get(curId).equals("i1") ? "b" : "w");
       } else {
         curB.add(pseudo.builder()
@@ -492,6 +498,7 @@ public class asmBuilder implements irVisitor {
     if (status == true)
       return;
     if (!node.getTp().equals("void")) {
+      if(node.getVal() == null) return;
       // store retval to a0
       // %ret.val -> addr -> a0
       var id = vrM.add(node.getVal());
@@ -576,6 +583,7 @@ public class asmBuilder implements irVisitor {
   public String getPtr(String name) {
 
     // problem is global?
+    if(name != null)
     if (name.getBytes()[0] == '@') {
       curB.add(pseudo.builder()
           .strs(new vector<String>("la", "t4", name.substring(1)))

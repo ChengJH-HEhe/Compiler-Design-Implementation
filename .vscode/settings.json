@@ -1,0 +1,19 @@
+{
+  "files.associations": {
+        "*.java": "java",
+        "*.xml": "xml",
+        "*.json": "json"
+    },
+  "java.project.referencedLibraries": [
+    "/**/*.jar"
+
+  ] ,
+  "java.project.sourcePaths": [
+    "src/main/java/juhuh/compiler"
+  ],
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "editor.tabSize": 2,
+  "editor.tabCompletion": "on",
+  "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx2G -Xms100m -Xlog:disable",
+  "java.debug.settings.onBuildFailureProceed": true,
+}

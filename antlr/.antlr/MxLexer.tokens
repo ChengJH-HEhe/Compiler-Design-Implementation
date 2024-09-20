@@ -61,7 +61,6 @@ Fstring_lst=60
 WhiteSpace=61
 LineComment=62
 ParaComment=63
-Non_s=64
 'void'=1
 'bool'=2
 'int'=3
