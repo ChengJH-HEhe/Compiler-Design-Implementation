@@ -8,6 +8,7 @@ import juhuh.compiler.util.error.error;
 @lombok.Setter
 
 public abstract class irNode {
+  private int block, stmt;
   public abstract String toString();
 
   public abstract void accept(irVisitor visitor) throws error;

@@ -1367,7 +1367,7 @@ public class irBuilder implements astVisitor<irNode> {
   public irNode visit(astAssignExprNode node) throws error {
     // calc lhs.ptr, calc rhs.val , store to lhs.ptr
     entity res2 = (entity) (node.getRhs()).accept(this);
-    // only consider a = 1; or a = b + c this.a = 1;
+    // only consider a = 1; or a = b + c don't consider this.a = 1;
     if (node.getLhs() instanceof astAtomExprNode)
       defStatus = true;
     entity res1 = (entity) (node.getLhs()).accept(this);

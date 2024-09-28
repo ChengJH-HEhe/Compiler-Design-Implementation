@@ -1,7 +1,8 @@
 @.str.true = private unnamed_addr constant [5 x i8] c"true\00"
 @.str.false = private unnamed_addr constant [6 x i8] c"false\00"
+@MAXN.0.0 = global i32 0
+@MAXM.0.1 = global i32 0
 %class.string = type {  }
-%class.A = type { i32 }
 declare i32 @string.length(ptr %this)
 declare ptr @string.substring(ptr %this, i32 %.int0, i32 %.int1)
 declare i32 @string.parseInt(ptr %this)
@@ -18,41 +19,10 @@ declare void @printInt(i32 %i)
 declare void @printlnInt(i32 %i)
 declare ptr @getString()
 declare i32 @getInt()
-define void @A.A(ptr %this) {
-entry:
-  br label %return1
-
-
-return1:
-  ret void
-
-}
-
-define i32 @A.f(ptr %this) {
-entry:
-  %_0 = getelementptr %class.A, ptr %this, i32 0
-  %_1 = getelementptr i32, ptr %_0, i32 0
-  %_2 = load i32, ptr %_1
-  br label %return2
-
-
-return2:
-  ret i32 %_2
-
-}
-
-define ptr @A.copy(ptr %this) {
-entry:
-  br label %return3
-
-
-return3:
-  ret ptr %this
-
-}
-
 define void @__init__() {
 entry:
+  store i32 10005, ptr @MAXN.0.0
+  store i32 10005, ptr @MAXM.0.1
   br label %return0
 
 
@@ -64,63 +34,108 @@ return0:
 define i32 @main() {
 entry:
   call void @__init__()
-  %_0 = call ptr @_malloc(i32 1)
-  call void @A.A(ptr %_0)
-  %_1 = call i32 @A.f(ptr %_0)
-  %_2 = icmp slt i32 %_1, 0
-  br i1 %_2, label %cond.true0, label %cond.false0
+  %_0 = call i32 @getInt()
+  %_1 = call i32 @getInt()
+  %_2 = load i32, ptr @MAXN.0.0
+  %_3 = call ptr @_arr_init(i32 %_2)
+  %_4 = call ptr @_arr_init(i32 %_2)
+  %_5 = call ptr @_arr_init(i32 %_2)
+  br label %for.cond2.0.0
 
-cond.true0:
-  br label %cond.end0
+for.cond2.0.0:
+  %i.1.7.for.cond2.0.0 = phi i32 [ 0 , %entry], [ %_19 , %for.inc2.0.0]
+  %_8 = icmp slt i32 %i.1.7.for.cond2.0.0, %_1
+  br i1 %_8, label %for.body2.0.0, label %for.end2.0.0
 
-cond.false0:
-  %_4 = call ptr @A.copy(ptr %_0)
-  br label %cond.end0
-
-cond.end0:
-  %_5 = select i1 %_2, ptr null, ptr %_4
-  %_6 = call i32 @A.f(ptr %_5)
-  %_7 = icmp sgt i32 %_6, 0
-  br i1 %_7, label %cond.true1, label %cond.false1
-
-cond.true1:
-  %_9 = call ptr @A.copy(ptr %_5)
-  br label %cond.end1
-
-cond.false1:
-  br label %cond.end1
-
-cond.end1:
-  %_10 = select i1 %_7, ptr %_9, ptr null
-  %_11 = call ptr @_arr_init(i32 10)
-  %_12 = getelementptr i32, ptr %_11, i32 9
+for.body2.0.0:
+  %_9 = call i32 @getInt()
+  %_12 = getelementptr i32, ptr %_3, i32 %i.1.7.for.cond2.0.0
   %_13 = load i32, ptr %_12
-  %_14 = getelementptr i32, ptr %_11, i32 1
-  %_15 = load i32, ptr %_14
-  %_16 = icmp sgt i32 %_13, %_15
-  br i1 %_16, label %cond.true2, label %cond.false2
+  store i32 %_9, ptr %_12
+  %_14 = call i32 @getInt()
+  %_16 = getelementptr i32, ptr %_4, i32 %i.1.7.for.cond2.0.0
+  %_17 = load i32, ptr %_16
+  store i32 %_14, ptr %_16
+  br label %for.inc2.0.0
 
-cond.true2:
-  br label %cond.end2
+for.inc2.0.0:
+  %_19 = add i32 %i.1.7.for.cond2.0.0, 1
+  br label %for.cond2.0.0
 
-cond.false2:
-  br label %cond.end2
+for.end2.0.0:
+  br label %for.cond2.1.1
 
-cond.end2:
-  %_18 = select i1 %_16, ptr %_17, ptr null
-  %_20 = call ptr @A.copy(ptr %_10)
-  %_21 = call ptr @A.copy(ptr %_20)
-  %_22 = call ptr @A.copy(ptr %_21)
-  %_23 = call ptr @A.copy(ptr %_22)
-  %_24 = call i32 @A.f(ptr %_23)
-  %_25 = getelementptr i32, ptr %_18, i32 0
+for.cond2.1.1:
+  %i.1.7.for.cond2.1.1 = phi i32 [ 0 , %for.end2.0.0], [ %_64 , %for.inc2.1.1]
+  %j.1.8.for.cond2.1.1 = phi i32 [0, %for.end2.0.0], [ %j.1.8.for.cond4.0.2 , %for.inc2.1.1]
+  %_22 = icmp slt i32 %i.1.7.for.cond2.1.1, %_1
+  br i1 %_22, label %for.body2.1.1, label %for.end2.1.1
+
+for.body2.1.1:
+  %_25 = getelementptr i32, ptr %_4, i32 %i.1.7.for.cond2.1.1
   %_26 = load i32, ptr %_25
-  %_27 = add i32 %_24, %_26
-  br label %return4
+  br label %for.cond4.0.2
+
+for.cond4.0.2:
+  %j.1.8.for.cond4.0.2 = phi i32 [ %_26 , %for.body2.1.1], [ %_62 , %for.inc4.0.2]
+  %_29 = icmp sle i32 %j.1.8.for.cond4.0.2, %_0
+  br i1 %_29, label %for.body4.0.2, label %for.end4.0.2
+
+for.body4.0.2:
+  %_32 = getelementptr i32, ptr %_5, i32 %j.1.8.for.cond4.0.2
+  %_33 = load i32, ptr %_32
+  %_36 = getelementptr i32, ptr %_4, i32 %i.1.7.for.cond2.1.1
+  %_37 = load i32, ptr %_36
+  %_38 = sub i32 %j.1.8.for.cond4.0.2, %_37
+  %_39 = getelementptr i32, ptr %_5, i32 %_38
+  %_40 = load i32, ptr %_39
+  %_42 = getelementptr i32, ptr %_3, i32 %i.1.7.for.cond2.1.1
+  %_43 = load i32, ptr %_42
+  %_44 = add i32 %_40, %_43
+  %_45 = icmp sle i32 %_33, %_44
+  br i1 %_45, label %if.then6.0.0, label %if.else6.0.0
+
+if.then6.0.0:
+  %_50 = getelementptr i32, ptr %_4, i32 %i.1.7.for.cond2.1.1
+  %_51 = load i32, ptr %_50
+  %_52 = sub i32 %j.1.8.for.cond4.0.2, %_51
+  %_53 = getelementptr i32, ptr %_5, i32 %_52
+  %_54 = load i32, ptr %_53
+  %_56 = getelementptr i32, ptr %_3, i32 %i.1.7.for.cond2.1.1
+  %_57 = load i32, ptr %_56
+  %_58 = add i32 %_54, %_57
+  %_59 = getelementptr i32, ptr %_5, i32 %j.1.8.for.cond4.0.2
+  %_60 = load i32, ptr %_59
+  store i32 %_58, ptr %_59
+  br label %if.end6.0.0
+
+if.else6.0.0:
+  br label %if.end6.0.0
+
+if.end6.0.0:
+  br label %for.inc4.0.2
+
+for.inc4.0.2:
+  %_62 = add i32 %j.1.8.for.cond4.0.2, 1
+  br label %for.cond4.0.2
+
+for.end4.0.2:
+  br label %for.inc2.1.1
+
+for.inc2.1.1:
+  %_64 = add i32 %i.1.7.for.cond2.1.1, 1
+  br label %for.cond2.1.1
+
+for.end2.1.1:
+  %_67 = getelementptr i32, ptr %_5, i32 %_0
+  %_68 = load i32, ptr %_67
+  %_69 = call ptr @toString(i32 %_68)
+  call void @print(ptr %_69)
+  br label %return1
 
 
-return4:
-  ret i32 %_27
+return1:
+  ret i32 0
 
 }
 

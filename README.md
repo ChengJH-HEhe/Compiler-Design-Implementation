@@ -13,6 +13,16 @@ p.s. things to do in domBuilder;
   1. placePhi: should add domF, domF's domF ..
   2. firstload upd in arr_init
 
+9.28 complete liveness analysis
+  1. spill cost design: use * 10^B (B = loop depth)
+  todo: 1.collect use, in allocator.regs
+  2.calc loop depth
+    loop header -> dom one of preds ,that predecessor is in loopbody
+    loop body's depth is the same as loopheader
+  3. begin to spill
+
+  4. color those unused
+  
 definition:
 
 1.basic block (BB)

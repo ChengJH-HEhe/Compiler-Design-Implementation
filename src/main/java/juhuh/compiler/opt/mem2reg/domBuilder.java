@@ -4,12 +4,14 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import juhuh.compiler.backend.asmBuilder;
 import juhuh.compiler.frontend.irVisitor;
 import juhuh.compiler.ir.*;
 import juhuh.compiler.ir.def.*;
 import juhuh.compiler.ir.ins.*;
 import juhuh.compiler.ir.stmt.irBlock;
 import juhuh.compiler.ir.stmt.irStmt;
+import juhuh.compiler.opt.regAlloc.allocator;
 import juhuh.compiler.util.vector;
 import juhuh.compiler.util.error.error;
 
@@ -17,14 +19,16 @@ import java.util.BitSet;
 
 public class domBuilder implements irVisitor {
   private vector<dom> doms;
-  private HashMap<String, Integer> id;
-  private vector<irBlock> id2B;
-  private int cnt = 0;
-  private vector<Integer>[] preds, dom;
-  private vector<Integer>[] ch;
+  public HashMap<String, Integer> id;
+  public vector<irBlock> id2B;
+  public int cnt = 0;
+  public vector<Integer>[] preds;
+  private vector<Integer>[] dom, ch;
   private vector<Integer> postRev;
   BitSet[] domFlag;
 
+  HashMap<Integer, Integer> loopHeader;
+  int[] loopBody;
   public void delPhi(irRoot root) {
     for (var def : root.getFDef())
       delPhi(def);
@@ -325,7 +329,7 @@ public class domBuilder implements irVisitor {
       for (var entry : block.getRegs().entrySet()) {
         // fix: entry's reg not first load
         if (entry.getValue() != null
-            && (isConst(entry.getValue()) || !entry.getKey().equals(block.findFirstLoad(entry.getValue()))) ) {
+            && (isConst(entry.getValue()) || !entry.getKey().equals(block.findFirstLoad(entry.getValue())))) {
           // new irPhi
           // upd: lhs only local variables
           if (!isTmpName(entry.getKey()))
@@ -346,7 +350,8 @@ public class domBuilder implements irVisitor {
     // find-first-load only store %_
 
   }
-  // TODO: redef critical edge
+
+  // redef critical edge
   private void delPhi(irFuncDef curFunc) {
     // phi -> add 0 : spj in asmBuilder
     // problem: critical edge? domF must have more than one pred,(endpoint ok) but
@@ -354,11 +359,16 @@ public class domBuilder implements irVisitor {
     // only need to add 1 bb for st is many-child
     // if st is one-child, then add 0 in this block
     // else add 0 in a new created block
-    boolean[] isOnly = new boolean[cnt];
-    isOnly[0] = true;
+    boolean[] inOnly = new boolean[cnt];
+    int[] outCnt = new int[cnt];
+
+    for (int i = 1; i < cnt; ++i) {
+      for (var pre : preds[i])
+        ++outCnt[pre];
+    }
     for (int i = 0; i < cnt; ++i) {
-      if (ch[i].size() == 1) {
-        isOnly[ch[i].get(0)] = true;
+      if (outCnt[i] == 1) {
+        inOnly[i] = true;
       }
     }
     // st not only-child, -> endterm is still certain
@@ -367,11 +377,11 @@ public class domBuilder implements irVisitor {
       var block = id2B.get(i);
       if (block.isUnreachable())
         continue;
-      if (isOnly[i]) {
+      if (!inOnly[i]) {
         // add 0 in new block
         block.setTerminal(block.getEndTerm());
         var newBlock = irBlock.builder()
-            .label("_phi" + block.getLabel())
+            .label("_phi." + block.getLabel())
             .stmts(new vector<irStmt>())
             .terminalstmt(block.getTerminalstmt())
             .build();
@@ -384,7 +394,8 @@ public class domBuilder implements irVisitor {
         var domF = id2B.get(domf);
         // domF block's find this block's value should add 0 in this block
         for (var phiLhs : domF.getPhi().entrySet()) {
-          if (phiLhs.getValue().getLabel2val().containsKey(block.getLabel())) {
+          if (phiLhs.getValue().getLabel2val().containsKey(block.getLabel()) &&
+              phiLhs.getValue().getLabel2val().get(block.getLabel()) != null) {
             block.getStmts().add(irBinary.builder()
                 .res(phiLhs.getKey() + "." + domF.getLabel())
                 .op("add")
@@ -394,8 +405,7 @@ public class domBuilder implements irVisitor {
           }
         }
       }
-
-      if (!isOnly[i]) {
+      if (!inOnly[i]) {
         curFunc.add(block);
       }
     }
@@ -423,8 +433,44 @@ public class domBuilder implements irVisitor {
     renameReg(0);
     // reset phi: add 0, xi -> opt phi
     // ir should be right
+
+    // get tempMap for allocator
+    
+    // spill cost calc
+    // first step: loop header, loop body classify
+    defLoop();
+    // spill use
+    var alloc = new allocator(this);
+    alloc.visit(node);
+    alloc.spill();
+    // asm rewrite 
+  }
+  BitSet Loopvisited;
+  private void LoopDfs(int target, int cur) {
+    if(Loopvisited.get(cur)) return;
+    ++loopBody[cur];
+    Loopvisited.set(cur);
+    if(cur == target) return;
+    for(var i : preds[cur]) LoopDfs(target, i);
   }
 
+  private void defLoop() {
+    loopHeader = new HashMap<Integer, Integer>();
+    loopBody = new int[cnt];
+    // backedge
+    for(int i = 0; i < cnt; ++i) {
+      for(var j : preds[i]) {
+        if(domFlag[i].get(j)) {
+          loopHeader.put(i,j);
+        }
+      }
+    }
+    // loopbody -> loopheader
+    for(var header : loopHeader.entrySet()) {
+      Loopvisited = new BitSet(cnt);
+      LoopDfs(header.getKey(), header.getValue());
+    }
+  }
   @Override
   public void visit(irNode node) throws error {
     node.accept(this);
@@ -544,7 +590,7 @@ public class domBuilder implements irVisitor {
   @Override
   public void visit(irStore node) throws error {
     // getelementptr's result should be added too
-    // but if not? 
+    // but if not?
     var block = path.getlst();
     node.setPtr(replace(block, node.getPtr()));
     node.setRes(replace(block, node.getRes()));
