@@ -10,11 +10,20 @@ public class regCol {
   HashSet<Integer> inUse;
   int spillCount = 0;
   int K = 32;
-
-  private int findCol() {
-    if(inUse == null) {
-      inUse = new HashSet<Integer>();
+  public regCol() {
+    regs = new HashMap<String, color>();
+    inUse = new HashSet<Integer>();
+  }
+  public void orLiveIn(HashSet<String> liveIn) {
+    for (String reg : liveIn) {
+      if (regs.get(reg) != null) {
+        var col = regs.get(reg);
+        if(!col.spilled)
+          inUse.add(col.id);
+      }
     }
+  }
+  private int findCol() {
     for (int i = 0; i < K; i++) {
       if (!inUse.contains(i)) {
         inUse.add(i);
@@ -25,9 +34,6 @@ public class regCol {
   }
   // spill or color after spill (determine with isSpilled)
   public void addReg(String reg, boolean isSpilled) {
-    if (regs == null) {
-      regs = new HashMap<String, color>();
-    }
     if (regs.get(reg) != null) {
       return;
     }
@@ -38,6 +44,17 @@ public class regCol {
     } else {
       c.spilled = false;
       c.id = findCol();
+    }
+  }
+  public void eraseReg(String reg) {
+    if (regs.get(reg) == null) {
+      return;
+    }
+    var col = regs.get(reg);
+    if(!col.spilled)
+      inUse.remove(col.id);
+    else {
+      System.err.println("Spilled register " + reg + " is erased");
     }
   }
 }

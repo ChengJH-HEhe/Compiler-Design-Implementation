@@ -5,38 +5,32 @@ import java.util.HashSet;
 
 public class live {
   public HashSet<String> in, out, def, use;
-  void Def(HashMap<String,Integer> reg, String d) {
+  public live() {
+    in = new HashSet<String>();
+    out = new HashSet<String>();
+    def = new HashSet<String>();
+    use = new HashSet<String>();
+  }
+  void Def(HashMap<String,Integer> reg, int dep, String d) {
     if(reg.containsKey(d)) {
-      reg.put(d, reg.get(d) + 1);
+      reg.put(d, reg.get(d) + dep);
     } else {
-      reg.put(d, 1);
-    }
-    if(def == null) {
-      def = new HashSet<>();
+      reg.put(d, dep);
     }
     def.add(d);
   }
-  void Use(HashMap<String,Integer> reg, String u) {
+  void Use(HashMap<String,Integer> reg, int dep, String u) {
     if(reg.containsKey(u)) {
-      reg.put(u, reg.get(u) + 1);
+      reg.put(u, reg.get(u) + dep);
     } else {
-      reg.put(u, 1);
-    }
-    if(use == null) {
-      use = new HashSet<>();
+      reg.put(u, dep);
     }
     use.add(u);
   }
   void Out(String o) {
-    if(out == null) {
-      out = new HashSet<>();
-    }
     out.add(o);
   }
   void In(String i) {
-    if(in == null) {
-      in = new HashSet<>();
-    }
     in.add(i);
   }
 }

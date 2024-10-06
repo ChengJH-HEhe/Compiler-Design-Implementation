@@ -22,13 +22,13 @@ public class domBuilder implements irVisitor {
   public HashMap<String, Integer> id;
   public vector<irBlock> id2B;
   public int cnt = 0;
-  public vector<Integer>[] preds;
-  private vector<Integer>[] dom, ch;
+  public vector<Integer>[] preds, ch;
+  private vector<Integer>[] dom;
   private vector<Integer> postRev;
   BitSet[] domFlag;
 
   HashMap<Integer, Integer> loopHeader;
-  int[] loopBody;
+  public int[] loopBody;
   public void delPhi(irRoot root) {
     for (var def : root.getFDef())
       delPhi(def);
@@ -439,11 +439,14 @@ public class domBuilder implements irVisitor {
     // spill cost calc
     // first step: loop header, loop body classify
     defLoop();
-    // spill use
+    // spill use & color
     var alloc = new allocator(this);
     alloc.visit(node);
-    alloc.spill();
+    alloc.spill2Col(node.getParavaluelist());
+    // delphi
+    delPhi(node);
     // asm rewrite 
+    
   }
   BitSet Loopvisited;
   private void LoopDfs(int target, int cur) {
