@@ -209,12 +209,13 @@ public class asmBuilder implements irVisitor {
     var res = vrM.add(node.getRes());
     if (status == true)
       return;
+    
     String tp = tBool(node.getTp().equals("i1"));
     if(node.getOp1() != null)
-    if(node.getOp().equals("add") && node.getOp1().equals("0")) {
-      // special: res = add 0, x1 const: li, res, mv
-      
-    }
+      if(node.getOp().equals("add") && node.getOp1().equals("0")) {
+        // special: res = add 0, x1 const: li, res, mv
+        
+      }
     mem2a(node.getOp1(), 0, tp);
     mem2a(node.getOp2(), 1, tp);
     // calc t0 t1 to t2

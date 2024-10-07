@@ -5,124 +5,16 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1a468947-559a-4935-9776-6ac80def677e" name="更改" comment="">
-      <change beforePath="$PROJECT_DIR$/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/Makefile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/antlr/.antlr/Mx.interp" beforeDir="false" afterPath="$PROJECT_DIR$/antlr/.antlr/Mx.interp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/antlr/.antlr/MxParser.java" beforeDir="false" afterPath="$PROJECT_DIR$/antlr/.antlr/MxParser.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/antlr/Mx.g4" beforeDir="false" afterPath="$PROJECT_DIR$/antlr/Mx.g4" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/builtin.ll" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output.ll" beforeDir="false" afterPath="$PROJECT_DIR$/output.ll" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/juhuh/compiler/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/juhuh/compiler/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/juhuh/compiler/backend/VarRegManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/juhuh/compiler/backend/VarRegManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/juhuh/compiler/backend/asm/asmBlock.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/juhuh/compiler/backend/asm/asmBlock.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/juhuh/compiler/backend/asm/asmRoot.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/juhuh/compiler/backend/asm/asmRoot.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/juhuh/compiler/backend/asm/def/asmFuncDef.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/juhuh/compiler/backend/asm/def/asmFuncDef.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/juhuh/compiler/backend/asmBuilder.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/juhuh/compiler/backend/asmBuilder.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/juhuh/compiler/backend/output.s" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/juhuh/compiler/backend/output.s" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/juhuh/compiler/ir/output.ll" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/juhuh/compiler/ir/output.ll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/e5.mx" beforeDir="false" afterPath="$PROJECT_DIR$/testcases/codegen/e5.mx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/e7.mx" beforeDir="false" afterPath="$PROJECT_DIR$/testcases/codegen/e7.mx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/scripts/test_asm.bash" beforeDir="false" afterPath="$PROJECT_DIR$/testcases/codegen/scripts/test_asm.bash" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/scripts/test_asm_all.bash" beforeDir="false" afterPath="$PROJECT_DIR$/testcases/codegen/scripts/test_asm_all.bash" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/scripts/test_llvm_ir.bash" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/scripts/test_llvm_ir_all.bash" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t1.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t1.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t10.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t10.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t11.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t11.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t12.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t13.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t14.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t15.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t16.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t17.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t17.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t18.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t19.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t2.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t2.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t20.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t21.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t22.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t23.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t24.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t25.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t26.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t27.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t28.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t29.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t3.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t3.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t30.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t31.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t32.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t33.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t34.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t35.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t36.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t37.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t38.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t39.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t4.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t4.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t40.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t41.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t42.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t43.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t44.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t45.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t46.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t47.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t48.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t49.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t5.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t5.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t50.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t51.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t52.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t53.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t54.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t55.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t56.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t57.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t58.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t59.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t6.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t6.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t60.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t61.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t62.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t63.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t64.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t66.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t67.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t68.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t69.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t7.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t7.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t70.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t71.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t72.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t73.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t74.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t8.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t8.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t9.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/codegen/t9.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/deprecated/t65.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/sema/array-package/array-1.mx" beforeDir="false" afterPath="$PROJECT_DIR$/testcases/sema/array-package/array-1.mx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/sema/class-package/class-1.mx" beforeDir="false" afterPath="$PROJECT_DIR$/testcases/sema/class-package/class-1.mx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/sema/const-array-package/const_array2.mx" beforeDir="false" afterPath="$PROJECT_DIR$/testcases/sema/const-array-package/const_array2.mx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/sema/formatted-string-package/formatted-string2.mx" beforeDir="false" afterPath="$PROJECT_DIR$/testcases/sema/formatted-string-package/formatted-string2.mx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/sema/formatted-string-package/formatted-string4.mx" beforeDir="false" afterPath="$PROJECT_DIR$/testcases/sema/formatted-string-package/formatted-string4.mx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/sema/misc-package/misc-1.mx" beforeDir="false" afterPath="$PROJECT_DIR$/testcases/sema/misc-package/misc-1.mx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/sema/scripts/test.bash" beforeDir="false" afterPath="$PROJECT_DIR$/testcases/sema/scripts/test.bash" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/sema/scripts/test_all.bash" beforeDir="false" afterPath="$PROJECT_DIR$/testcases/sema/scripts/test_all.bash" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/sema/ternary-package/ternary-expression-1.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/sema/ternary-package/ternary-expression-2.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/sema/ternary-package/ternary-expression-3.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/sema/ternary-package/ternary-expression-4.mx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testcases/sema/ternary-package/ternary-expression-5.mx" beforeDir="false" afterPath="$PROJECT_DIR$/testcases/sema/ternary-package/ternary-expression-5.mx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/juhuh/compiler/opt/mem2reg/domBuilder.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/juhuh/compiler/opt/mem2reg/domBuilder.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/juhuh/compiler/opt/regAlloc/allocator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/juhuh/compiler/opt/regAlloc/allocator.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/juhuh/compiler/opt/regAlloc/regCol.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/juhuh/compiler/opt/regAlloc/regCol.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/juhuh/compiler/opt/mem2reg/domBuilder.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/juhuh/compiler/opt/mem2reg/domBuilder.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/juhuh/compiler/opt/regAlloc/allocator.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/juhuh/compiler/opt/regAlloc/allocator.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/juhuh/compiler/opt/regAlloc/regCol.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/juhuh/compiler/opt/regAlloc/regCol.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/testcases/sema/array-package/array-2.mx" beforeDir="false" afterPath="$PROJECT_DIR$/testcases/sema/array-package/array-2.mx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -167,29 +59,29 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.go.formatter.settings.were.checked": "true",
-    "RunOnceActivity.go.migrated.go.modules.settings": "true",
-    "git-widget-placeholder": "master",
-    "go.import.settings.migrated": "true",
-    "ignore.virus.scanning.warn.message": "true",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "//wsl.localhost/ubuntu-22.04/home/unix/github/Compiler-Design-Implementation/testcases/sema/formatted-string-package/formatted-string3.mx",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "项目",
-    "project.structure.proportion": "0.0",
-    "project.structure.side.proportion": "0.0",
-    "run.code.analysis.last.selected.profile": "pProject Default",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.formatter.settings.were.checked&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.migrated.go.modules.settings&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;go.import.settings.migrated&quot;: &quot;true&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;//wsl.localhost/ubuntu-22.04/home/unix/github/Compiler-Design-Implementation/testcases/sema/formatted-string-package/formatted-string3.mx&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;项目&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="\\wsl.localhost\ubuntu-22.04\home\unix\github\Compiler-Design-Implementation\src\main\java\juhuh\compiler\" />
@@ -271,6 +163,7 @@
       <workItem from="1724830602133" duration="1351000" />
       <workItem from="1724922527520" duration="2625000" />
       <workItem from="1725034268409" duration="10434000" />
+      <workItem from="1728229109762" duration="1989000" />
     </task>
     <servers />
   </component>

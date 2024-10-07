@@ -27,6 +27,7 @@ public class regCol {
     for (int i = 0; i < K; i++) {
       if (!inUse.contains(i)) {
         inUse.add(i);
+        System.err.println("Register " + i + " is found");
         return i;
       }
     }
@@ -45,6 +46,7 @@ public class regCol {
       c.spilled = false;
       c.id = findCol();
     }
+    regs.put(reg, c);
   }
   public void eraseReg(String reg) {
     if (regs.get(reg) == null) {

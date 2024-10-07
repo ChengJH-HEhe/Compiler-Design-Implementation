@@ -22,7 +22,7 @@ public class allocator implements irVisitor {
   private domBuilder dom;
   public vector<live> liveStmt[];
   //
-  public regCol regColor = new regCol(); // spill color it
+  public regCol regColor; // spill color it
   public int argsId = 0;
   int regIdCnt = 0;
   // tempvar bool spilled, int id;
@@ -56,19 +56,19 @@ public class allocator implements irVisitor {
   // q: a stmt, choose the longest reg to spill reduce the probability to spill.
 
   void scanPhi(irBlock node) {
-    for (var stmt : node.getStmts()) {
-      if (stmt instanceof irPhi) {
-        var phi = (irPhi) stmt;
+    for (var stmt : node.getPhi().entrySet()) 
+      {
+        var phi = stmt.getValue();
         for (var val : phi.getLabel2val().entrySet()) {
           if (val.getValue() != null && val.getValue().equals(reg)) {
             scanBlock(dom.id.get(val.getKey()), val.getValue());
           }
         }
       }
-    }
   }
 
   void scanBlock(int blockId, String regName) {
+    
     if (scanned.get(blockId)) {
       return;
     }
@@ -82,14 +82,14 @@ public class allocator implements irVisitor {
   }
 
   void scanIn() {
+    assert(curStmt >= 0);
     if (curStmt == 0) {
       // no preceding
       var setPhi = dom.id2B.get(curBlock).getPhi();
       if (setPhi != null) {
-
         for (var phi : setPhi.entrySet()) {
           // phi def use reg?
-          if (phi.getValue().getReg().equals(reg)) {
+          if (phi.getValue() != null && phi.getValue().getReg().equals(reg)) {
             return;
           }
         }
@@ -99,16 +99,23 @@ public class allocator implements irVisitor {
         scanBlock(pred, reg);
       }
     } else {
-      liveStmt[curBlock].get(curStmt).In(reg);
-      --curStmt;
-      scanOut();
+      try {
+          // Code that may throw an exception
+          liveStmt[curBlock].get(curStmt).In(reg);
+          --curStmt;
+          scanOut();
+      } catch (Exception e) {
+          // Use the utility method to get the first line of the exception message
+          assert(false);
+      }
     }
   }
 
   void scanOut() {
+    assert(curStmt >= 0);
     var def = liveStmt[curBlock].get(curStmt).def;
     liveStmt[curBlock].get(curStmt).Out(reg);
-    if (def == null || !def.contains(reg)) {
+    if (!def.contains(reg)) {
       scanIn();
     }
   }
@@ -135,7 +142,7 @@ public class allocator implements irVisitor {
         // scan use for specified variable
         for (int j = 0; j < liveStmt[i].size(); j++) {
           var stmt = liveStmt[i].get(j);
-          if (stmt.def != null && stmt.def.contains(reg)) {
+          if (stmt.use != null && stmt.use.contains(reg)) {
             curStmt = j;
             scanIn();
           }
@@ -150,17 +157,16 @@ public class allocator implements irVisitor {
     entryList.sort(new Comparator<Map.Entry<String, Integer>>() {
       @Override
       public int compare(Map.Entry<String, Integer> e1, Map.Entry<String, Integer> e2) {
-        return e2.getValue().compareTo(e1.getValue());
+        return -e2.getValue().compareTo(e1.getValue());
       }
     });
     for (Map.Entry<String, Integer> entry : entryList) {
-      System.out.println(entry.getKey() + ": " + entry.getValue());
     }
     return entryList;
   }
 
   private boolean spilled(String reg) {
-    return regColor.regs.containsKey(reg);
+    return regColor.regs.containsKey(reg) && regColor.regs.get(reg).spilled;
   }
 
   private void spillReg() {
@@ -171,16 +177,15 @@ public class allocator implements irVisitor {
     @SuppressWarnings("unchecked")
     HashSet<String> out = (HashSet<String>) (liveStmt[id].get(0).in).clone();
     // TODO : check if [id].[0].in is phi.out
-    {
-      int sz = out.size();
-      for (var outReg : out) {
-        if (spilled(outReg))
-          --sz;
-      }
-      if (sz > regColor.K) {
-        spillReg();
-        return true;
-      }
+
+    int sz = out.size();
+    for (var outReg : out) {
+      if (spilled(outReg))
+        --sz;
+    }
+    if (sz > regColor.K) {
+      spillReg();
+      return true;
     }
     return false;
   }
@@ -196,7 +201,7 @@ public class allocator implements irVisitor {
         var stmt = liveStmt[i].get(j);
         if (stmt.out.contains(reg)) {
           int sz = stmt.out.size();
-          if (sz < regColor.K)
+          if (sz <= regColor.K)
             continue;
           for (var outReg : stmt.out) {
             if (spilled(outReg))
@@ -255,20 +260,21 @@ public class allocator implements irVisitor {
     // spill the > k
     argsId = Math.min(8, args.size());// notspilled count store
     List<HashMap.Entry<String, Integer>> entryList = sortByCost();
+    // reverse entryList
+    regColor = new regCol();
     for (Map.Entry<String, Integer> entry : entryList) {
       reg = entry.getKey();
-      if (!spReg())
-        break;
+      if (spReg()) {
+      }
     }
     // col reg. dominate tree preorder.
-    regColor = new regCol();
     // recolor args
     int tmpcnt = 0;
     for (var arg : args) {
       tmpcnt++;
-      if(tmpcnt < 8)
+      if (tmpcnt <= 8)
         regColor.addReg(arg, false);
-      else 
+      else
         regColor.addReg(arg, true);
     }
     preColor(0);
@@ -292,17 +298,25 @@ public class allocator implements irVisitor {
     return res;
   }
 
+  private void liveUse(live newlive, String reg) {
+    if (reg != null && reg.charAt(0) == '%') {
+      newlive.Use(regs, pow(curBlock), reg);
+    }
+  }
+
+  private void liveDef(live newlive, String reg) {
+    if (reg != null && reg.charAt(0) == '%') {
+      newlive.Def(regs, pow(curBlock), reg);
+    }
+  }
+
   @Override
   public void visit(irBinary node) throws error {
     // def: res, use: val1, val2
     var newlive = new live();
-    if (node.getOp1().charAt(0) == '%') {
-      newlive.Use(regs, pow(curBlock), node.getOp1());
-    }
-    if (node.getOp2().charAt(0) == '%') {
-      newlive.Use(regs, pow(curBlock), node.getOp2());
-    }
-    newlive.Def(regs, pow(curBlock), node.getRes());
+    liveUse(newlive, node.getOp1());
+    liveUse(newlive, node.getOp2());
+    liveDef(newlive, node.getRes());
     liveStmt[curBlock].add(newlive);
   }
 
@@ -310,13 +324,9 @@ public class allocator implements irVisitor {
   public void visit(irIcmp node) throws error {
     //
     var newlive = new live();
-    if (node.getOp1().charAt(0) == '%') {
-      newlive.Use(regs, pow(curBlock), node.getOp1());
-    }
-    if (node.getOp2().charAt(0) == '%') {
-      newlive.Use(regs, pow(curBlock), node.getOp2());
-    }
-    newlive.Def(regs, pow(curBlock), node.getRes());
+    liveUse(newlive, node.getOp1());
+    liveUse(newlive, node.getOp2());
+    liveDef(newlive, node.getRes());
     liveStmt[curBlock].add(newlive);
   }
 
@@ -324,27 +334,19 @@ public class allocator implements irVisitor {
   public void visit(irSelect node) throws error {
     // def, use
     var newlive = new live();
-    if (node.getCond().charAt(0) == '%') {
-      newlive.Use(regs, pow(curBlock), node.getCond());
-    }
-    if (node.getVal1().charAt(0) == '%') {
-      newlive.Use(regs, pow(curBlock), node.getVal1());
-    }
-    if (node.getVal2().charAt(0) == '%') {
-      newlive.Use(regs, pow(curBlock), node.getVal2());
-    }
-    newlive.Def(regs, pow(curBlock), node.getRes());
+    liveUse(newlive, node.getCond());
+    liveUse(newlive, node.getVal1());
+    liveUse(newlive, node.getVal2());
+    liveDef(newlive, node.getRes());
     liveStmt[curBlock].add(newlive);
   }
 
   @Override
   public void visit(irBranch node) throws error {
     // cond use
-    if (node.getCond().charAt(0) == '%') {
-      var newLive = new live();
-      newLive.Use(regs, pow(curBlock), node.getCond());
-      liveStmt[curBlock].add(newLive);
-    }
+    var newlive = new live();
+    liveUse(newlive, node.getCond());
+    liveStmt[curBlock].add(newlive);
   }
 
   @Override
@@ -357,7 +359,7 @@ public class allocator implements irVisitor {
   public void visit(irRet node) throws error {
     // only use
     var newLive = new live();
-    if (!node.getVal().equals("") && node.getVal().charAt(0) == '%') {
+    if (node.getVal() != null && !node.getVal().equals("") && node.getVal().charAt(0) == '%') {
       newLive.Use(regs, pow(curBlock), node.getVal());
     }
     liveStmt[curBlock].add(newLive);
@@ -366,9 +368,10 @@ public class allocator implements irVisitor {
   @Override
   public void visit(irCall node) throws error {
     var newlive = new live();
-    newlive.Def(regs, pow(curBlock), node.getRes());
+    if (!node.getRes().equals(""))
+      newlive.Def(regs, pow(curBlock), node.getRes());
     for (var arg : node.getVal()) {
-      if (arg.charAt(0) == '%') {
+      if (arg != null && arg.charAt(0) == '%') {
         newlive.Use(regs, pow(curBlock), arg);
       }
     }
@@ -385,13 +388,9 @@ public class allocator implements irVisitor {
   public void visit(irGetElement node) throws error {
     //
     var newlive = new live();
-    newlive.Def(regs, pow(curBlock), node.getRes());
-    if (node.getPtrval().charAt(0) == '%') {
-      newlive.Use(regs, pow(curBlock), node.getPtrval());
-    }
-    if (node.getId1().charAt(0) == '%') {
-      newlive.Use(regs, pow(curBlock), node.getId1());
-    }
+    liveDef(newlive, node.getRes());
+    liveUse(newlive, node.getPtrval());
+    liveUse(newlive, node.getId1());
     liveStmt[curBlock].add(newlive);
   }
 
@@ -399,10 +398,8 @@ public class allocator implements irVisitor {
   public void visit(irLoad node) throws error {
     //
     var newlive = new live();
-    newlive.Def(regs, pow(curBlock), node.getRes());
-    if (node.getPtr().charAt(0) == '%') {
-      newlive.Use(regs, pow(curBlock), node.getPtr());
-    }
+    liveDef(newlive, node.getRes());
+    liveUse(newlive, node.getPtr());
     liveStmt[curBlock].add(newlive);
   }
 
@@ -410,18 +407,14 @@ public class allocator implements irVisitor {
   public void visit(irStore node) throws error {
     //
     var newlive = new live();
-    newlive.Def(regs, pow(curBlock), node.getRes());
-    if (node.getPtr().charAt(0) == '%') {
-      newlive.Use(regs, pow(curBlock), node.getPtr());
-    }
+    liveUse(newlive, node.getRes());
+    liveUse(newlive, node.getPtr());
     liveStmt[curBlock].add(newlive);
   }
 
   @Override
   public void visit(irBlock node) throws error {
     //
-    if (node.isUnreachable())
-      return;
     if (node.getStmts() != null)
       for (curStmt = 0; curStmt < node.getStmts().size(); curStmt++) {
         var stmt = node.getStmts().get(curStmt);

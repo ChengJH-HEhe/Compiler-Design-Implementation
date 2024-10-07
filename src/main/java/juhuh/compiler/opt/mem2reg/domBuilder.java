@@ -29,6 +29,11 @@ public class domBuilder implements irVisitor {
 
   HashMap<Integer, Integer> loopHeader;
   public int[] loopBody;
+
+  private asmBuilder asm;
+  public domBuilder(asmBuilder asm) {
+    this.asm = asm;
+  }
   public void delPhi(irRoot root) {
     for (var def : root.getFDef())
       delPhi(def);
@@ -156,7 +161,6 @@ public class domBuilder implements irVisitor {
       }
       tmp.xor(tmp1);
       tmp.set(i, false);
-      // TODO: domF for a block to be unreachable?
       for (int j = tmp.nextSetBit(0); j >= 0; j = tmp.nextSetBit(j + 1)) {
         doms.get(j).getDomF().add(i);
         System.err.println(j + " domF " + i);
@@ -401,6 +405,7 @@ public class domBuilder implements irVisitor {
                 .op("add")
                 .op2(phiLhs.getValue().getLabel2val().get(block.getLabel()))
                 .op1("0")
+                .tp(phiLhs.getValue().getTp())
                 .build());
           }
         }
@@ -435,7 +440,6 @@ public class domBuilder implements irVisitor {
     // ir should be right
 
     // get tempMap for allocator
-    
     // spill cost calc
     // first step: loop header, loop body classify
     defLoop();
@@ -444,36 +448,45 @@ public class domBuilder implements irVisitor {
     alloc.visit(node);
     alloc.spill2Col(node.getParavaluelist());
     // delphi
-    delPhi(node);
-    // asm rewrite 
-    
+    //delPhi(node);
+    // asm rewrite
+
   }
+
   BitSet Loopvisited;
+
   private void LoopDfs(int target, int cur) {
-    if(Loopvisited.get(cur)) return;
+    if (Loopvisited.get(cur))
+      return;
     ++loopBody[cur];
     Loopvisited.set(cur);
-    if(cur == target) return;
-    for(var i : preds[cur]) LoopDfs(target, i);
+    if (cur == target)
+      return;
+    for (var i : preds[cur])
+      LoopDfs(target, i);
   }
 
   private void defLoop() {
     loopHeader = new HashMap<Integer, Integer>();
     loopBody = new int[cnt];
     // backedge
-    for(int i = 0; i < cnt; ++i) {
-      for(var j : preds[i]) {
-        if(domFlag[i].get(j)) {
-          loopHeader.put(i,j);
+    for (int i = 0; i < cnt; ++i) {
+      for (var j : preds[i]) {
+        if (domFlag[j].get(i)) {
+          loopHeader.put(i, j);
+          System.err.println(id2B.get(i).getLabel() + " -> " + id2B.get(j).getLabel());
         }
       }
     }
     // loopbody -> loopheader
-    for(var header : loopHeader.entrySet()) {
+    for (var header : loopHeader.entrySet()) {
       Loopvisited = new BitSet(cnt);
       LoopDfs(header.getKey(), header.getValue());
     }
+    for (int i = 0; i < cnt; ++i)
+      System.err.println(id2B.get(i).getLabel() + " depth : " + loopBody[i]);
   }
+
   @Override
   public void visit(irNode node) throws error {
     node.accept(this);

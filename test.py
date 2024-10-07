@@ -53,7 +53,7 @@ for testcase in test_file:
         temp = open('test.in', 'w')
         temp.write(input_data)
         temp.flush()
-        commands = 'java -cp /usr/share/java/antlr-runtime-4.13.1-complete.jar:bin juhuh.compiler.Main -emit-llvm '
+        commands = 'java -Xss10m -cp /usr/share/java/antlr-runtime-4.13.1-complete.jar:bin juhuh.compiler.Main -emit-llvm '
         process = subprocess.Popen(commands, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=True)
         _, _ = process.communicate(input=content)
         compile_status = process.returncode

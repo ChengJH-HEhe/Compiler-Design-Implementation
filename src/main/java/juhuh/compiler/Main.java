@@ -34,7 +34,8 @@ import juhuh.compiler.util.error.error;
 public class Main {
     public static void main(String[] args) throws Exception{
         var input = CharStreams.fromStream(System.in);
-        try {
+        try 
+        {
             globalScope gScope = new globalScope(null,null),
             origin = new globalScope(null,null);
             
@@ -58,23 +59,21 @@ public class Main {
             irBuilder IR = new irBuilder(origin);
 
             irRoot rt = (irRoot) IR.visit(ASTRoot);
-            var dom = new domBuilder();
+            asmBuilder asm = new asmBuilder();
+            var dom = new domBuilder(asm);
             dom.visit(rt);
             {
                 FileWriter writer = new FileWriter("output.ll");   
                 writer.write(rt.toString());
                 writer.close();
             }
-            asmBuilder asm = new asmBuilder();
-            asm.visit(rt);
+            
             System.out.print(asm.getRt().toString());
-            // {
-            //     FileWriter writer = new FileWriter("test.s");   
-            //     writer.write(asm.getRt().toString());
-            //     writer.close();
-            // }
-            // new RegAlloc(asmF).work();
-            // new AsmPrinter(asmF, System.out).print();
+            {
+                FileWriter writer = new FileWriter("test.s");   
+                writer.write(asm.getRt().toString());
+                writer.close();
+            }
         } 
         catch (error er) {
             System.out.println(er.toString());
