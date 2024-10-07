@@ -16,12 +16,14 @@ traverse_directory(testcases_folder)
 def extract_input_output_exitcode(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
         content = file.read()
-    input_regex = r'Input:\n=== input ===\n(.*?)\n=== end ==='
-    output_regex = r'Output:\n=== output ===\n(.*?)\n=== end ==='
-    exitcode_regex = r'ExitCode: (.+)'
+    input_file = os.path.splitext(file_path)[0] + '.in'
+    with open(input_file, 'r', encoding='utf-8') as file:
+      input_regex = file.read()
+    output_file = os.path.splitext(file_path)[0] + '.ans'
+    with open(output_file, 'r', encoding='utf-8') as file:
+      output_regex = file.read()
     input_match = re.search(input_regex, content, re.DOTALL)
     output_match = re.search(output_regex, content, re.DOTALL)
-    exitcode_match = re.search(exitcode_regex, content)
     if input_match:
         input_data = input_match.group(1).strip()
     else:
@@ -30,10 +32,7 @@ def extract_input_output_exitcode(file_path):
         output_data = output_match.group(1)
     else:
         output_data = ""
-    if exitcode_match:
-        exitcode = exitcode_match.group(1).strip()
-    else:
-        exitcode = ""
+    exitcode = "0"
     return content, input_data, output_data, exitcode
 
 

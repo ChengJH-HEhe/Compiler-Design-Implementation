@@ -31,15 +31,18 @@ public class domBuilder implements irVisitor {
   public int[] loopBody;
 
   private asmBuilder asm;
+
   public domBuilder(asmBuilder asm) {
     this.asm = asm;
   }
+
   public void delPhi(irRoot root) {
     for (var def : root.getFDef())
       delPhi(def);
   }
 
   public void visit(irRoot node) throws error {
+    asm.visit(node);
     for (var def : node.getFDef()) {
       visit(def);
     }
@@ -355,6 +358,11 @@ public class domBuilder implements irVisitor {
 
   }
 
+  private void shufflePhi() {
+    for(int i = 0; i < cnt; ++i) {
+      
+    }
+  }
   // redef critical edge
   private void delPhi(irFuncDef curFunc) {
     // phi -> add 0 : spj in asmBuilder
@@ -381,6 +389,8 @@ public class domBuilder implements irVisitor {
       var block = id2B.get(i);
       if (block.isUnreachable())
         continue;
+      if (block.getPhiDel() == null)
+        block.setPhiDel(new vector<irBinary>());
       if (!inOnly[i]) {
         // add 0 in new block
         block.setTerminal(block.getEndTerm());
@@ -389,10 +399,10 @@ public class domBuilder implements irVisitor {
             .stmts(new vector<irStmt>())
             .terminalstmt(block.getTerminalstmt())
             .build();
+        newBlock.setPhiDel(new vector<irBinary>());
         block.setTerminalstmt(irJump.builder().dest(newBlock.getLabel()).build());
         block = newBlock;
       }
-
       // directly add 0 in this block
       for (var domf : doms.get(i).getDomF()) {
         var domF = id2B.get(domf);
@@ -400,7 +410,7 @@ public class domBuilder implements irVisitor {
         for (var phiLhs : domF.getPhi().entrySet()) {
           if (phiLhs.getValue().getLabel2val().containsKey(block.getLabel()) &&
               phiLhs.getValue().getLabel2val().get(block.getLabel()) != null) {
-            block.getStmts().add(irBinary.builder()
+            block.getPhiDel().add(irBinary.builder()
                 .res(phiLhs.getKey() + "." + domF.getLabel())
                 .op("add")
                 .op2(phiLhs.getValue().getLabel2val().get(block.getLabel()))
@@ -412,8 +422,12 @@ public class domBuilder implements irVisitor {
       }
       if (!inOnly[i]) {
         curFunc.add(block);
+        ++cnt;
       }
     }
+    // rearrange phi
+
+    shufflePhi();
   }
 
   @Override
@@ -448,9 +462,9 @@ public class domBuilder implements irVisitor {
     alloc.visit(node);
     alloc.spill2Col(node.getParavaluelist());
     // delphi
-    //delPhi(node);
+    delPhi(node);
     // asm rewrite
-
+    asm.visit(node);
   }
 
   BitSet Loopvisited;

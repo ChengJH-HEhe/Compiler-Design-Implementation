@@ -22,7 +22,13 @@ public class asmBuilder implements irVisitor {
   private boolean status;
   private irFuncDef curFunc;
   private int branCount = 0;
-
+  public asmBuilder() {
+    Rt = asmRoot.builder()
+        .text(new vector<asmFuncDef>())
+        .data(new vector<asmVarDef>())
+        .rodata(new vector<asmVarDef>())
+        .build();
+  }
   public asmRoot getRt() {
     return Rt;
   }
@@ -43,18 +49,9 @@ public class asmBuilder implements irVisitor {
 
   @Override
   public void visit(irRoot node) throws error {
-    // visit Program
-    asmRoot rt = asmRoot.builder()
-        .text(new vector<asmFuncDef>())
-        .data(new vector<asmVarDef>())
-        .rodata(new vector<asmVarDef>())
-        .build();
-    Rt = rt;
+    // visit Program function in irFuncDef
     for (var globl : node.getGlobalDef()) {
       globl.accept(this);
-    }
-    for (var func : node.getFDef()) {
-      func.accept(this);
     }
   }
 
@@ -83,14 +80,14 @@ public class asmBuilder implements irVisitor {
         .build());
   }
 
-  private void offset2PtrPtrReg(int offset, String reg) {
-    curB.add(riscL.builder()
-        .op("lw")
-        .rd(reg)
-        .rs1("sp")
-        .imm(offset)
-        .build());
-  }
+  // private void offset2PtrPtrReg(int offset, String reg) {
+  //   curB.add(riscL.builder()
+  //       .op("lw")
+  //       .rd(reg)
+  //       .rs1("sp")
+  //       .imm(offset)
+  //       .build());
+  // }
 
   private void offset2Val(int offset, String reg, String type) {
     curB.add(riscL.builder()
@@ -101,14 +98,14 @@ public class asmBuilder implements irVisitor {
         .build());
   }
 
-  private void ptrPtr2ValReg(String result, String reg, String type) {
-    curB.add(riscL.builder()
-        .op(type)
-        .rd(result)
-        .rs1(reg)
-        .imm(0)
-        .build());
-  }
+  // private void ptrPtr2ValReg(String result, String reg, String type) {
+  //   curB.add(riscL.builder()
+  //       .op(type)
+  //       .rd(result)
+  //       .rs1(reg)
+  //       .imm(0)
+  //       .build());
+  // }
 
   @Override
   public void visit(irFuncDef node) throws error {

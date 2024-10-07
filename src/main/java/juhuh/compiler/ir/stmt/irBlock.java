@@ -25,7 +25,7 @@ public class irBlock extends irStmt{
   private HashMap<String, String> ptr2reg; // store the first load
 
   private boolean unreachable;
-
+  private vector<irBinary> phiDel;
   public void setFirstLoad(String ptr, String reg) {
     if(ptr2reg == null) 
       ptr2reg = new HashMap<>();

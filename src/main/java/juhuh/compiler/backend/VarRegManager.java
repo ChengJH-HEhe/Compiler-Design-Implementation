@@ -9,7 +9,10 @@ import juhuh.compiler.util.vector;
 public class VarRegManager {
   // alloc %.(ptr) or %num = (val) all to sp + id * 4
   // manaager for a
-  private HashMap<String, Integer> Var2Id = new HashMap<String, Integer>();
+  // todo init for spilled vars
+  private HashMap<String, Integer> Var2Id = new HashMap<String, Integer>(),
+  regs;
+
   private int size = 0, maxArgs = 0; // t0~t4
   private asmBlock curB;
 

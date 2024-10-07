@@ -11,7 +11,7 @@
 # 1. Get an temporary directory
 # 2. Execute <compiler> < <testcase> > "$TEMPDIR/output.s"
 # 3. Get the test.in and test.ans from <testcase> using sed
-# 4. Execute ravel --input-file="$TEMPDIR/test.in" --output-file="$TEMPDIR/test.out" "$TEMPDIR/output.s" [builtin]
+# 4. Execute reimu --input-file="$TEMPDIR/test.in" --output-file="$TEMPDIR/test.out" "$TEMPDIR/output.s" [builtin]
 # 5. Compare the output and exit code
 
 # Usage
@@ -41,9 +41,9 @@ if [ ! -f $TESTCASE ]; then
 fi
 source $(dirname $0)/utils.bash
 
-# Test whether ravel is installed
+# Test whether reimu is installed
 # If not installed, please follow the document at
-# <https://github.com/Engineev/ravel>.
+# <https://github.com/Engineev/reimu>.
 # Note: If you just follow the steps in the README, you need to put the last
 # line (export PATH="/usr/local/opt/bin:$PATH") in your .bashrc or .zshrc
 # (depending on which shell you are using).
@@ -125,13 +125,13 @@ if [ $? -ne 0 ]; then
 fi
 EXPECTED_EXIT_CODE=$(grep "ExitCode:" $TESTCASE | awk '{print $2}')
 
-# 4. Execute the code with ravel
-reimu -i="$TEMPDIR/test.in" -o="$TEMPDIR/test.out" -f="$TEMPDIR/output.s",$BUILTIN -p="$TEMPDIR/ravel_output.txt" --silent
+# 4. Execute the code with reimu
+reimu --all -s=1M -i="$TEMPDIR/test.in" -o="$TEMPDIR/test.out" -f="$TEMPDIR/output.s",$BUILTIN -p="$TEMPDIR/reimu_output.txt"
 if [ $? -ne 0 ]; then
     cat << EOF >&2
-Error: Ravel exits with a non-zero value.
+Error: reimu exits with a non-zero value.
 You may run the following command again to see the error message:
-  reimu -i="$TEMPDIR/test.in" -o="$TEMPDIR/test.out" -f="$TEMPDIR/output.s",$BUILTIN -p="$TEMPDIR/ravel_output.txt" --silent
+  reimu -i="$TEMPDIR/test.in" -o="$TEMPDIR/test.out" -f="$TEMPDIR/output.s",$BUILTIN -p="$TEMPDIR/reimu_output.txt" --silent
 EOF
     print_temp_dir
     exit 1
@@ -145,7 +145,9 @@ if [ $? -ne 0 ]; then
     print_temp_dir
     HAS_PROBLEM=1
 fi
-EXIT_CODE=$(grep 'exit code' "$TEMPDIR/ravel_output.txt" | awk '{print $3}')
+EXIT_CODE=$(grep 'Exit code' "$TEMPDIR/reimu_output.txt" | awk '{print $3}')
+TOTAL_CYCLES=$(grep 'Total cycles:' "$TEMPDIR/reimu_output.txt" | awk '{print $3}')
+
 if [ $EXIT_CODE -ne $EXPECTED_EXIT_CODE ]; then
     echo "Error: Exit code mismatch." >&2
     print_temp_dir
@@ -153,7 +155,7 @@ if [ $EXIT_CODE -ne $EXPECTED_EXIT_CODE ]; then
 fi
 
 if [ $HAS_PROBLEM -eq 0 ]; then
-    print_green_msg "Passed"
+    print_green_msg "Passed [cycles: $TOTAL_CYCLES]"
     clean
     exit 0
 else

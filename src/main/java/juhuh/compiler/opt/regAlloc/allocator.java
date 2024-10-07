@@ -23,8 +23,7 @@ public class allocator implements irVisitor {
   public vector<live> liveStmt[];
   //
   public regCol regColor; // spill color it
-  public int argsId = 0;
-  int regIdCnt = 0;
+
   // tempvar bool spilled, int id;
   // inUse in here
   // decide which to spill?
@@ -160,8 +159,6 @@ public class allocator implements irVisitor {
         return -e2.getValue().compareTo(e1.getValue());
       }
     });
-    for (Map.Entry<String, Integer> entry : entryList) {
-    }
     return entryList;
   }
 
@@ -170,7 +167,7 @@ public class allocator implements irVisitor {
   }
 
   private void spillReg() {
-    regColor.addReg(reg, true);
+    regColor.addSpill(reg);
   }
 
   private boolean spillPhi(int id) {
@@ -258,14 +255,18 @@ public class allocator implements irVisitor {
 
   public void spill2Col(vector<String> args) {
     // spill the > k
-    argsId = Math.min(8, args.size());// notspilled count store
+    regColor.argsId = Math.min(8, args.size());// notspilled count store
+    regColor.spillCount = args.size() - 8;
     List<HashMap.Entry<String, Integer>> entryList = sortByCost();
     // reverse entryList
     regColor = new regCol();
+    for (int i = 0; i < dom.cnt; ++i) {
+      for (int j = 0; j < liveStmt[i].size(); ++j)
+        regColor.setSpillCount(liveStmt[i].get(j).out.size());
+    }
     for (Map.Entry<String, Integer> entry : entryList) {
       reg = entry.getKey();
-      if (spReg()) {
-      }
+      spReg();
     }
     // col reg. dominate tree preorder.
     // recolor args
