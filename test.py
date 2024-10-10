@@ -3,7 +3,7 @@ import re
 import subprocess
 
 test_file = []
-testcases_folder = r'./testcases/optim2'
+testcases_folder = r'./testcases/optim'
 
 def traverse_directory(dir_path):
     for root, dirs, files in os.walk(dir_path):

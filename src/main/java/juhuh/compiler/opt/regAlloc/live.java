@@ -15,6 +15,7 @@ public class live {
     if(reg.containsKey(d)) {
       reg.put(d, reg.get(d) + dep);
     } else {
+      
       reg.put(d, dep);
     }
     def.add(d);

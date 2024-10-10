@@ -229,7 +229,7 @@ public class allocator implements irVisitor {
     }
     // color phi def when out contains def
     for (var phiuse : dom.id2B.get(blockId).getPhi().entrySet()) {
-      var def = phiuse.getValue().getReg();
+    var def = phiuse.getValue().getReg();
       if (out.contains(def)) {
         regColor.addReg(def, false);
       }
@@ -255,11 +255,12 @@ public class allocator implements irVisitor {
 
   public void spill2Col(vector<String> args) {
     // spill the > k
+    regColor = new regCol();
     regColor.argsId = Math.min(8, args.size());// notspilled count store
     regColor.spillCount = args.size() - 8;
     List<HashMap.Entry<String, Integer>> entryList = sortByCost();
     // reverse entryList
-    regColor = new regCol();
+    
     for (int i = 0; i < dom.cnt; ++i) {
       for (int j = 0; j < liveStmt[i].size(); ++j)
         regColor.setSpillCount(liveStmt[i].get(j).out.size());
@@ -308,6 +309,7 @@ public class allocator implements irVisitor {
   private void liveDef(live newlive, String reg) {
     if (reg != null && reg.charAt(0) == '%') {
       newlive.Def(regs, pow(curBlock), reg);
+
     }
   }
 
@@ -399,6 +401,7 @@ public class allocator implements irVisitor {
   public void visit(irLoad node) throws error {
     //
     var newlive = new live();
+
     liveDef(newlive, node.getRes());
     liveUse(newlive, node.getPtr());
     liveStmt[curBlock].add(newlive);

@@ -3,6 +3,11 @@ package juhuh.compiler.opt.regAlloc;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import juhuh.compiler.backend.VarRegManager;
+import juhuh.compiler.backend.asm.*;
+import juhuh.compiler.backend.asm.ins.pseudo;
+import juhuh.compiler.backend.asm.ins.riscS;
+import juhuh.compiler.util.*;
 import juhuh.compiler.util.error.error;
 
 public class regCol {
@@ -16,6 +21,51 @@ public class regCol {
   public regCol() {
     regs = new HashMap<String, color>();
     inUse = new HashSet<Integer>();
+  }
+  public String getRegName(int id) {
+    if(id <= 11)
+      return "s" + (id - 1);
+    else {
+      id -= 12;
+      if(id <= 3)
+        return "a" + (7 - id);
+      else {
+        id -= 4;
+        if(id <= 6)
+          return "t" + id;
+        else
+          return "a" + (10-id); 
+      }
+    } 
+  }
+  public asmNode getResult(String name, String resul, String tp, VarRegManager VRM) {
+    // is not spilled return the register; else return the riscS,tempvar(t5)
+    var res = getReg(name);
+    if(res >= 0) {
+      return pseudo.builder()
+        .strs(new vector<String>("mv", getRegName(res), resul))
+      .build();
+    } else {
+      if(res == -114514191) {
+        return null;
+      }
+      return riscS.builder()
+        .op(tp)
+        .rs2(resul)
+        .rs1("sp")
+        .imm(VRM.getOffset(res))
+         // rd the spill structure 
+        .build();
+    }
+  }
+  public int getReg(String name) {
+    var res = regs.get(name);
+    if(res == null) {
+      return -114514191;
+    }
+    if(res.spilled)
+      return (res.id+1) * (-1);
+    return res.id;
   }
   public void orLiveIn(HashSet<String> liveIn) {
     for (String reg : liveIn) {
@@ -50,7 +100,7 @@ public class regCol {
     regs.put(reg, c);
   }
   public void addReg(String reg, boolean isSpilled) {
-    if (regs.get(reg) != null && regs.get(reg).id != -114514) {
+    if (regs.get(reg) != null && regs.get(reg).id == -114514) {
       return;
     }
     color c = new color();
@@ -61,6 +111,7 @@ public class regCol {
       c.spilled = false;
       c.id = findCol();
     }
+    System.err.println(reg + "colored " + c.spilled + " " + c.id);
     regs.put(reg, c);
   }
   public void eraseReg(String reg) {

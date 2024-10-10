@@ -61,6 +61,7 @@ public class Main {
             irRoot rt = (irRoot) IR.visit(ASTRoot);
             asmBuilder asm = new asmBuilder();
             var dom = new domBuilder(asm);
+            
             dom.visit(rt);
             {
                 FileWriter writer = new FileWriter("output.ll");   

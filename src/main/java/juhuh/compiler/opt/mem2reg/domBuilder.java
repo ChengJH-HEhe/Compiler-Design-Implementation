@@ -12,6 +12,7 @@ import juhuh.compiler.ir.ins.*;
 import juhuh.compiler.ir.stmt.irBlock;
 import juhuh.compiler.ir.stmt.irStmt;
 import juhuh.compiler.opt.regAlloc.allocator;
+import juhuh.compiler.opt.regAlloc.regCol;
 import juhuh.compiler.util.vector;
 import juhuh.compiler.util.error.error;
 
@@ -358,11 +359,7 @@ public class domBuilder implements irVisitor {
 
   }
 
-  private void shufflePhi() {
-    for(int i = 0; i < cnt; ++i) {
-      
-    }
-  }
+  
   // redef critical edge
   private void delPhi(irFuncDef curFunc) {
     // phi -> add 0 : spj in asmBuilder
@@ -385,6 +382,7 @@ public class domBuilder implements irVisitor {
     }
     // st not only-child, -> endterm is still certain
     // add 0 in asmbuilder
+    int tmpcnt = cnt;
     for (int i = 0; i < cnt; ++i) {
       var block = id2B.get(i);
       if (block.isUnreachable())
@@ -421,13 +419,12 @@ public class domBuilder implements irVisitor {
         }
       }
       if (!inOnly[i]) {
+        id.put(block.getLabel(), tmpcnt);
+        id2B.add(block);
         curFunc.add(block);
-        ++cnt;
+        tmpcnt++;
       }
     }
-    // rearrange phi
-
-    shufflePhi();
   }
 
   @Override
@@ -464,6 +461,7 @@ public class domBuilder implements irVisitor {
     // delphi
     delPhi(node);
     // asm rewrite
+    asm.setCol(alloc.regColor);
     asm.visit(node);
   }
 
@@ -497,8 +495,8 @@ public class domBuilder implements irVisitor {
       Loopvisited = new BitSet(cnt);
       LoopDfs(header.getKey(), header.getValue());
     }
-    for (int i = 0; i < cnt; ++i)
-      System.err.println(id2B.get(i).getLabel() + " depth : " + loopBody[i]);
+    // for (int i = 0; i < cnt; ++i)
+    //   System.err.println(id2B.get(i).getLabel() + " depth : " + loopBody[i]);
   }
 
   @Override
