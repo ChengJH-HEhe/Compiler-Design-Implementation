@@ -41,7 +41,8 @@ public class asmBlock extends asmNode {
   public String toString() {
     String s = label + ":\n";
     for (asmNode node : nodes) {
-      s += "  " + node.toString() + "\n";
+      if(node != null)
+        s += "  " + node.toString() + "\n";
     }
     return s;
   }

@@ -69,12 +69,12 @@ public class Main {
                 writer.close();
             }
             
-            System.out.print(asm.getRt().toString());
-            {
-                FileWriter writer = new FileWriter("test.s");   
-                writer.write(asm.getRt().toString());
-                writer.close();
-            }
+            // System.out.print(asm.getRt().toString());
+            // {
+            //     FileWriter writer = new FileWriter("test.s");   
+            //     writer.write(asm.getRt().toString());
+            //     writer.close();
+            // }
         } 
         catch (error er) {
             System.out.println(er.toString());

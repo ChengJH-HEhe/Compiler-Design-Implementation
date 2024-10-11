@@ -1,6 +1,9 @@
 package juhuh.compiler.backend;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Queue;
 
 import juhuh.compiler.backend.asm.asmBlock;
 import juhuh.compiler.backend.asm.asmNode;
@@ -13,6 +16,7 @@ import juhuh.compiler.ir.*;
 import juhuh.compiler.ir.def.*;
 import juhuh.compiler.ir.ins.*;
 import juhuh.compiler.ir.stmt.*;
+import juhuh.compiler.opt.regAlloc.color;
 import juhuh.compiler.opt.regAlloc.regCol;
 import juhuh.compiler.util.*;
 import juhuh.compiler.util.error.error;
@@ -30,6 +34,7 @@ public class asmBuilder implements irVisitor {
 
   public void setCol(regCol regColor) {
     this.regColor = regColor;
+    vrM.setSize(regColor.spillCount - regColor.argsId);
   }
 
   public asmBuilder() {
@@ -123,6 +128,7 @@ public class asmBuilder implements irVisitor {
     visitFunc(node);
     status = false;
     // entry storeA > 8, store T
+
     visitFunc(node);
     // ret resetT value
     Rt.getText().add(func);
@@ -187,8 +193,10 @@ public class asmBuilder implements irVisitor {
         return regColor.getRegName(res);
       } else {
         if (res == -114514191) {
+          // return "233";
           throw new error(name + "not colored");
         } else {
+
           curB.add(riscL.builder()
               .op(tp)
               .rd("t" + num)
@@ -321,17 +329,11 @@ public class asmBuilder implements irVisitor {
     curB.add(pseudo.builder()
         .strs(new vector<String>("#Call  "))
         .build());
-    vrM.setCurB(curB);
+    // store a regs
+    vrM.setCurB(curB, curFunc.getParatypelist().size());
 
     // maxargs , maxargs + 7
-    for (int i = 0; i < 8; ++i) {
-      curB.add(riscS.builder()
-          .op("sw")
-          .rs2("a" + i)
-          .imm((vrM.getMaxargs() + i) * 4)
-          .rs1("sp")
-          .build());
-    }
+    vrM.storeCall();
 
     var varArr = node.getVal();
     var vartype = node.getType();
@@ -363,7 +365,7 @@ public class asmBuilder implements irVisitor {
         curB.add(riscS.builder()
             .op(vartype.get(curId).equals("i1") ? "sb" : "sw")
             .rs2(tmpvar)
-            .imm((curId - 8) * 4)
+            .imm(vrM.getCallArgs(curId) * 4)
             .rs1("sp")
             .build());
       }
@@ -388,14 +390,8 @@ public class asmBuilder implements irVisitor {
       }
     }
     // store a regs
-    for (int i = 0; i < 8; ++i) {
-      curB.add(riscL.builder()
-          .op("lw")
-          .rd("a" + i)
-          .imm((vrM.getMaxargs() + i) * 4)
-          .rs1("sp")
-          .build());
-    }
+
+    vrM.restoreCall();
 
   }
 
@@ -556,25 +552,9 @@ public class asmBuilder implements irVisitor {
           .build());
     }
     // reset T, add sp
-    int sz = vrM.getSize();
-
-    curB.add(riscL.builder()
-        .op("lw")
-        .rd("ra")
-        .imm((sz - 1) * 4)
-        .rs1("sp")
-        .build());
-
-    // for (int i = 1; i <= 5; ++i) {
-    // curB.add(riscL.builder()
-    // .op("lw")
-    // .rd("t" + i)
-    // .imm((sz - i - 1) * 4)
-    // .rs1("sp")
-    // .build());
-    // }
-
     curB.adS("sp", "sp", vrM.getSize() * 4);
+    vrM.restoreDef();
+
     curB.add(pseudo.builder()
         .strs(new vector<String>("ret   "))
         .build());
@@ -620,7 +600,6 @@ public class asmBuilder implements irVisitor {
   // result in 't4'
   // precisely get the ptr -> the real address
   public String getPtr(String name) {
-
     // problem is global?
     if (name != null)
       if (name.getBytes()[0] == '@') {
@@ -628,14 +607,8 @@ public class asmBuilder implements irVisitor {
             .strs(new vector<String>("la", "t4", name.substring(1)))
             .build());
       } else {
-        // TODO : Load word from name
-        // curB.add(riscL.builder()
-        // .op("lw")
-        // .rd("t4")
-        // .imm(vrM.add(name) * 4)
-        // .rs1("sp")
-        // .build());
-        // t4
+        // Load word from name
+        return mem2a(name, 4, "lw");
       }
     return "t4";
   }
@@ -673,7 +646,7 @@ public class asmBuilder implements irVisitor {
           if (i < 8)
             res = -i - 1;
           else {
-            res = vrM.getArgM(i);
+            res = vrM.getOffset(regColor.getSpillReg(node.getRes()));
           }
           break;
         }
@@ -745,17 +718,78 @@ public class asmBuilder implements irVisitor {
   // [num] st -> ed tempvar
   HashMap<Integer, vector<Integer>> edge, num;
 
+  private class pair {
+    color st, ed;
+    int num; // ID
+
+    public pair(color st, color ed, int num) {
+      this.st = st;
+      this.ed = ed;
+      this.num = num;
+    }
+  };
+
+  private class costa {
+    // in_num, nxt;
+    public int in;
+    public vector<color> nxt;
+    public vector<Integer> nxt_id;
+  }
+
   private void shuPhi(vector<irBinary> phi) {
     // rearrange the order
-    edge = new HashMap<>();
-    num = new HashMap<>();
-    // int id = 0;
-    for (var ph : phi) {
-      // if (!num.containsKey(regColor.getReg(ph.getRes())))
-        // ++id;
+    // mv use -> def col->col
+    vector<pair> edge = new vector<pair>();
+    for (var ph : phi)
+      edge.add(new pair(regColor.getCol(ph.getOp2()), regColor.getCol(ph.getRes()), edge.size()));
+    HashMap<color, costa> coInfo = new HashMap<>();
+    for (var pr : edge) {
+      if (coInfo.get(pr.st) == null) {
+        coInfo.put(pr.st, new costa());
+        coInfo.get(pr.st).nxt = new vector<color>();
+        coInfo.get(pr.st).nxt_id = new vector<Integer>();
+      }
+      if (coInfo.get(pr.ed) == null) {
+        coInfo.put(pr.ed, new costa());
+      }
+      coInfo.get(pr.ed).in++;
+      coInfo.get(pr.st).nxt.add(pr.ed);
+      coInfo.get(pr.st).nxt_id.add(pr.num);
     }
-
+    Queue<color> topo = new LinkedList<color>();
     // add phi
+    for (var pr : edge) {
+      if (coInfo.get(pr.st).in == 0)
+        topo.add(pr.st);
+    }
+    vector<Integer> finalOrder = new vector<Integer>();
+    while (!topo.isEmpty()) {
+      var cur = topo.poll();
+      for (int i = 0; i < coInfo.get(cur).nxt.size(); ++i) {
+        var nxt = coInfo.get(cur).nxt.get(i);
+        finalOrder.add(coInfo.get(cur).nxt_id.get(i));
+
+        coInfo.get(nxt).in--;
+        if (coInfo.get(nxt).in == 0)
+          topo.add(nxt);
+      }
+    }
+    for (var pr : coInfo.keySet())
+      if (coInfo.get(pr).in != 0) {
+        // TODO arrange the order in circle, in != 0
+        
+        throw new error("circle in the graph");
+      }
+
+    for (var pr : finalOrder) {
+      var ph = phi.get(pr);
+      curB.add(pseudo.builder()
+          .strs(new vector<String>("#phi"))
+          .build());
+      var t0 = mem2a(ph.getOp2(), 6, tBool(ph.getTp().equals("i1")));
+      var res = regColor.getResult(ph.getRes(), t0, tBool(ph.getTp().equals("i1")), vrM);
+      curB.add(res);
+    }
   }
 
   @Override
@@ -772,8 +806,8 @@ public class asmBuilder implements irVisitor {
       if (node.getLabel().equals("entry")) {
         // entry storeT
         blck.setLabel(func.getName());
-        vrM.setCurB(curB);
-        vrM.store(); // size currect
+        vrM.setCurB(curB, curFunc.getParatypelist().size());
+        vrM.storeDef(); // size currect
         curB.adS("sp", "sp", -(vrM.getSize() / 4 * 16));
       }
     if (node.getStmts() != null)

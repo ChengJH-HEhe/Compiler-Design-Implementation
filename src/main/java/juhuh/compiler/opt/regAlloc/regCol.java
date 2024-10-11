@@ -13,18 +13,28 @@ import juhuh.compiler.util.error.error;
 public class regCol {
   HashMap<String, color> regs;
   HashSet<Integer> inUse;
-  int spillCount = 0, argsId;
-  int K = 32;
+  public int spillCount = 0, argsId;
+  int K = 27;
   public void setSpillCount(int count) {
     spillCount = Math.max(spillCount, count - K);
   }
   public regCol() {
     regs = new HashMap<String, color>();
     inUse = new HashSet<Integer>();
+    spillregs = new HashSet<>();
+  }
+  public color getCol(String name) {
+    return regs.get(name);
+  } 
+  public int getSpillReg(String name) {
+    var res = regs.get(name);
+    assert(res.spilled);
+    return res.id;
   }
   public String getRegName(int id) {
+    // s0~11 a7~4 t0~6 a3~0
     if(id <= 11)
-      return "s" + (id - 1);
+      return "s" + id;
     else {
       id -= 12;
       if(id <= 3)
@@ -99,6 +109,27 @@ public class regCol {
     c.id = -114514;
     regs.put(reg, c);
   }
+  private int anum(int num) {
+    if(num <= 3)
+      return K - num;
+    else
+      return 16 - num;
+  }
+  // call arg store used-a;
+  public void stCaller() {
+
+  }
+  public void stCallee() {
+
+  }
+
+  public void addArg(String name, int num) {
+    color c = new color();
+    c.spilled = false;
+    c.id = anum(num);
+    regs.put(name, c);
+  }
+
   public void addReg(String reg, boolean isSpilled) {
     if (regs.get(reg) != null && regs.get(reg).id == -114514) {
       return;
