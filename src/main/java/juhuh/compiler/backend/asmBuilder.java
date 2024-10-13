@@ -1,6 +1,5 @@
 package juhuh.compiler.backend;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -176,7 +175,7 @@ public class asmBuilder implements irVisitor {
   }
 
   // for usual anonymous variable
-  // TODO: if is spilled then direct store into the val;
+  // if is spilled then direct store into the val;
   public String mem2a(String name, int num, String tp) {
     if (name == null)
       return null;
@@ -213,6 +212,24 @@ public class asmBuilder implements irVisitor {
       global2ValReg(name.substring(1), "t" + num, "l" + tp);
       return "t" + num;
     }
+  }
+  
+  
+  public String memCol2a(int res, int num, String tp) {
+    
+      if (res >= 0) {
+        // normal reg
+        return regColor.getRegName(res);
+      } else {
+          curB.add(riscL.builder()
+              .op(tp)
+              .rd("t" + num)
+              .rs1("sp")
+              .imm(vrM.getOffset(res))
+              .build());
+          return "t" + num;
+        
+      }
   }
 
   public String mem2aS(String name, String num, String tp) {
@@ -731,11 +748,32 @@ public class asmBuilder implements irVisitor {
 
   private class costa {
     // in_num, nxt;
-    public int in;
-    public vector<color> nxt;
-    public vector<Integer> nxt_id;
+    public int in, in_id;
+    public HashMap<color, Integer> nxt;
   }
-
+  private void addCurB(vector<irBinary> phi, vector<Integer> finalOrder) {
+    for (var pr : finalOrder) {
+      var ph = phi.get(pr);
+      curB.add(pseudo.builder()
+          .strs(new vector<String>("#phi"))
+          .build());
+      String t0 = "t6";
+      if(ph.getOp2() != null)
+        t0 = mem2a(ph.getOp2(), 5, tBool(ph.getTp().equals("i1")));
+      asmNode res = null;
+      if(ph.getRes() != null)
+        res = regColor.getResult(ph.getRes(), t0, tBool(ph.getTp().equals("i1")), vrM);
+      else {
+        if(!t0.equals("t6")) {
+          curB.add(pseudo.builder()
+              .strs(new vector<String>("mv", "t6", t0))
+              .build());
+        }
+      }
+      curB.add(res);
+    }
+  
+  }
   private void shuPhi(vector<irBinary> phi) {
     // rearrange the order
     // mv use -> def col->col
@@ -743,53 +781,68 @@ public class asmBuilder implements irVisitor {
     for (var ph : phi)
       edge.add(new pair(regColor.getCol(ph.getOp2()), regColor.getCol(ph.getRes()), edge.size()));
     HashMap<color, costa> coInfo = new HashMap<>();
+    // build edge
     for (var pr : edge) {
       if (coInfo.get(pr.st) == null) {
         coInfo.put(pr.st, new costa());
-        coInfo.get(pr.st).nxt = new vector<color>();
-        coInfo.get(pr.st).nxt_id = new vector<Integer>();
+        coInfo.get(pr.st).nxt = new HashMap<color, Integer>();
       }
       if (coInfo.get(pr.ed) == null) {
         coInfo.put(pr.ed, new costa());
       }
       coInfo.get(pr.ed).in++;
-      coInfo.get(pr.st).nxt.add(pr.ed);
-      coInfo.get(pr.st).nxt_id.add(pr.num);
+      coInfo.get(pr.ed).in_id = pr.num;
+      coInfo.get(pr.st).nxt.put(pr.ed, pr.num);
     }
     Queue<color> topo = new LinkedList<color>();
     // add phi
     for (var pr : edge) {
-      if (coInfo.get(pr.st).in == 0)
+      if (coInfo.get(pr.st).nxt.isEmpty())
         topo.add(pr.st);
     }
-    vector<Integer> finalOrder = new vector<Integer>();
-    while (!topo.isEmpty()) {
-      var cur = topo.poll();
-      for (int i = 0; i < coInfo.get(cur).nxt.size(); ++i) {
-        var nxt = coInfo.get(cur).nxt.get(i);
-        finalOrder.add(coInfo.get(cur).nxt_id.get(i));
 
-        coInfo.get(nxt).in--;
-        if (coInfo.get(nxt).in == 0)
-          topo.add(nxt);
-      }
+    // non circle
+    vector<Integer> finalOrder = new vector<Integer>(),
+    circle = new vector<Integer>();
+    while (!topo.isEmpty()) {
+      var fa = (coInfo.get(topo.poll()).in_id);
+      finalOrder.add(fa);
+      var st = edge.get(fa).st;
+      coInfo.get(st).nxt.remove(edge.get(fa).ed);
+      if(coInfo.get(st).nxt.isEmpty())
+        topo.add(st);
+      
     }
+    addCurB(phi, finalOrder);
+
     for (var pr : coInfo.keySet())
       if (coInfo.get(pr).in != 0) {
-        // TODO arrange the order in circle, in != 0
-        
-        throw new error("circle in the graph");
+        // arrange the order in circle, in != 0
+        // pr -> t6
+        curB.add(pseudo.builder()
+            .strs(new vector<String>("#phi_circle_found"))
+            .build());
+        memCol2a(regColor.col2i(pr), 6, "lw");
+        // pr def <- use
+        circle.clear();
+        // findcircle to add edge
+        color cur = null;
+        do{
+          // in_id
+          var st = edge.get(coInfo.get(cur).in_id).st;
+          coInfo.get(st).nxt.remove(cur);
+          if(st != pr) {  
+            cur = st;
+            circle.add(coInfo.get(cur).in_id);
+          } else {
+            break;
+          }
+        }while(cur != pr);
+        addCurB(phi, circle);
+        // last t6 -> cur
+        curB.add(regColor.getColResult(cur, "t6", "sw", vrM));
       }
-
-    for (var pr : finalOrder) {
-      var ph = phi.get(pr);
-      curB.add(pseudo.builder()
-          .strs(new vector<String>("#phi"))
-          .build());
-      var t0 = mem2a(ph.getOp2(), 6, tBool(ph.getTp().equals("i1")));
-      var res = regColor.getResult(ph.getRes(), t0, tBool(ph.getTp().equals("i1")), vrM);
-      curB.add(res);
-    }
+    // 先非环，再环。
   }
 
   @Override

@@ -12,7 +12,6 @@ import juhuh.compiler.ir.ins.*;
 import juhuh.compiler.ir.stmt.irBlock;
 import juhuh.compiler.ir.stmt.irStmt;
 import juhuh.compiler.opt.regAlloc.allocator;
-import juhuh.compiler.opt.regAlloc.regCol;
 import juhuh.compiler.util.vector;
 import juhuh.compiler.util.error.error;
 

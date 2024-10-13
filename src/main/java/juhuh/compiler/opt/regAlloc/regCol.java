@@ -48,6 +48,23 @@ public class regCol {
       }
     } 
   }
+  public asmNode getColResult(color co, String resul, String tp, VarRegManager VRM) {
+    // is not spilled return the register; else return the riscS,tempvar(t5)
+    var res = col2i(co);
+    if(res >= 0) {
+      return pseudo.builder()
+        .strs(new vector<String>("mv", getRegName(res), resul))
+      .build();
+    } else {
+      return riscS.builder()
+        .op(tp)
+        .rs2(resul)
+        .rs1("sp")
+        .imm(VRM.getOffset(res))
+         // rd the spill structure 
+        .build();
+    }
+  }
   public asmNode getResult(String name, String resul, String tp, VarRegManager VRM) {
     // is not spilled return the register; else return the riscS,tempvar(t5)
     var res = getReg(name);
@@ -67,6 +84,11 @@ public class regCol {
          // rd the spill structure 
         .build();
     }
+  }
+  public int col2i(color c) {
+    if(c.spilled)
+      return (c.id+1) * (-1);
+    return c.id;
   }
   public int getReg(String name) {
     var res = regs.get(name);
