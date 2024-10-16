@@ -308,7 +308,7 @@ public class allocator implements irVisitor {
   public void spill2Col(vector<String> args) {
     // spill the > k
     regColor = new regCol();
-    regColor.argsId = Math.min(8, args.size());// notspilled count store
+    regColor.argsId = (args.size());// notspilled count store
     List<HashMap.Entry<String, Integer>> entryList = sortByCost();
     // reverse entryList
 
@@ -326,11 +326,7 @@ public class allocator implements irVisitor {
     // recolor args
     int tmpcnt = 0;
     for (var arg : args) {
-      if (tmpcnt <= 7) {
-        regColor.addArg(arg, tmpcnt);
-      }
-      else
-        regColor.addReg(arg, true);
+      regColor.addArg(arg, tmpcnt);
       tmpcnt++;
     }
     preColor(0);

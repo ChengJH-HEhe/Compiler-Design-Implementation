@@ -221,7 +221,10 @@ public class asmBuilder implements irVisitor {
 
     if (res >= 0) {
       // normal reg
-      return regColor.getRegName(res);
+      curB.add(pseudo.builder()
+          .strs(new vector<String>("mv", "t" + num, regColor.getRegName(res)))
+          .build());
+      return "t" + num;
     } else {
       curB.add(riscL.builder()
           .op(tp)
@@ -249,9 +252,21 @@ public class asmBuilder implements irVisitor {
       if (res >= 0) {
         // normal reg
         if (num.charAt(0) == 'a') {
-          curB.add(pseudo.builder()
-              .strs(new vector<String>("mv", num, regColor.getRegName(res)))
-              .build());
+          var regname = regColor.getRegName(res);
+          int aid = Integer.parseInt(regname.substring(1));
+          if(regname.charAt(0) != 'a' || aid >= Math.min(regColor.argsId, 7))
+            curB.add(pseudo.builder()
+                .strs(new vector<String>("mv", num, regname))
+                .build());
+          else {
+            int id = vrM.getMaxargs() + 5 + aid;
+            curB.add(riscL.builder()
+                .op("lw")
+                .rd(num)
+                .imm(id*4)
+                .rs1("sp")
+                .build());
+          }
           return num;
         } else
             return regColor.getRegName(res);
@@ -366,7 +381,7 @@ public class asmBuilder implements irVisitor {
       curB.add(pseudo.builder()
           .strs(new vector<String>("# " + arg))
           .build());
-
+      
       String tmpvar = "t5";
       if (curId < 8)
         tmpvar = "a" + curId;
@@ -383,7 +398,7 @@ public class asmBuilder implements irVisitor {
       }
 
       if (curId >= 8) {
-        // store tmpvar to sp + (curId - 8) * 4
+        // store tmpvar to sp + (aNum - curId) * 4
         // "t3" store the val
         curB.add(riscS.builder()
             .op(vartype.get(curId).equals("i1") ? "sb" : "sw")
@@ -393,29 +408,31 @@ public class asmBuilder implements irVisitor {
             .build());
       }
     }
+
     curB.add(pseudo.builder()
         .strs(new vector<String>("call", node.getFunc().getName()))
         .build());
+    curB.add(pseudo.builder()
+      .strs(new vector<String>("mv", "t6", "a0"))
+    .build());
+    vrM.restoreCall();
     if (!node.getRes().equals("") && !node.getRes().equals("void")) {
       // not void call
       var tp = tBool(node.getFunc().getRetType().equals(SemanticChecker.boolType));
-      var res = regColor.getResult(node.getRes(), "a0", tp, vrM);
+      var res = regColor.getResult(node.getRes(), "t6", tp, vrM);
       // store retval to res
       if (res == null) {
         // store to z0
         curB.add(pseudo.builder()
-            .strs(new vector<String>("#mv", "z0", "a0"))
+            .strs(new vector<String>("#mv", "z0", "t6"))
             .build());
       } else {
         if (!(res instanceof pseudo))
-          ((riscS) res).setRs2("a0");
+          ((riscS) res).setRs2("t6");
         curB.add(res);
       }
     }
     // store a regs
-
-    vrM.restoreCall();
-
   }
 
   @Override
@@ -759,6 +776,7 @@ public class asmBuilder implements irVisitor {
   private class costa {
     // in_num, nxt;
     public int in_id;
+    public color st;
     public HashMap<color, Integer> nxt;
   }
 
@@ -780,7 +798,9 @@ public class asmBuilder implements irVisitor {
     }
 
   }
-
+  private void nxtremove(costa co, color ed) {
+    co.nxt.remove(ed);
+  }
   private void shuPhi(vector<irBinary> phi) {
     // rearrange the order
     // mv use -> def col->col
@@ -805,28 +825,31 @@ public class asmBuilder implements irVisitor {
         immDef.add(pr.num);
       } 
     }
-    HashMap<color, costa> coInfo = new HashMap<>();
+    HashMap<Integer, costa> coInfo = new HashMap<>();
     // build edge
     
     for (var pr : edge) {
       if(pr == null || pr.st == null) {
         continue;
       } 
-      if (coInfo.get(pr.st) == null) {
-        coInfo.put(pr.st, new costa());
-        coInfo.get(pr.st).nxt = new HashMap<color, Integer>();
-        coInfo.get(pr.st).in_id = -1;
+      var stp = regColor.col2i(pr.st);
+      var edp = regColor.col2i(pr.ed);
+      if (coInfo.get(stp) == null) {
+        coInfo.put(stp, new costa());
+        coInfo.get(stp).nxt = new HashMap<color, Integer>();
+        coInfo.get(stp).in_id = -1;
       }
-      if (coInfo.get(pr.ed) == null) {
-        coInfo.put(pr.ed, new costa());
-        coInfo.get(pr.ed).nxt = new HashMap<color, Integer>();
-        coInfo.get(pr.ed).in_id = -1;
+      if (coInfo.get(edp) == null) {
+        coInfo.put(edp, new costa());
+        coInfo.get(edp).nxt = new HashMap<color, Integer>();
+        coInfo.get(edp).in_id = -1;
       }
-      coInfo.get(pr.ed).in_id = pr.num;
-      coInfo.get(pr.st).nxt.put(pr.ed, pr.num);
+      coInfo.get(stp).st = pr.st;
+      coInfo.get(edp).in_id = pr.num;
+      coInfo.get(stp).nxt.put(pr.ed, pr.num);
     }
     
-    Queue<color> topo = new LinkedList<color>();
+    Queue<Integer> topo = new LinkedList<Integer>();
     // add phi
     for (var pr : coInfo.entrySet()) {
       if (pr.getValue().nxt.isEmpty())
@@ -841,10 +864,8 @@ public class asmBuilder implements irVisitor {
       if(fa == -1)
         continue;
       finalOrder.add(fa);
-      var st = edge.get(fa).st;
-      if (st == null)
-        continue;
-      coInfo.get(st).nxt.remove(edge.get(fa).ed);
+      var st = regColor.col2i(edge.get(fa).st);
+      nxtremove(coInfo.get(st), edge.get(fa).ed);
       if (coInfo.get(st).nxt.isEmpty())
         topo.add(st);
     }
@@ -859,25 +880,26 @@ public class asmBuilder implements irVisitor {
         curB.add(pseudo.builder()
             .strs(new vector<String>("#phi_circle_found"))
             .build());
-        memCol2a(regColor.col2i(pr), 6, "w");
+        memCol2a(pr, 6, "lw");
         // pr def <- use
         circle.clear();
         // findcircle to add edge
-        color cur = pr;
+        int cur = pr;
         do {
           // in_id
-          var st = edge.get(coInfo.get(cur).in_id).st;
-          coInfo.get(st).nxt.remove(cur);
+          var st = regColor.col2i(edge.get(coInfo.get(cur).in_id).st);
+          nxtremove(coInfo.get(st), coInfo.get(cur).st);
           if (st != pr) {
-            cur = st;
             circle.add(coInfo.get(cur).in_id);
+            cur = st;
           } else {
             break;
           }
         } while (cur != pr);
         addCurB(phi, circle);
         // last t6 -> cur
-        curB.add(regColor.getColResult(cur, "t6", "sw", vrM));
+        curB.add(regColor.getColResult(edge.get(coInfo.get(cur).in_id).ed, "t6", "sw", vrM));
+        coInfo.get(cur).nxt.clear();
       }
     // 先非环，再环, 最后immDef。
     
@@ -906,7 +928,7 @@ public class asmBuilder implements irVisitor {
     if (status == false) {
       vrM.setCurB(curB, curFunc.getParatypelist().size());
       if (node.getLabel().equals("entry")) {
-        vrM.setSize(6 + Math.min(curFunc.getParatypelist().size(), 8));
+        vrM.setSize(6 + 8);
         // entry storeT
         blck.setLabel(func.getName());
         vrM.storeDef(); // size currect

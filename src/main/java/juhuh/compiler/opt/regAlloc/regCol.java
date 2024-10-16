@@ -9,7 +9,6 @@ import juhuh.compiler.backend.asm.*;
 import juhuh.compiler.backend.asm.ins.pseudo;
 import juhuh.compiler.backend.asm.ins.riscS;
 import juhuh.compiler.util.*;
-import juhuh.compiler.util.error.error;
 
 public class regCol {
   HashMap<String, color> regs;
@@ -21,10 +20,11 @@ public class regCol {
     int count = 0;
     for (var str : out) {
       if (regs.get(str) != null && regs.get(str).spilled) {
-        count++;
+        if(regs.get(str).id < 0)
+          count++;
       }
     }
-    spillCount = Math.max(spillCount, count);
+    spillCount = Math.max(spillCount, count + Math.max(0, argsId - 8));
   }
 
   public regCol() {
@@ -179,9 +179,14 @@ public class regCol {
 
   public void addArg(String name, int num) {
     color c = new color();
-    c.spilled = false;
-    c.id = anum(num);
-    inUse.add(c.id);
+    if (num <= 7) {
+      c.spilled = false;
+      c.id = anum(num);
+      inUse.add(c.id);
+    } else {
+      c.spilled = true;
+      c.id = num - 8;
+    }
     regs.put(name, c);
   }
 
@@ -199,13 +204,14 @@ public class regCol {
       return;
     }
     if (isSpilled) {
-      throw new error("should not be spilled");
+      // func args.
+      c.spilled = true;
+      c.id = findSpilled();
     } else {
       c.spilled = false;
       c.id = findCol();
-      regs.put(reg, c);
     }
-
+    regs.put(reg, c);
   }
 
   public void eraseReg(String reg) {

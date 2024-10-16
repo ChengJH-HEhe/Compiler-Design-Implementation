@@ -27,12 +27,12 @@ public class VarRegManager {
       System.err.println("Error: getOffset(-1)");
     }
     // args -id-1 < aNum - 8 selfArgs
-    int id22 = getSize() - 12 - (-id-1);
+    int id22 = getSize() - 12 - (-id-1 - Math.max(0,aNum - 8)); // >=
     if ((-id - 1) < aNum - 8){
       id22 = getSize() + (aNum - 8) - 1 - (-id - 1);
     } //> 8 selfArgs
-    if(id22 <= maxArgs + 5 + Math.min(aNum, 8) ) 
-      System.err.println("bug!");
+    // if(id22 <= maxArgs + 5 + Math.min(aNum, 8) ) 
+    //   System.err.println("bug!");
     // spillCount 
     return id22 * 4;
     // spill count;
@@ -73,7 +73,7 @@ public class VarRegManager {
     }
     // caller ti ra ai
     // a0~amin(num-1,7) 也需要
-    for (int i = 0; i < Math.min(aNum, 8); ++i) {
+    for (int i = 0; i < 8; ++i) {
       curB.add(riscS.builder()
           .op("sw")
           .rs2("a" + i)
@@ -83,7 +83,7 @@ public class VarRegManager {
     }
     curB.add(riscS.builder().op("sw")
         .rs2("ra")
-        .imm((maxArgs + 5 + Math.min(aNum, 8)) * 4)
+        .imm((maxArgs + 5 + 8) * 4)
         .rs1("sp")
         .build());
     // 8~maxargs - i
@@ -98,7 +98,7 @@ public class VarRegManager {
           .rs1("sp")
           .build());
     }
-    for (int i = 0; i < Math.min(aNum, 8); ++i) {
+    for (int i = 0; i < 8; ++i) {
       curB.add(riscS.builder()
           .op("lw")
           .rs2("a" + i)
@@ -108,7 +108,7 @@ public class VarRegManager {
     }
     curB.add(riscS.builder().op("lw")
         .rs2("ra")
-        .imm((maxArgs + 5 + Math.min(aNum, 8)) * 4)
+        .imm((maxArgs + 5 + 8) * 4)
         .rs1("sp")
         .build());
   }

@@ -393,11 +393,14 @@ public class domBuilder implements irVisitor {
       if (!inOnly[i]) {
         // add 0 in new block
         block.setTerminal(block.getEndTerm());
+
         var newBlock = irBlock.builder()
             .label("_phi." + block.getLabel())
             .stmts(new vector<irStmt>())
             .terminalstmt(block.getTerminalstmt())
             .build();
+        if(block.getLabel().equals("entry"))
+          newBlock.setLabel("_phi." + curFunc.getFName());
         newBlock.setPhiDel(new vector<irBinary>());
         block.setTerminalstmt(irJump.builder().dest(newBlock.getLabel()).build());
         block = newBlock;
