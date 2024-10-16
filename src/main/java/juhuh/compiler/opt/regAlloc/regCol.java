@@ -59,7 +59,7 @@ public class regCol {
         if (id <= 4)
           return "t" + id;
         else
-          return "a" + (9 - id);
+          return "a" + (8 - id);
       }
     }
   }
@@ -172,9 +172,9 @@ public class regCol {
 
   private int anum(int num) {
     if (num <= 3)
-      return K - num;
+      return K - num - 1;
     else
-      return 20 - num;
+      return 19 - num;
   }
 
   public void addArg(String name, int num) {
@@ -188,7 +188,7 @@ public class regCol {
   public void addReg(String reg, boolean isSpilled) {
     color c = new color();
     if (regs.get(reg) != null && regs.get(reg).id == -114514) {
-      if (reg.equals("%_8"))
+      if (reg.equals("%a"))
         System.err.println("debug");
       c.spilled = true;
       c.id = findSpilled();

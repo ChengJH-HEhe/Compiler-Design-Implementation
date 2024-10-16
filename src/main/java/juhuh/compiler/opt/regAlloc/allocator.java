@@ -175,7 +175,7 @@ public class allocator implements irVisitor {
     for (var reg1 : regs.keySet()) {
       reg = reg1;
       scanned.clear();
-      if(reg1.equals("%flag.3.4.if.end6.0.0"))
+      if(reg1.equals("%ret.val.return1"))
         System.err.println("debug");
       for (int i = 0; i < dom.cnt; i++) {
         curBlock = i;

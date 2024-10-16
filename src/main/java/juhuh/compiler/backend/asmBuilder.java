@@ -752,10 +752,7 @@ public class asmBuilder implements irVisitor {
     color st, ed;
     int num; // ID
 
-    public pair(color st, color ed, int num) {
-      this.st = st;
-      this.ed = ed;
-      this.num = num;
+    public pair() {
     }
   };
 
@@ -773,16 +770,11 @@ public class asmBuilder implements irVisitor {
         .build());
       String t0 = "t6";
       if (ph.getOp2() != null)
-        t0 = mem2a(ph.getOp2(), 5, tBool(ph.getTp().equals("i1")));
+        t0 = mem2a(ph.getOp2(), 6, tBool(ph.getTp().equals("i1")));
       
       asmNode res = null;
       if (ph.getRes() != null) {
         res = regColor.getResult(ph.getRes(), t0, tBool(ph.getTp().equals("i1")), vrM);
-        if (res != null && !t0.equals("t6")) {
-          curB.add(pseudo.builder()
-          .strs(new vector<String>("mv", "t6", t0))
-          .build());
-        }
         curB.add(res);
       }
     }
@@ -793,13 +785,21 @@ public class asmBuilder implements irVisitor {
     // rearrange the order
     // mv use -> def col->col
     vector<pair> edge = new vector<pair>();
-
+    
     // new vector immediate -> def
     vector<Integer> immDef = new vector<>();
+    // pr.num should equal to edge.size
     for (var ph : phi) {
-      var pr = new pair(regColor.getCol(ph.getOp2()), regColor.getCol(ph.getRes()), edge.size());
-      if(pr.ed == null)
+      pair pr = new pair();
+      pr.st = regColor.getCol(ph.getOp2());
+      pr.ed = regColor.getCol(ph.getRes());
+      pr.num = edge.size();
+      if(curB.getLabel().equals("cond.end1"))
+        System.err.println("Debug");
+      if(pr.ed == null) {
+        edge.add(null);
         continue;
+      }
       edge.add(pr);
       if(pr.st == null) {
         immDef.add(pr.num);
@@ -809,7 +809,7 @@ public class asmBuilder implements irVisitor {
     // build edge
     
     for (var pr : edge) {
-      if(pr.st == null) {
+      if(pr == null || pr.st == null) {
         continue;
       } 
       if (coInfo.get(pr.st) == null) {
@@ -825,6 +825,7 @@ public class asmBuilder implements irVisitor {
       coInfo.get(pr.ed).in_id = pr.num;
       coInfo.get(pr.st).nxt.put(pr.ed, pr.num);
     }
+    
     Queue<color> topo = new LinkedList<color>();
     // add phi
     for (var pr : coInfo.entrySet()) {
