@@ -20,23 +20,29 @@ public class VarRegManager {
     this.aNum = aNum;
   }
 
-  // (sp) | callargs(maxArgs) | s0~11 | spillcount | t0~6 | a0~7 | ra  (selfargs(N,N-1,..,8): spillcount
-  // 0~argsId)
+  // (sp(after)) | callargs(maxArgs)(storeCall(selfargs, t0~t4, ra), ) |
+  // spillcount | (s0~s11 sp when loadDef/storeDef)
   public int getOffset(int id) {
-    assert (id < 0);
-    if ((-id - 1) < aNum - 8)
-      return (getSize() - (-id - 1) - 1) * 4;
-    else
-      return ((-id - 1 - (aNum - 8)) + maxArgs + 12) * 4;
+    if(id == -1) {
+      System.err.println("Error: getOffset(-1)");
+    }
+    // args -id-1 < aNum - 8 selfArgs
+    int id22 = getSize() - 12 - (-id-1);
+    if ((-id - 1) < aNum - 8){
+      id22 = getSize() + (aNum - 8) - 1 - (-id - 1);
+    } //> 8 selfArgs
+    
+    // spillCount 
+    return id22 * 4;
     // spill count;
   }
 
   public int getCallArgs(int id) {
     return aNum - id;
   }
-
+  // CALL ONLY TWICE!
   public void setSize(int size) {
-    this.size = size;
+    this.size += size;
   }
 
   public int getSize() {
@@ -60,7 +66,7 @@ public class VarRegManager {
       curB.add(riscS.builder()
           .op("sw")
           .rs2("t" + i)
-          .imm((-(i + 1)) * 4)
+          .imm((maxArgs + i) * 4)
           .rs1("sp")
           .build());
     }
@@ -70,17 +76,15 @@ public class VarRegManager {
       curB.add(riscS.builder()
           .op("sw")
           .rs2("a" + i)
-          .imm(-(i + 6) * 4)
+          .imm((maxArgs + 5 + i) * 4)
           .rs1("sp")
           .build());
     }
     curB.add(riscS.builder().op("sw")
         .rs2("ra")
-        .imm((-1) * 4)
+        .imm((maxArgs + 5 + Math.min(aNum, 8)) * 4)
         .rs1("sp")
         .build());
-    size += 7 + aNum;
-
     // 8~maxargs - i
   }
 
@@ -89,7 +93,7 @@ public class VarRegManager {
       curB.add(riscS.builder()
           .op("lw")
           .rs2("t" + i)
-          .imm((-(i + 1)) * 4)
+          .imm((maxArgs + i) * 4)
           .rs1("sp")
           .build());
     }
@@ -97,13 +101,13 @@ public class VarRegManager {
       curB.add(riscS.builder()
           .op("lw")
           .rs2("a" + i)
-          .imm(-(i + 6) * 4)
+          .imm((maxArgs + 5 + i) * 4)
           .rs1("sp")
           .build());
     }
     curB.add(riscS.builder().op("lw")
         .rs2("ra")
-        .imm((-1) * 4)
+        .imm((maxArgs + 5 + Math.min(aNum, 8)) * 4)
         .rs1("sp")
         .build());
   }
@@ -114,7 +118,7 @@ public class VarRegManager {
       curB.add(riscS.builder()
           .op("sw")
           .rs2("s" + i)
-          .imm(maxArgs + i)
+          .imm(-(i+1) * 4)
           .rs1("sp")
           .build());
     }
@@ -126,7 +130,7 @@ public class VarRegManager {
       curB.add(riscS.builder()
           .op("lw")
           .rs2("s" + i)
-          .imm(maxArgs + i)
+          .imm(-(i+1) * 4)
           .rs1("sp")
           .build());
     }

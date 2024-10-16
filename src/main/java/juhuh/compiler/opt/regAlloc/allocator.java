@@ -167,7 +167,7 @@ public class allocator implements irVisitor {
   private boolean spillPhi(int id) {
     @SuppressWarnings("unchecked")
     HashSet<String> out = (HashSet<String>) (liveStmt[id].get(0).in).clone();
-    // TODO : check if [id].[0].in is phi.out
+    // check if [id].[0].in is phi.out
 
     int sz = out.size();
     for (var outReg : out) {
@@ -212,7 +212,11 @@ public class allocator implements irVisitor {
     // inUse should bit-OR in [0]in (phi.out)
     @SuppressWarnings("unchecked")
     HashSet<String> out = (HashSet<String>) (liveStmt[blockId].get(0).in).clone();
-    regColor.orLiveIn(out);
+    
+    @SuppressWarnings("unchecked")
+    HashSet<String> in = (HashSet<String>) (liveStmt[blockId].get(0).in).clone();
+    regColor.orLiveIn(in, dom.id2B.get(blockId).getPhi().keySet());
+    
     // phi def should be colored(if in [0]in)
     for (var phiuse : dom.id2B.get(blockId).getPhi().entrySet()) {
       var regSet = phiuse.getValue().getLabel2val();
@@ -221,6 +225,7 @@ public class allocator implements irVisitor {
           regColor.eraseReg(reg);
         }
     }
+    
     // color phi def when out contains def
     for (var phiuse : dom.id2B.get(blockId).getPhi().entrySet()) {
       var def = phiuse.getValue().getReg();
@@ -229,6 +234,8 @@ public class allocator implements irVisitor {
       }
     }
     // color simple stmt
+    if(dom.id2B.get(blockId).getLabel().equals("for.cond2.0.0"))
+      System.err.println("debug");
     for (var live : liveStmt[blockId]) {
       // erase use & not in liveout
       for (var uses : live.use)
@@ -251,27 +258,29 @@ public class allocator implements irVisitor {
     // spill the > k
     regColor = new regCol();
     regColor.argsId = Math.min(8, args.size());// notspilled count store
-    regColor.spillCount = args.size() - 8;
     List<HashMap.Entry<String, Integer>> entryList = sortByCost();
     // reverse entryList
 
-    for (int i = 0; i < dom.cnt; ++i) {
-      for (int j = 0; j < liveStmt[i].size(); ++j)
-        regColor.setSpillCount(liveStmt[i].get(j).out.size());
-    }
+    
     for (Map.Entry<String, Integer> entry : entryList) {
       reg = entry.getKey();
       spReg();
+    }
+    for (int i = 0; i < dom.cnt; ++i) {
+      regColor.setSpillCount(liveStmt[i].get(0).in);
+      for (int j = 0; j < liveStmt[i].size(); ++j)
+        regColor.setSpillCount(liveStmt[i].get(j).out);
     }
     // col reg. dominate tree preorder.
     // recolor args
     int tmpcnt = 0;
     for (var arg : args) {
-      tmpcnt++;
-      if (tmpcnt <= 8)
-        regColor.addReg(arg, false);
+      if (tmpcnt <= 7) {
+        regColor.addArg(arg, tmpcnt);
+      }
       else
         regColor.addReg(arg, true);
+      tmpcnt++;
     }
     preColor(0);
   }
