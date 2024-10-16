@@ -368,14 +368,16 @@ public class domBuilder implements irVisitor {
     // if st is one-child, then add 0 in this block
     // else add 0 in a new created block
     boolean[] inOnly = new boolean[cnt];
-    int[] outCnt = new int[cnt];
-
+    @SuppressWarnings("unchecked")
+    vector<Integer>[] outCnt = new vector[cnt];
+    for(int i = 0; i < cnt; ++i)
+      outCnt[i] = new vector<>();
     for (int i = 1; i < cnt; ++i) {
       for (var pre : preds[i])
-        ++outCnt[pre];
+        outCnt[pre].add(i);
     }
     for (int i = 0; i < cnt; ++i) {
-      if (outCnt[i] == 1) {
+      if (outCnt[i].size() == 1) {
         inOnly[i] = true;
       }
     }
@@ -401,14 +403,13 @@ public class domBuilder implements irVisitor {
         block = newBlock;
       }
       // directly add 0 in this block
-      for (var domf : doms.get(i).getDomF()) {
-        var domF = id2B.get(domf);
-        // domF block's find this block's value should add 0 in this block
-        for (var phiLhs : domF.getPhi().entrySet()) {
-          if (phiLhs.getValue().getLabel2val().containsKey(block.getLabel()) &&
-              phiLhs.getValue().getLabel2val().get(block.getLabel()) != null) {
+      for (var Nxt : outCnt[i]) {
+        var nxt = id2B.get(Nxt);
+        // nxt block's find this block's value should add 0 in this block
+        for (var phiLhs : nxt.getPhi().entrySet()) {
+          if (phiLhs.getValue().getLabel2val().get(block.getLabel()) != null) {
             block.getPhiDel().add(irBinary.builder()
-                .res(phiLhs.getKey() + "." + domF.getLabel())
+                .res(phiLhs.getKey() + "." + nxt.getLabel())
                 .op("add")
                 .op2(phiLhs.getValue().getLabel2val().get(block.getLabel()))
                 .op1("0")
@@ -460,6 +461,7 @@ public class domBuilder implements irVisitor {
     // delphi
     delPhi(node);
     // asm rewrite
+    
     asm.setCol(alloc.regColor);
     asm.visit(node);
   }

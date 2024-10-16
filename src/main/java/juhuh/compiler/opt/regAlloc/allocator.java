@@ -5,8 +5,10 @@ import java.util.BitSet;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 
 import juhuh.compiler.frontend.irVisitor;
 import juhuh.compiler.ir.*;
@@ -112,21 +114,69 @@ public class allocator implements irVisitor {
       scanIn();
     }
   }
+  private HashMap<String, Integer> phi2blckId = new HashMap<>();
+  void findphiDef() {
+    for (int i = 0; i < dom.cnt; i++) {
+      for (var stmt : dom.id2B.get(i).getPhi().entrySet()) {
+        var phi = stmt.getValue();
+        phi2blckId.put(phi.getReg(), i);
+      }
+    }
+    Queue<String> phiDef = new LinkedList<>();
+    for (int i = 0; i < dom.cnt; i++) {
+      for (var stmt : dom.id2B.get(i).getPhi().entrySet()) {
+        var phi = stmt.getValue();
+        if (regs.get(phi.getReg()) == null) {
+          continue;
+        }
+        for(var use : phi.getLabel2val().entrySet()) {
+          if(use.getValue() != null && regs.get(use.getValue()) == null) {
+            // block, def should not be visited
+            regs.put(use.getValue(), pow(dom.id.get(use.getKey())));
+            if(phi2blckId.get(use.getValue()) !=null)
+              phiDef.add(use.getValue());
+          }
+        }
+      }
+    }
+    while(!phiDef.isEmpty()) {
+      var reg = phiDef.poll();
+      int blockId = phi2blckId.get(reg);
+      for (var stmt : dom.id2B.get(blockId).getPhi().entrySet()) {
+        var phi = stmt.getValue();
+        if(phi.getReg().equals(reg)) {
+          for(var use : phi.getLabel2val().entrySet()) {
+            if(use.getValue() != null && regs.get(use.getValue()) == null) {
+              regs.put(use.getValue(), pow(dom.id.get(use.getKey())));
+              if(phi2blckId.get(use.getValue()) !=null)
+                phiDef.add(use.getValue());
+            }
+          }
+        }
+      }
+    }
+  }
 
   @Override
   public void visit(irFuncDef node) throws error {
     regs = new HashMap<String, Integer>();
+    // getRegs keyset.
     visit(node.getEntry());
     for (var block : node.getBody()) {
       visit(block);
     }
     visit(node.getRet());
+    // phi def in regs, then phi use is all effective, should be added.
+    findphiDef();
+    // phi use -> phi def effective.
     scanned = new BitSet(dom.cnt);
     // begin ssa liveness analysis
     // initialization
     for (var reg1 : regs.keySet()) {
       reg = reg1;
       scanned.clear();
+      if(reg1.equals("%flag.3.4.if.end6.0.0"))
+        System.err.println("debug");
       for (int i = 0; i < dom.cnt; i++) {
         curBlock = i;
         var block = dom.id2B.get(i);
@@ -229,6 +279,7 @@ public class allocator implements irVisitor {
     // color phi def when out contains def
     for (var phiuse : dom.id2B.get(blockId).getPhi().entrySet()) {
       var def = phiuse.getValue().getReg();
+      
       if (out.contains(def)) {
         regColor.addReg(def, false);
       }

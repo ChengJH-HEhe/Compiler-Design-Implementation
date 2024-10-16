@@ -31,7 +31,8 @@ public class VarRegManager {
     if ((-id - 1) < aNum - 8){
       id22 = getSize() + (aNum - 8) - 1 - (-id - 1);
     } //> 8 selfArgs
-    
+    if(id22 <= maxArgs + 5 + Math.min(aNum, 8) ) 
+      System.err.println("bug!");
     // spillCount 
     return id22 * 4;
     // spill count;

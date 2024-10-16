@@ -33,6 +33,7 @@ public class asmBuilder implements irVisitor {
 
   public void setCol(regCol regColor) {
     this.regColor = regColor;
+    vrM = new VarRegManager();
     vrM.setSize(regColor.spillCount);
   }
 
@@ -42,7 +43,6 @@ public class asmBuilder implements irVisitor {
         .data(new vector<asmVarDef>())
         .rodata(new vector<asmVarDef>())
         .build();
-    vrM = new VarRegManager();
   }
 
   public asmRoot getRt() {
@@ -122,7 +122,6 @@ public class asmBuilder implements irVisitor {
         .name(node.getFName())
         .nodes(new vector<asmBlock>())
         .build();
-    vrM = new VarRegManager();
     // t0~t4 store into the sp + i
     status = true;
     visitFunc(node);
@@ -206,7 +205,6 @@ public class asmBuilder implements irVisitor {
           .imm(vrM.getOffset(res))
           .build();
           curB.add(L);
-          System.err.println(L);
           return "t" + num;
         }
       }
@@ -771,8 +769,8 @@ public class asmBuilder implements irVisitor {
     for (var pr : finalOrder) {
       var ph = phi.get(pr);
       curB.add(pseudo.builder()
-          .strs(new vector<String>("#phi"))
-          .build());
+        .strs(new vector<String>("#phi_nonCircle"))
+        .build());
       String t0 = "t6";
       if (ph.getOp2() != null)
         t0 = mem2a(ph.getOp2(), 5, tBool(ph.getTp().equals("i1")));
@@ -849,6 +847,8 @@ public class asmBuilder implements irVisitor {
       if (coInfo.get(st).nxt.isEmpty())
         topo.add(st);
     }
+    
+
     addCurB(phi, finalOrder);
 
     for (var pr : coInfo.keySet())
@@ -902,7 +902,6 @@ public class asmBuilder implements irVisitor {
         .build();
 
     curB = blck;
-    shuPhi(node.getPhiDel());
     if (status == false) {
       vrM.setCurB(curB, curFunc.getParatypelist().size());
       if (node.getLabel().equals("entry")) {
@@ -917,11 +916,14 @@ public class asmBuilder implements irVisitor {
       for (irStmt ins : node.getStmts()) {
         ins.accept(this);
       }
-    if (node.getTerminalstmt() != null)
-      node.getTerminalstmt().accept(this);
-    else
-      node.getEndTerm().accept(this);
-    if (status == false)
+      // delphi before jump
+    if (status == false){
+      shuPhi(node.getPhiDel());
+      if (node.getTerminalstmt() != null)
+        node.getTerminalstmt().accept(this);
+      else
+        node.getEndTerm().accept(this);
       func.getNodes().add(blck);
+    }
   }
 }

@@ -14,8 +14,8 @@ import juhuh.compiler.util.error.error;
 public class regCol {
   HashMap<String, color> regs;
   HashSet<Integer> inUse;
-  public int spillCount = 0, argsId;
-  int K = 2;
+  public int spillCount = 0, argsId = 0;
+  int K = 25;
 
   public void setSpillCount(HashSet<String> out) {
     int count = 0;
