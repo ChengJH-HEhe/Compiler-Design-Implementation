@@ -175,21 +175,26 @@ public class asmBuilder implements irVisitor {
   }
 
   // for usual anonymous variable
-  // if is spilled then direct store into the val;
+  // if is spilled then direct store into the val="t"+num;
+  // else return imm ; reg.
   public String mem2a(String name, int num, String tp) {
     if (name == null)
       return null;
     if (name.getBytes()[0] != '%' && name.getBytes()[0] != '@') {
-      curB.add(pseudo.builder()
+      var psu = pseudo.builder()
           .strs(new vector<String>("li", "t" + num,
               name.equals("false") ? "0" : name.equals("true") ? "1" : name.equals("null") ? "0" : name))
-          .build());
+          .build();
+      if (isImm(name))
+        return Integer.toString(Imm(name));
+      else
+        curB.add(psu);
       return "t" + num;
     } else if (name.charAt(0) == '%') {
       var res = regColor.getReg(name);
       curB.add(pseudo.builder()
-        .strs(new vector<String>("#mem2a", name, (Integer.toString(res))))
-      .build());
+          .strs(new vector<String>("#mem2a", name, (Integer.toString(res))))
+          .build());
       if (res >= 0) {
         // normal reg
         return regColor.getRegName(res);
@@ -199,11 +204,11 @@ public class asmBuilder implements irVisitor {
           return null;
         } else {
           var L = riscL.builder()
-          .op("l" + tp)
-          .rd("t" + num)
-          .rs1("sp")
-          .imm(vrM.getOffset(res))
-          .build();
+              .op("l" + tp)
+              .rd("t" + num)
+              .rs1("sp")
+              .imm(vrM.getOffset(res))
+              .build();
           curB.add(L);
           return "t" + num;
         }
@@ -236,6 +241,7 @@ public class asmBuilder implements irVisitor {
 
     }
   }
+
   // tp = "w" or "b"
   public String mem2aS(String name, String num, String tp) {
     if (name == null)
@@ -254,8 +260,8 @@ public class asmBuilder implements irVisitor {
         if (num.charAt(0) == 'a') {
           var regname = regColor.getRegName(res);
           int aid = Integer.parseInt(regname.substring(1));
-          if(regname.charAt(0) != 'a' 
-            || aid >= Math.min(regColor.argsId, Integer.parseInt(num.substring(1))))
+          if (regname.charAt(0) != 'a'
+              || aid >= Math.min(regColor.argsId, Integer.parseInt(num.substring(1))))
             curB.add(pseudo.builder()
                 .strs(new vector<String>("mv", num, regname))
                 .build());
@@ -264,13 +270,13 @@ public class asmBuilder implements irVisitor {
             curB.add(riscL.builder()
                 .op("lw")
                 .rd(num)
-                .imm(id*4)
+                .imm(id * 4)
                 .rs1("sp")
                 .build());
           }
           return num;
         } else
-            return regColor.getRegName(res);
+          return regColor.getRegName(res);
       } else {
         if (res == -114514191) {
           throw new error(name + "not colored");
@@ -293,52 +299,87 @@ public class asmBuilder implements irVisitor {
     }
   }
 
+  public static boolean isImm(String im) {
+    if (im.equals("null") || im.equals("false") || im.equals("true"))
+      return true;
+    if (im.charAt(0) == 's' || im.charAt(0) == 'a' || im.charAt(0) == 't' || im.charAt(0) == '%'
+        || im.charAt(0) == '@')
+      return false;
+    return Math.abs(Imm(im)) <= 2048;
+  }
+
   // res = valPtr
+  private void swap(String a, String b) {
+    String c = a;
+    a = b;
+    b = c;
+  }
+
   @Override
   public void visit(irBinary node) throws error {
     // binary
-    if(status == true)
+    if (status == true)
       return;
     String tp = tBool(node.getTp().equals("i1"));
-    if (node.getOp1() != null)
-      if (node.getOp().equals("add") && node.getOp1().equals("0")) {
-        // special: res = add 0, x1 const: li, res, mv
 
-      }
-    var t0 = mem2a(node.getOp1(), 5, tp);
-    var t1 = mem2a(node.getOp2(), 6, tp);
     // calc t0 t1 to t2
     var resul = regColor.getResult(node.getRes(), "t5", tp, vrM);
+    var rd = "t5";
+    if (resul instanceof pseudo) {
+      rd = ((pseudo) resul).getStrs().get(1);
+      resul = null;
+    }
     if (node.getOp().equals("sdiv") || node.getOp().equals("srem")) {
+      var t0 = mem2a(node.getOp1(), 5, tp);
+      var t1 = mem2a(node.getOp2(), 6, tp);
       curB.add(riscR.builder()
           .op(node.getOp().substring(1))
-          .rd("t5")
+          .rd(rd)
           .rs1(t0)
           .rs2(t1)
           .build());
     } else {
       var cmd = riscR.builder()
           .op(node.getOp())
-          .rd("t5")
-          .rs1(t0)
-          .rs2(t1)
+          .rd(rd)
           .build();
-      if (node.getOp().equals("shl")) {
-        cmd.setOp("sll");
-      } else if (node.getOp().equals("ashr")) {
-        cmd.setOp("sra");
+      if (node.getOp().equals("shl") ||
+          node.getOp().equals("ashr")) {
+        cmd.setRs1(mem2a(node.getOp1(), 5, tp));
+        cmd.setRs2(mem2a(node.getOp2(), 6, tp));
+        if (node.getOp().equals("shl")) {
+          cmd.setOp("sll");
+        } else if (node.getOp().equals("ashr")) {
+          cmd.setOp("sra");
+        }
+        if (isImm(cmd.getRs2()))
+          cmd.setOp(cmd.getOp() + "i");
+      } else if (node.getOp().equals("sub")) {
+        cmd.setRs1(mem2a(node.getOp1(), 5, tp));
+        if (isImm(node.getOp2())) {
+          cmd.setOp("addi");
+          cmd.setRs2(Integer.toString(-Imm(node.getOp2())));
+        } else {
+          cmd.setRs2(mem2a(node.getOp2(), 6, tp));
+        }
+      } else {
+        if (isImm(node.getOp1())) {
+          swap(node.getOp1(), node.getOp2());
+          swap(cmd.getRs1(), cmd.getRs2());
+        }
+        cmd.setRs1(mem2a(node.getOp1(), 5, tp));
+        if (isImm(node.getOp2()) && !cmd.getOp().equals("mul")) {
+          cmd.setOp(cmd.getOp() + "i");
+          cmd.setRs2(Integer.toString(Imm(node.getOp2())));
+        } else {
+          cmd.setRs2(mem2a(node.getOp2(), 6, tp));
+        }
       }
       curB.add(cmd);
     }
     // store to res
     if (resul != null)
       curB.add(resul);
-    // curB.add(riscS.builder()
-    // .op("s" + tp)
-    // .rs2("t2")
-    // .imm(res * 4)
-    // .rs1("sp")
-    // .build());
   }
 
   @Override
@@ -372,7 +413,7 @@ public class asmBuilder implements irVisitor {
         .strs(new vector<String>("#Call  "))
         .build());
     // maxargs , maxargs + 7
-    
+
     vrM.storeCall(regColor.getReg(node.getLive().out));
 
     var varArr = node.getVal();
@@ -383,7 +424,7 @@ public class asmBuilder implements irVisitor {
       curB.add(pseudo.builder()
           .strs(new vector<String>("# " + arg))
           .build());
-      
+
       String tmpvar = "t5";
       if (curId < 8)
         tmpvar = "a" + curId;
@@ -415,8 +456,8 @@ public class asmBuilder implements irVisitor {
         .strs(new vector<String>("call", node.getFunc().getName()))
         .build());
     curB.add(pseudo.builder()
-      .strs(new vector<String>("mv", "t6", "a0"))
-    .build());
+        .strs(new vector<String>("mv", "t6", "a0"))
+        .build());
     vrM.restoreCall();
     if (!node.getRes().equals("") && !node.getRes().equals("void")) {
       // not void call
@@ -440,7 +481,7 @@ public class asmBuilder implements irVisitor {
   @Override
   public void visit(irGetElement node) throws error {
     // should change name -> id
-    if(status == true)
+    if (status == true)
       return;
     curB.add(pseudo.builder()
         .strs(new vector<String>("#getElement"))
@@ -449,11 +490,10 @@ public class asmBuilder implements irVisitor {
 
     // t0
     String offset = "t5";
-    if (node.getId1().getBytes()[0] != '%')
-      curB.add(pseudo.builder()
-          .strs(new vector<String>("li", offset,
-              ((Integer) (Integer.parseInt(node.getId1()) * 4)).toString()))
-          .build());
+    if (node.getId1().equals("0")) {
+      offset = "0";
+    } else if (node.getId1().getBytes()[0] != '%')
+      offset = Integer.toString((Integer) (Integer.parseInt(node.getId1()) * 4));
     else {
       offset = mem2a(node.getId1(), 5, "w");
       // t0 <<= 2; offset
@@ -467,15 +507,24 @@ public class asmBuilder implements irVisitor {
     }
     // tmp += t0
     var res = regColor.getResult(node.getRes(), "t6", "w", vrM);
-    curB.add(riscR.builder()
+    asmNode calc = riscR.builder()
         .op("add")
         .rd("t6")
         .rs1(tmp)
         .rs2(offset)
-        .build());
+        .build();
+    if (!offset.equals("t5")) {
+      ((riscR) calc).setOp("addi");
+    }
     // load ptr to t3;
     // store t3 to res
-    curB.add(res);
+    if (res instanceof riscS) {
+      curB.add(calc);
+      curB.add(res);
+    } else {
+      ((riscR) calc).setRd(((pseudo) res).getStrs().get(1));
+      curB.add(calc);
+    }
   }
 
   @Override
@@ -483,88 +532,107 @@ public class asmBuilder implements irVisitor {
     //
     if (status == true)
       return;
+    var resul = regColor.getResult(node.getRes(), "t5", "b", vrM);
+    if (resul == null)
+      return;
 
     // t0 t1 -> "t5"
     var t0 = mem2a(node.getOp1(), 5, tBool(node.getTp().equals("i1")));
     var t1 = mem2a(node.getOp2(), 6, tBool(node.getTp().equals("i1")));
     switch (node.getOp()) {
+      case "sgt", "sle":
+        if (isImm(t1)) {
+          curB.add(pseudo.builder()
+              .strs(new vector<String>("li", "t6", t1))
+              .build());
+          t1 = "t6";
+        }
+        break;
+      default:
+        if (isImm(t0)) {
+          curB.add(pseudo.builder()
+              .strs(new vector<String>("li", "t5", t0))
+              .build());
+          t0 = "t5";
+        }
+    }
+    var rd = "t5";
+    if (resul instanceof pseudo) {
+      rd = ((pseudo) resul).getStrs().get(1);
+    }
+
+    switch (node.getOp()) {
       case "sgt":
         curB.add(riscR.builder()
-            .op("slt")
-            .rd("t5")
+            .op("slt" + (isImm(t0) ? "i" : ""))
+            .rd(rd)
             .rs1(t1)
             .rs2(t0)
             .build());
         break;
       case "slt":
         curB.add(riscR.builder()
-            .op("slt")
-            .rd("t5")
+            .op("slt" + (isImm(t1) ? "i" : ""))
+            .rd(rd)
             .rs1(t0)
             .rs2(t1)
             .build());
         break;
       case "sge":
         curB.add(riscR.builder()
-            .op("slt")
-            .rd("t5")
+            .op("slt" + (isImm(t1) ? "i" : ""))
+            .rd(rd)
             .rs1(t0)
             .rs2(t1)
             .build());
         curB.add(riscRI.builder()
             .op("xori")
-            .rd("t5")
-            .rs1("t5")
+            .rd(rd)
+            .rs1(rd)
             .imm(1)
             .build());
         break;
       case "sle":
         curB.add(riscR.builder()
-            .op("slt")
-            .rd("t5")
+            .op("slt" + (isImm(t0) ? "i" : ""))
+            .rd(rd)
             .rs1(t1)
             .rs2(t0)
             .build());
         curB.add(riscRI.builder()
             .op("xori")
-            .rd("t5")
-            .rs1("t5")
+            .rd(rd)
+            .rs1(rd)
             .imm(1)
             .build());
         break;
       case "eq":
         curB.add(riscR.builder()
-            .op("xor")
-            .rd("t5")
+            .op("xor" + (isImm(t1) ? "i" : ""))
+            .rd(rd)
             .rs1(t0)
             .rs2(t1)
             .build());
         curB.add(pseudo.builder()
-            .strs(new vector<String>("seqz", "t5", "t5"))
+            .strs(new vector<String>("seqz", rd, rd))
             .build());
         break;
       case "ne":
         curB.add(riscR.builder()
-            .op("xor")
-            .rd("t5")
+            .op("xor" + (isImm(t1) ? "i" : ""))
+            .rd(rd)
             .rs1(t0)
             .rs2(t1)
             .build());
         curB.add(pseudo.builder()
-            .strs(new vector<String>("snez", "t5", "t5"))
+            .strs(new vector<String>("snez", rd, rd))
             .build());
         break;
     }
 
     // store to res
-    var resul = regColor.getResult(node.getRes(), "t5", "b", vrM);
-    curB.add(resul);
-    // curB.add(riscS.builder()
-    // .op("sb")
-    // .rs2("t2")
-    // .imm(res * 4)
-    // .rs1("sp")
-    // .build());
+    if (!(resul instanceof pseudo))
+      curB.add(resul);
   }
 
   @Override
@@ -592,12 +660,17 @@ public class asmBuilder implements irVisitor {
       // %ret.val -> addr -> a0
       // store register value to "a0":
       var id = mem2a(node.getVal(), 5, tBool(node.getTp().equals("i1")));
-      curB.add(pseudo.builder()
-          .strs(new vector<String>("mv", "a0", id))
-          .build());
+      if (!isImm(id))
+        curB.add(pseudo.builder()
+            .strs(new vector<String>("mv", "a0", id))
+            .build());
+      else
+        curB.add(pseudo.builder()
+            .strs(new vector<String>("li", "a0", id))
+            .build());
     }
     // reset T, add sp
-    
+
     vrM.restoreDef();
 
     curB.add(pseudo.builder()
@@ -613,12 +686,23 @@ public class asmBuilder implements irVisitor {
     // load cond
     var t0 = mem2a(node.getCond(), 5, "b");
     // branch
-
+    if (isImm(t0)) {
+      if (Imm(t0) != 0) {
+        var res = regColor.getResult(node.getRes(),
+            mem2a(node.getVal1(), 5, tBool(node.getTp1().equals("i1"))), "w", vrM);
+        curB.add(res);
+      } else {
+        var res = regColor.getResult(node.getRes(),
+            mem2a(node.getVal2(), 5, tBool(node.getTp2().equals("i1"))), "w", vrM);
+        curB.add(res);
+      }
+      return;
+    }
+    // normal
     curB.add(pseudo.builder()
         .strs(new vector<String>("beqz", t0, ".false" + branCount))
         .build());
     // store a1 -> res
-
     var res = regColor.getResult(node.getRes(),
         mem2a(node.getVal1(), 5, tBool(node.getTp1().equals("i1"))), "w", vrM);
     curB.add(res);
@@ -676,11 +760,12 @@ public class asmBuilder implements irVisitor {
     if (node.getRes().charAt(0) != '%' && node.getRes().charAt(0) != '@') {
       // imm
       rd = "t5";
-      curB.add(pseudo.builder()
+      var psu = pseudo.builder()
           .strs(new vector<String>("li", rd,
               node.getRes().equals("false") ? "0"
                   : node.getRes().equals("true") ? "1" : node.getRes().equals("null") ? "0" : node.getRes()))
-          .build());
+          .build();
+      curB.add(psu);
     } else if (node.getRes().charAt(0) == '@') {
       // global str
       rd = "t5";
@@ -699,15 +784,17 @@ public class asmBuilder implements irVisitor {
       if (res >= 0) {
         if (res == 114514) {
           // res = vrM.add(node.getRes());
+          // normal reg;
           rd = mem2a(node.getRes(), 5, tp);
-          // curB.add(riscL.builder()
-          // .op("l" + tp)
-          // .rd(rd)
-          // .imm(res * 4)
-          // .rs1("sp")
-          // .build());
+          if (isImm(rd)) {
+            curB.add(pseudo.builder()
+                .strs(new vector<String>("mv", "t6", rd))
+                .build());
+            rd = "t6";
+          }
         } else {
           // rd.ptr point to->args.val
+          // spill in stack.
           rd = "t5";
           curB.add(riscL.builder()
               .op("l" + tp)
@@ -721,7 +808,6 @@ public class asmBuilder implements irVisitor {
         rd = "a" + (-res - 1);
       }
     }
-
     // store res into addr “t5”
     // addr -> the real addr
     curB.add(riscS.builder()
@@ -744,24 +830,26 @@ public class asmBuilder implements irVisitor {
     var addr = getPtr(node.getPtr());
     // store addr.value(t5) to res.ptr(t3)
     // t5 is the val addr
-    
+
     var res = regColor.getResult(node.getRes(), "t5", tp, vrM);
     // 挖的坑，addr可能是有用的。
-    if(res != null) {
-      curB.add(riscL.builder()
-      .op("l" + tp)
-        .rd("t5")
-        .imm(0)
-        .rs1(addr)
-        .build());
-      // addr get the ptr.val, store into res.ptr
-      curB.add(res);
+    if (res != null) {
+      var Ld = riscL.builder()
+          .op("l" + tp)
+          .rd("t5")
+          .imm(0)
+          .rs1(addr)
+          .build();
+      if (res instanceof pseudo) {
+        Ld.setRd(((pseudo) res).getStrs().get(1));
+        curB.add(Ld);
+      } else {
+        curB.add(Ld);
+        // addr get the ptr.val, store into res.ptr
+        curB.add(res);
+      }
+
     }
-    // curB.add(riscS.builder()
-    // .op("s" + tp)
-    // .rs2(addr)
-    // .imm(offset * 4)
-    // .rs1("sp").build());
   }
 
   // [num] st -> ed tempvar
@@ -781,66 +869,83 @@ public class asmBuilder implements irVisitor {
     public color st;
     public HashMap<color, Integer> nxt;
   }
-  // if same/ ed null/  pass.
-  int Imm(String imm) {
-    if(imm.equals("null")||imm.equals("false"))
+
+  // if same/ ed null/ pass.
+  public static int Imm(String imm) {
+    if (imm.equals("null") || imm.equals("false"))
       return 0;
-    if(imm.equals("true"))
+    if (imm.equals("true"))
       return 1;
     return Integer.parseInt(imm);
   }
+
   private boolean movImm(String imm, String ed) {
     int id = regColor.getReg(ed);
     int im = Imm(imm);
-    if(id >= 0) {
+    if (id >= 0) {
       curB.add(pseudo.builder()
-        .strs(new vector<String>("li", regColor.getRegName(id), Integer.toString(im)))
-      .build());
+          .strs(new vector<String>("li", regColor.getRegName(id), Integer.toString(im)))
+          .build());
       return true;
-    } 
+    }
     return false;
   }
+
   private boolean sameColor(String st, String ed) {
     var edc = regColor.getCol(ed);
     var stc = regColor.getCol(st);
-    if(edc == null)
+    if (edc == null)
       return true;
-    if(stc == null) {
+    if (stc == null) {
       // direct store into ed
-      return movImm(st,ed);
+      return movImm(st, ed);
     }
     return stc.equals(edc);
   }
+
   private void addCurB(vector<irBinary> phi, vector<Integer> finalOrder) {
     for (var pr : finalOrder) {
       var ph = phi.get(pr);
       curB.add(pseudo.builder()
-        .strs(new vector<String>("#phi_nonCircle"))
-        .build());
+          .strs(new vector<String>("#phi_nonCircle"))
+          .build());
       // same place don't move
-      if(sameColor(ph.getOp2(), ph.getRes())) {
+      if (sameColor(ph.getOp2(), ph.getRes())) {
         continue;
       }
       String t0 = "t6";
       if (ph.getOp2() != null)
         t0 = mem2a(ph.getOp2(), 6, tBool(ph.getTp().equals("i1")));
-      
+
       asmNode res = null;
       if (ph.getRes() != null) {
         res = regColor.getResult(ph.getRes(), t0, tBool(ph.getTp().equals("i1")), vrM);
-        curB.add(res);
+        if (isImm(t0) && res != null) {
+          if (res instanceof pseudo) {
+            ((pseudo) res).getStrs().set(0, "li");
+            ((pseudo) res).getStrs().set(2, t0);
+          } else {
+            curB.add(pseudo.builder()
+                .strs(new vector<String>("li", "t6", t0))
+                .build());
+            ((riscS) res).setRs2("t6");
+          }
+          curB.add(res);
+        }
       }
     }
 
   }
+
   private void nxtremove(costa co, color ed) {
     co.nxt.remove(ed);
   }
+
   private void shuPhi(vector<irBinary> phi) {
     // rearrange the order
     // mv use -> def col->col
     vector<pair> edge = new vector<pair>();
-    
+
     // new vector immediate -> def
     vector<Integer> immDef = new vector<>();
     // pr.num should equal to edge.size
@@ -849,24 +954,24 @@ public class asmBuilder implements irVisitor {
       pr.st = regColor.getCol(ph.getOp2());
       pr.ed = regColor.getCol(ph.getRes());
       pr.num = edge.size();
-      if(curB.getLabel().equals("cond.end1"))
+      if (curB.getLabel().equals("cond.end1"))
         System.err.println("Debug");
-      if(pr.ed == null) {
+      if (pr.ed == null) {
         edge.add(null);
         continue;
       }
       edge.add(pr);
-      if(pr.st == null) {
+      if (pr.st == null) {
         immDef.add(pr.num);
-      } 
+      }
     }
     HashMap<Integer, costa> coInfo = new HashMap<>();
     // build edge
-    
+
     for (var pr : edge) {
-      if(pr == null || pr.st == null) {
+      if (pr == null || pr.st == null) {
         continue;
-      } 
+      }
       var stp = regColor.col2i(pr.st);
       var edp = regColor.col2i(pr.ed);
       if (coInfo.get(stp) == null) {
@@ -883,7 +988,7 @@ public class asmBuilder implements irVisitor {
       coInfo.get(edp).in_id = pr.num;
       coInfo.get(stp).nxt.put(pr.ed, pr.num);
     }
-    
+
     Queue<Integer> topo = new LinkedList<Integer>();
     // add phi
     for (var pr : coInfo.entrySet()) {
@@ -896,7 +1001,7 @@ public class asmBuilder implements irVisitor {
         circle = new vector<Integer>();
     while (!topo.isEmpty()) {
       var fa = (coInfo.get(topo.poll()).in_id);
-      if(fa == -1)
+      if (fa == -1)
         continue;
       finalOrder.add(fa);
       var st = regColor.col2i(edge.get(fa).st);
@@ -904,7 +1009,6 @@ public class asmBuilder implements irVisitor {
       if (coInfo.get(st).nxt.isEmpty())
         topo.add(st);
     }
-    
 
     addCurB(phi, finalOrder);
 
@@ -915,7 +1019,6 @@ public class asmBuilder implements irVisitor {
         curB.add(pseudo.builder()
             .strs(new vector<String>("#phi_circle_found"))
             .build());
-        memCol2a(pr, 6, "lw");
         // pr def <- use
         circle.clear();
         // findcircle to add edge
@@ -931,23 +1034,43 @@ public class asmBuilder implements irVisitor {
             break;
           }
         } while (cur != pr);
-        addCurB(phi, circle);
-        // last t6 -> cur
-        curB.add(regColor.getColResult(edge.get(coInfo.get(cur).in_id).ed, "t6", "sw", vrM));
+        if (!circle.isEmpty()) {
+          memCol2a(pr, 6, "lw");
+          addCurB(phi, circle);
+          // last t6 -> cur
+          curB.add(regColor.getColResult(edge.get(coInfo.get(cur).in_id).ed, "t6", "sw", vrM));
+        }
         coInfo.get(cur).nxt.clear();
       }
     // 先非环，再环, 最后immDef。
-    
-    for(var id : immDef) {
+
+    for (var id : immDef) {
       //
       var pr = edge.get(id);
       curB.add(pseudo.builder()
           .strs(new vector<String>("#phi_immDef"))
           .build());
       // mem2a pr.st -> t6
-      mem2a(phi.get(id).getOp2(), 6, tBool(phi.get(id).getTp().equals("i1")));
+      var phs = mem2a(phi.get(id).getOp2(), 6, tBool(phi.get(id).getTp().equals("i1")));
       // t6 -> pr.ed
-      curB.add(regColor.getColResult(pr.ed, "t6", "sw", vrM));
+      var res = regColor.getColResult(pr.ed, "t6", "sw", vrM);
+      if (res == null)
+        continue;
+      if (res instanceof riscS) {
+        if (isImm(phs)) {
+          // phs is imm
+          curB.add(pseudo.builder()
+              .strs(new vector<String>("li", "t6", phs))
+              .build());
+        }
+      } else {
+        if (isImm(phs)) {
+          var psu = ((pseudo) res);
+          psu.getStrs().set(0, "li");
+          psu.getStrs().set(2, phs);
+        }
+      }
+      curB.add(res);
     }
   }
 
@@ -973,8 +1096,8 @@ public class asmBuilder implements irVisitor {
       for (irStmt ins : node.getStmts()) {
         ins.accept(this);
       }
-      // delphi before jump
-    if (status == false){
+    // delphi before jump
+    if (status == false) {
       shuPhi(node.getPhiDel());
       if (node.getTerminalstmt() != null)
         node.getTerminalstmt().accept(this);

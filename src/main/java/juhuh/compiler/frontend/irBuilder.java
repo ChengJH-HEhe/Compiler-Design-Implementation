@@ -1,5 +1,6 @@
 package juhuh.compiler.frontend;
 
+import java.util.LinkedList;
 import java.util.Stack;
 
 import juhuh.compiler.ast.node.astNode;
@@ -254,7 +255,7 @@ public class irBuilder implements astVisitor<irNode> {
             .label("entry")
             .stmts(new vector<irStmt>())
             .build())
-        .body(new vector<irBlock>())
+        .body(new LinkedList<irBlock>())
         .ret(irBlock.builder()
             .label("return" + funCount)
             .stmts(new vector<irStmt>())
@@ -370,7 +371,7 @@ public class irBuilder implements astVisitor<irNode> {
             .label("entry")
             .stmts(new vector<irStmt>())
             .build())
-        .body(new vector<irBlock>())
+        .body(new LinkedList<irBlock>())
         .build();
     ++funCount;
     // reminder curFunc.curBlock to be the FuncDef entry block, entry br to the
@@ -600,7 +601,7 @@ public class irBuilder implements astVisitor<irNode> {
             .label("return" + funCount)
             .endTerm(irRet.builder().tp("void").val("").build())
             .build())
-        .body(new vector<irBlock>())
+        .body(new LinkedList<irBlock>())
         .build();
     ++funCount;
     curFunc.curBlock = curFunc.getEntry();
@@ -1089,8 +1090,8 @@ public class irBuilder implements astVisitor<irNode> {
           .op("xor")
           .res(resul)
           .tp("i32")
-          .op1("-1")
-          .op2(((register) res).getName())
+          .op2("-1")
+          .op1(((register) res).getName())
           .build());
       return register.builder()
           .name(resul)

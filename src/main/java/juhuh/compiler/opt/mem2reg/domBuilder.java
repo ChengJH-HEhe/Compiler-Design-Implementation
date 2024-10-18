@@ -50,14 +50,14 @@ public class domBuilder implements irVisitor {
 
   private void initBlock(irBlock block) {
     // consider block.name == "entry", it will be put at first
-    System.err.println("init block " + block.getLabel() + " " + cnt);
+    //System.err.println("init block " + block.getLabel() + " " + cnt);
     id.put(block.getLabel(), cnt);
     id2B.add(block);
     ++cnt;
   }
 
   private boolean visitBlock(int idx) {
-    // System.err.println(idx + " " + id2B.get(idx).getLabel() +
+    // //System.err.println(idx + " " + id2B.get(idx).getLabel() +
     // (doms.get(idx).getDomF() == null));
     if (doms.get(idx).getDomF() != null) {
       return false;
@@ -107,9 +107,9 @@ public class domBuilder implements irVisitor {
         tmp.clear();
         if (i != 0)
           tmp.set(0, cnt);
-        // System.err.println(i + ": ");
+        // //System.err.println(i + ": ");
         for (var pred : preds[i]) {
-          // System.err.println(i + " pred " + pred);
+          // //System.err.println(i + " pred " + pred);
           tmp.and(domFlag[pred]);
         }
         tmp.set(i, true);
@@ -117,14 +117,14 @@ public class domBuilder implements irVisitor {
           domFlag[i] = (BitSet) tmp.clone();
           changed = true;
         }
-        // System.err.println(i + domFlag[i].toString());
+        // //System.err.println(i + domFlag[i].toString());
       }
     }
     for (int i = 0; i < cnt; ++i) {
       for (int j = 0; j < cnt; ++j) {
         if (domFlag[i].get(j)) {
           dom[i].add(j);
-          // System.err.println(j + " dom " + i);
+          // //System.err.println(j + " dom " + i);
         }
       }
     }
@@ -146,16 +146,16 @@ public class domBuilder implements irVisitor {
       if (flag == false) {
         // this block is unreachable
         id2B.get(i).setUnreachable(true);
-        System.err.println(id2B.get(i).getLabel() + " has no idom");
+        //System.err.println(id2B.get(i).getLabel() + " has no idom");
       } else {
-        System.err.println("idom for " + id2B.get(i).getLabel() + " is  " + id2B.get(doms.get(i).getIDom()).getLabel());
+        //System.err.println("idom for " + id2B.get(i).getLabel() + " is  " + id2B.get(doms.get(i).getIDom()).getLabel());
       }
     }
     // set domFrontier in preds.dom \ i.dom
     for (int i = 0; i < cnt; ++i) {
       if (id2B.get(i).isUnreachable())
         continue;
-      System.err.println(domFlag[i]);
+      //System.err.println(domFlag[i]);
       tmp.clear();
       var tmp1 = (BitSet) domFlag[i].clone();
       for (var pred : preds[i]) {
@@ -166,7 +166,7 @@ public class domBuilder implements irVisitor {
       tmp.set(i, false);
       for (int j = tmp.nextSetBit(0); j >= 0; j = tmp.nextSetBit(j + 1)) {
         doms.get(j).getDomF().add(i);
-        System.err.println(j + " domF " + i);
+        //System.err.println(j + " domF " + i);
       }
     }
   }
@@ -186,23 +186,23 @@ public class domBuilder implements irVisitor {
       } else {
         endT = block.getEndTerm();
       }
-      // System.err.println(endT.toString());
+      // //System.err.println(endT.toString());
       if (endT instanceof irJump) {
         // label -> block
         var idx = id.get(((irJump) endT).getDest());
         preds[idx].add(idS);
-        // System.err.println("jump to " + idx);
+        // //System.err.println("jump to " + idx);
         if (visitBlock(idx))
           q.offer(idx);
       } else if (endT instanceof irBranch) {
         var idx = id.get(((irBranch) endT).iftrue);
         preds[idx].add(idS);
-        // System.err.println("branch to " + idx);
+        // //System.err.println("branch to " + idx);
         if (visitBlock(idx))
           q.offer(idx);
         idx = id.get(((irBranch) endT).iffalse);
         preds[idx].add(idS);
-        // System.err.println("branch to " + idx);
+        // //System.err.println("branch to " + idx);
         if (visitBlock(idx))
           q.offer(idx);
       } else {
@@ -212,7 +212,7 @@ public class domBuilder implements irVisitor {
       postRev.add(idS);
     }
     // for (int i = 1; i < cnt; ++i) {
-    // System.err.println(i + " pred :" + preds[i].toString());
+    // //System.err.println(i + " pred :" + preds[i].toString());
     // }
   }
 
@@ -424,7 +424,7 @@ public class domBuilder implements irVisitor {
       if (!inOnly[i]) {
         id.put(block.getLabel(), tmpcnt);
         id2B.add(block);
-        curFunc.add(block);
+        curFunc.add(id2B.get(i), block);
         tmpcnt++;
       }
     }
@@ -433,17 +433,18 @@ public class domBuilder implements irVisitor {
   @Override
   public void visit(irFuncDef node) throws error {
     // cnt only acccesible in this function
-    System.err.println("visit func " + node.getFName());
+    //System.err.println("visit func " + node.getFName());
     initFunc(node);
     // build graph postReverseOrder
     initPreds(node);
     Visit();
     // build dominator tree using postReverseOrder
     // reverse postRev
-    for (var i : postRev) {
-      System.err.print(i + " ");
-    }
-    System.err.println("postRevOrder");
+    // for (var i : postRev) {
+    //   System.err.print(i + " ");
+    // }
+    //System.err.println("postRevOrder");
+    
     getDom();
     // place PHI cmd
     placePhi();
@@ -490,7 +491,7 @@ public class domBuilder implements irVisitor {
       for (var j : preds[i]) {
         if (domFlag[j].get(i)) {
           loopHeader.put(i, j);
-          System.err.println(id2B.get(i).getLabel() + " -> " + id2B.get(j).getLabel());
+          //System.err.println(id2B.get(i).getLabel() + " -> " + id2B.get(j).getLabel());
         }
       }
     }
@@ -500,7 +501,7 @@ public class domBuilder implements irVisitor {
       LoopDfs(header.getKey(), header.getValue());
     }
     // for (int i = 0; i < cnt; ++i)
-    //   System.err.println(id2B.get(i).getLabel() + " depth : " + loopBody[i]);
+    //   //System.err.println(id2B.get(i).getLabel() + " depth : " + loopBody[i]);
   }
 
   @Override
@@ -524,7 +525,7 @@ public class domBuilder implements irVisitor {
       if (res != null)
         return res;
     }
-    System.err.println("**** there is no pre-Def for " + Ptr + " !!!!");
+    //System.err.println("**** there is no pre-Def for " + Ptr + " !!!!");
     return null;
   }
 

@@ -1,5 +1,8 @@
 package juhuh.compiler.ir.def;
 
+import java.util.LinkedList;
+import java.util.ListIterator;
+
 import juhuh.compiler.frontend.irVisitor;
 import juhuh.compiler.ir.ins.irIns;
 import juhuh.compiler.ir.ins.irJump;
@@ -18,8 +21,8 @@ public class irFuncDef extends irDefNode {
   vector<String> paratypelist, paravaluelist;
   irBlock entry, ret;
   public irBlock curBlock;
-  
-  vector<irBlock> body;
+
+  LinkedList<irBlock> body;
 
   public String tmprename() {
     return "%_" + (anonyNum++);
@@ -29,20 +32,36 @@ public class irFuncDef extends irDefNode {
     body.add(b);
   }
 
+  public void add(irBlock nw, irBlock b) {
+    ListIterator<irBlock> iterator = body.listIterator();
+    if (nw.getLabel().equals("entry")) {
+      iterator.add(b);
+      return;
+    }
+    while (iterator.hasNext()) {
+      irBlock element = iterator.next();
+      if (element.equals(nw)) {
+        iterator.add(b);
+        return;
+      }
+    }
+    iterator.add(b);
+  }
+
   public void checkRet(irIns terminalstmt) {
     // irStore?
-    if(curBlock.getTerminalstmt() == null) 
-      if(terminalstmt instanceof irStore) {
+    if (curBlock.getTerminalstmt() == null)
+      if (terminalstmt instanceof irStore) {
         {
           curBlock.add(terminalstmt);
           curBlock.setEndTerm(irJump.builder()
-          .dest("return" + id)
-          .build());
+              .dest("return" + id)
+              .build());
         }
       } else {
         curBlock.setEndTerm(terminalstmt);
       }
-    // 
+    //
   }
 
   @Override
@@ -58,9 +77,10 @@ public class irFuncDef extends irDefNode {
       }
     }
     String body = "";
-    if (this.body != null) 
+    if (this.body != null)
       for (var b : this.body) {
-        if(b.isUnreachable()) continue;
+        if (b.isUnreachable())
+          continue;
         body += b.toString() + "\n";
       }
     return "define " + retType + " @" + fName + "(" + paralist + ") {\n" +

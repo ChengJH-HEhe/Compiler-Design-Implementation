@@ -493,7 +493,6 @@ public class allocator implements irVisitor {
   @Override
   public void visit(irBlock node) throws error {
     //
-
     if (node.getStmts() != null)
       for (curStmt = 0; curStmt < node.getStmts().size(); curStmt++) {
         var stmt = node.getStmts().get(curStmt);

@@ -12,6 +12,7 @@ public class pseudo extends asmNode{
   public String toString() {
     String s = "";
     boolean first = false;
+    
     for(var str : strs)
       if(first)
         s += str + ", ";

@@ -79,7 +79,7 @@ public class VarRegManager {
     // caller ti ra ai
     // a0~amin(num-1,7) 也需要
     for (int i = 0; i < 8; ++i) {
-      if(in.contains("a" + i))
+      if(in.contains("a" + i) || i < aNum)
       curB.add(riscS.builder()
           .op("sw")
           .rs2("a" + i)
@@ -102,7 +102,7 @@ public class VarRegManager {
           .build());
     }
     for (int i = 0; i < 8; ++i) {
-      if(in.contains("a" + i))
+      if(in.contains("a" + i) || i < aNum)
       curB.add(riscS.builder()
           .op("lw")
           .rs2("a" + i)
