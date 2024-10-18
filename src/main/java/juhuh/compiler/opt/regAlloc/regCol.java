@@ -111,7 +111,15 @@ public class regCol {
       return (c.id + 1) * (-1);
     return c.id;
   }
-
+  public HashSet<String> getReg(HashSet<String> in) {
+    var retg = new HashSet<String>();
+    for(var inReg : in) {
+      int num = getReg(inReg);
+      if(num >= 0)
+        retg.add(getRegName(num));
+    }
+    return retg;
+  }
   public int getReg(String name) {
     var res = regs.get(name);
     if (res == null || res.id == -114514) {

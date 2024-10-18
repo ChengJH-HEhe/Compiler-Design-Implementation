@@ -16,6 +16,7 @@ public class irBlock extends irStmt{
   String label; // label & terminalstmt must add;
   Scope scope; // scope.parent == parent.scope -> hold back
   irIns terminalstmt, endTerm;
+  
   // this-phi -> this'lst-def, this-lst def -> domF's phi 
   HashMap<String, irPhi> phi; // those phi added first
   // stack stored in the block? curBlock's new Phi add in the ptr2reg

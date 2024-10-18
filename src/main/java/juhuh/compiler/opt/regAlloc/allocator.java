@@ -114,7 +114,9 @@ public class allocator implements irVisitor {
       scanIn();
     }
   }
+
   private HashMap<String, Integer> phi2blckId = new HashMap<>();
+
   void findphiDef() {
     for (int i = 0; i < dom.cnt; i++) {
       for (var stmt : dom.id2B.get(i).getPhi().entrySet()) {
@@ -129,26 +131,26 @@ public class allocator implements irVisitor {
         if (regs.get(phi.getReg()) == null) {
           continue;
         }
-        for(var use : phi.getLabel2val().entrySet()) {
-          if(use.getValue() != null && regs.get(use.getValue()) == null) {
+        for (var use : phi.getLabel2val().entrySet()) {
+          if (use.getValue() != null && regs.get(use.getValue()) == null) {
             // block, def should not be visited
             regs.put(use.getValue(), pow(dom.id.get(use.getKey())));
-            if(phi2blckId.get(use.getValue()) !=null)
+            if (phi2blckId.get(use.getValue()) != null)
               phiDef.add(use.getValue());
           }
         }
       }
     }
-    while(!phiDef.isEmpty()) {
+    while (!phiDef.isEmpty()) {
       var reg = phiDef.poll();
       int blockId = phi2blckId.get(reg);
       for (var stmt : dom.id2B.get(blockId).getPhi().entrySet()) {
         var phi = stmt.getValue();
-        if(phi.getReg().equals(reg)) {
-          for(var use : phi.getLabel2val().entrySet()) {
-            if(use.getValue() != null && regs.get(use.getValue()) == null) {
+        if (phi.getReg().equals(reg)) {
+          for (var use : phi.getLabel2val().entrySet()) {
+            if (use.getValue() != null && regs.get(use.getValue()) == null) {
               regs.put(use.getValue(), pow(dom.id.get(use.getKey())));
-              if(phi2blckId.get(use.getValue()) !=null)
+              if (phi2blckId.get(use.getValue()) != null)
                 phiDef.add(use.getValue());
             }
           }
@@ -157,17 +159,36 @@ public class allocator implements irVisitor {
     }
   }
 
+  void addphiDef(live lv, irBlock blk) {
+    var phiset = blk.getPhi().entrySet();
+    for (var phi : phiset) {
+      lv.in.add(phi.getValue().getReg());
+    }
+  }
+
   @Override
   public void visit(irFuncDef node) throws error {
     regs = new HashMap<String, Integer>();
     // getRegs keyset.
+
     visit(node.getEntry());
+    var live = node.getEntry().getLive();
     for (var block : node.getBody()) {
       visit(block);
+      for (var in : block.getLive().in)
+        live.in.add(in);
     }
     visit(node.getRet());
+    for (var in : node.getRet().getLive().in)
+      live.in.add(in);
     // phi def in regs, then phi use is all effective, should be added.
     findphiDef();
+    // phi.def si?
+    addphiDef(live, node.getEntry());
+    addphiDef(live, node.getRet());
+    for (var block : node.getBody())
+      addphiDef(live, block);
+
     // phi use -> phi def effective.
     scanned = new BitSet(dom.cnt);
     // begin ssa liveness analysis
@@ -175,8 +196,6 @@ public class allocator implements irVisitor {
     for (var reg1 : regs.keySet()) {
       reg = reg1;
       scanned.clear();
-      if(reg1.equals("%ret.val.return1"))
-        System.err.println("debug");
       for (int i = 0; i < dom.cnt; i++) {
         curBlock = i;
         var block = dom.id2B.get(i);
@@ -262,11 +281,11 @@ public class allocator implements irVisitor {
     // inUse should bit-OR in [0]in (phi.out)
     @SuppressWarnings("unchecked")
     HashSet<String> out = (HashSet<String>) (liveStmt[blockId].get(0).in).clone();
-    
+
     @SuppressWarnings("unchecked")
     HashSet<String> in = (HashSet<String>) (liveStmt[blockId].get(0).in).clone();
     regColor.orLiveIn(in, dom.id2B.get(blockId).getPhi().keySet());
-    
+
     // phi def should be colored(if in [0]in)
     for (var phiuse : dom.id2B.get(blockId).getPhi().entrySet()) {
       var regSet = phiuse.getValue().getLabel2val();
@@ -275,17 +294,17 @@ public class allocator implements irVisitor {
           regColor.eraseReg(reg);
         }
     }
-    
+
     // color phi def when out contains def
     for (var phiuse : dom.id2B.get(blockId).getPhi().entrySet()) {
       var def = phiuse.getValue().getReg();
-      
+
       if (out.contains(def)) {
         regColor.addReg(def, false);
       }
     }
     // color simple stmt
-    if(dom.id2B.get(blockId).getLabel().equals("for.cond2.0.0"))
+    if (dom.id2B.get(blockId).getLabel().equals("for.cond2.0.0"))
       System.err.println("debug");
     for (var live : liveStmt[blockId]) {
       // erase use & not in liveout
@@ -312,7 +331,6 @@ public class allocator implements irVisitor {
     List<HashMap.Entry<String, Integer>> entryList = sortByCost();
     // reverse entryList
 
-    
     for (Map.Entry<String, Integer> entry : entryList) {
       reg = entry.getKey();
       spReg();
@@ -363,10 +381,16 @@ public class allocator implements irVisitor {
     }
   }
 
+  live NewLive(irNode node) {
+    var livee = new live(node);
+    node.setLive(livee);
+    return livee;
+  }
+
   @Override
   public void visit(irBinary node) throws error {
     // def: res, use: val1, val2
-    var newlive = new live(node);
+    var newlive = NewLive(node);
     liveUse(newlive, node.getOp1());
     liveUse(newlive, node.getOp2());
     liveDef(newlive, node.getRes());
@@ -376,7 +400,7 @@ public class allocator implements irVisitor {
   @Override
   public void visit(irIcmp node) throws error {
     //
-    var newlive = new live(node);
+    var newlive = NewLive(node);
     liveUse(newlive, node.getOp1());
     liveUse(newlive, node.getOp2());
     liveDef(newlive, node.getRes());
@@ -386,7 +410,7 @@ public class allocator implements irVisitor {
   @Override
   public void visit(irSelect node) throws error {
     // def, use
-    var newlive = new live(node);
+    var newlive = NewLive(node);
     liveUse(newlive, node.getCond());
     liveUse(newlive, node.getVal1());
     liveUse(newlive, node.getVal2());
@@ -397,7 +421,7 @@ public class allocator implements irVisitor {
   @Override
   public void visit(irBranch node) throws error {
     // cond use
-    var newlive = new live(node);
+    var newlive = NewLive(node);
     liveUse(newlive, node.getCond());
     liveStmt[curBlock].add(newlive);
   }
@@ -405,13 +429,13 @@ public class allocator implements irVisitor {
   @Override
   public void visit(irJump node) throws error {
     // no condition
-    liveStmt[curBlock].add(new live(node));
+    liveStmt[curBlock].add(NewLive(node));
   }
 
   @Override
   public void visit(irRet node) throws error {
     // only use
-    var newLive = new live(node);
+    var newLive = NewLive(node);
     if (node.getVal() != null && !node.getVal().equals("") && node.getVal().charAt(0) == '%') {
       newLive.Use(regs, pow(curBlock), node.getVal());
     }
@@ -420,7 +444,7 @@ public class allocator implements irVisitor {
 
   @Override
   public void visit(irCall node) throws error {
-    var newlive = new live(node);
+    var newlive = NewLive(node);
     if (!node.getRes().equals(""))
       newlive.Def(regs, pow(curBlock), node.getRes());
     for (var arg : node.getVal()) {
@@ -440,7 +464,7 @@ public class allocator implements irVisitor {
   @Override
   public void visit(irGetElement node) throws error {
     //
-    var newlive = new live(node);
+    var newlive = NewLive(node);
     liveDef(newlive, node.getRes());
     liveUse(newlive, node.getPtrval());
     liveUse(newlive, node.getId1());
@@ -450,7 +474,7 @@ public class allocator implements irVisitor {
   @Override
   public void visit(irLoad node) throws error {
     //
-    var newlive = new live(node);
+    var newlive = NewLive(node);
 
     liveDef(newlive, node.getRes());
     liveUse(newlive, node.getPtr());
@@ -460,7 +484,7 @@ public class allocator implements irVisitor {
   @Override
   public void visit(irStore node) throws error {
     //
-    var newlive = new live(node);
+    var newlive = NewLive(node);
     liveUse(newlive, node.getRes());
     liveUse(newlive, node.getPtr());
     liveStmt[curBlock].add(newlive);
@@ -469,6 +493,7 @@ public class allocator implements irVisitor {
   @Override
   public void visit(irBlock node) throws error {
     //
+
     if (node.getStmts() != null)
       for (curStmt = 0; curStmt < node.getStmts().size(); curStmt++) {
         var stmt = node.getStmts().get(curStmt);
@@ -482,6 +507,14 @@ public class allocator implements irVisitor {
     stmt.setBlock(curBlock);
     stmt.setStmt(curStmt);
     visit(stmt);
+    var live = new live(node);
+    for (var i : liveStmt[curBlock]) {
+      for (var in : i.use)
+        live.in.add(in);
+      for (var in : i.def)
+        live.in.add(in);
+    }
+    node.setLive(live);
     curBlock++;
   }
 }

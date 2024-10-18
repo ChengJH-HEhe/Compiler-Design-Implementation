@@ -1,5 +1,7 @@
 package juhuh.compiler.backend;
 
+import java.util.HashSet;
+
 import juhuh.compiler.backend.asm.asmBlock;
 import juhuh.compiler.backend.asm.ins.*;
 
@@ -61,9 +63,12 @@ public class VarRegManager {
   // difference? call: caller; define: callee
   // before call, caller store value to the args place
   // when calling, callee store args to the localptr
-  void storeCall() {
+  HashSet<String> in;
+  void storeCall(HashSet<String> in) {
     // curT[i] = size + i
+    this.in = in;
     for (int i = 0; i < 5; ++i) {
+      if(in.contains("t" + i))
       curB.add(riscS.builder()
           .op("sw")
           .rs2("t" + i)
@@ -74,6 +79,7 @@ public class VarRegManager {
     // caller ti ra ai
     // a0~amin(num-1,7) 也需要
     for (int i = 0; i < 8; ++i) {
+      if(in.contains("a" + i))
       curB.add(riscS.builder()
           .op("sw")
           .rs2("a" + i)
@@ -81,16 +87,13 @@ public class VarRegManager {
           .rs1("sp")
           .build());
     }
-    curB.add(riscS.builder().op("sw")
-        .rs2("ra")
-        .imm((maxArgs + 5 + 8) * 4)
-        .rs1("sp")
-        .build());
+    
     // 8~maxargs - i
   }
 
   void restoreCall() {
     for (int i = 0; i < 5; ++i) {
+      if(in.contains("t" + i))
       curB.add(riscS.builder()
           .op("lw")
           .rs2("t" + i)
@@ -99,6 +102,7 @@ public class VarRegManager {
           .build());
     }
     for (int i = 0; i < 8; ++i) {
+      if(in.contains("a" + i))
       curB.add(riscS.builder()
           .op("lw")
           .rs2("a" + i)
@@ -106,16 +110,14 @@ public class VarRegManager {
           .rs1("sp")
           .build());
     }
-    curB.add(riscS.builder().op("lw")
-        .rs2("ra")
-        .imm((maxArgs + 5 + 8) * 4)
-        .rs1("sp")
-        .build());
+    
   }
-
-  void storeDef() {
+  private HashSet<String> out;
+  void storeDef(HashSet<String> out) {
     // store s0~s11
+    this.out = out;
     for (int i = 0; i < 12; ++i) {
+      if(out.contains("s" + i))
       curB.add(riscS.builder()
           .op("sw")
           .rs2("s" + i)
@@ -123,11 +125,25 @@ public class VarRegManager {
           .rs1("sp")
           .build());
     }
+    curB.adS("sp", "sp", -(getSize() / 4 * 16));
+    curB.add(riscS.builder().op("sw")
+        .rs2("ra")
+        .imm((maxArgs + 5 + 8) * 4)
+        .rs1("sp")
+        .build());
   }
 
   void restoreDef() {
     // restore s0~s11
+    //opt#1 ra store;
+    curB.add(riscL.builder().op("lw")
+      .rd("ra")
+      .imm((maxArgs + 5 + 8) * 4)
+      .rs1("sp")
+      .build());
+    curB.adS("sp", "sp", getSize() * 4);
     for (int i = 0; i < 12; ++i) {
+      if(out.contains("s" + i))
       curB.add(riscS.builder()
           .op("lw")
           .rs2("s" + i)
@@ -135,6 +151,8 @@ public class VarRegManager {
           .rs1("sp")
           .build());
     }
+    
+    
   }
 
   void argsInc(int sz) {

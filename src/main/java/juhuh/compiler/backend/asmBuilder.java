@@ -254,7 +254,8 @@ public class asmBuilder implements irVisitor {
         if (num.charAt(0) == 'a') {
           var regname = regColor.getRegName(res);
           int aid = Integer.parseInt(regname.substring(1));
-          if(regname.charAt(0) != 'a' || aid >= Math.min(regColor.argsId, 7))
+          if(regname.charAt(0) != 'a' 
+            || aid >= Math.min(regColor.argsId, Integer.parseInt(num.substring(1))))
             curB.add(pseudo.builder()
                 .strs(new vector<String>("mv", num, regname))
                 .build());
@@ -371,7 +372,8 @@ public class asmBuilder implements irVisitor {
         .strs(new vector<String>("#Call  "))
         .build());
     // maxargs , maxargs + 7
-    vrM.storeCall();
+    
+    vrM.storeCall(regColor.getReg(node.getLive().out));
 
     var varArr = node.getVal();
     var vartype = node.getType();
@@ -595,7 +597,7 @@ public class asmBuilder implements irVisitor {
           .build());
     }
     // reset T, add sp
-    curB.adS("sp", "sp", vrM.getSize() * 4);
+    
     vrM.restoreDef();
 
     curB.add(pseudo.builder()
@@ -779,13 +781,46 @@ public class asmBuilder implements irVisitor {
     public color st;
     public HashMap<color, Integer> nxt;
   }
-
+  // if same/ ed null/  pass.
+  int Imm(String imm) {
+    if(imm.equals("null")||imm.equals("false"))
+      return 0;
+    if(imm.equals("true"))
+      return 1;
+    return Integer.parseInt(imm);
+  }
+  private boolean movImm(String imm, String ed) {
+    int id = regColor.getReg(ed);
+    int im = Imm(imm);
+    if(id >= 0) {
+      curB.add(pseudo.builder()
+        .strs(new vector<String>("li", regColor.getRegName(id), Integer.toString(im)))
+      .build());
+      return true;
+    } 
+    return false;
+  }
+  private boolean sameColor(String st, String ed) {
+    var edc = regColor.getCol(ed);
+    var stc = regColor.getCol(st);
+    if(edc == null)
+      return true;
+    if(stc == null) {
+      // direct store into ed
+      return movImm(st,ed);
+    }
+    return stc.equals(edc);
+  }
   private void addCurB(vector<irBinary> phi, vector<Integer> finalOrder) {
     for (var pr : finalOrder) {
       var ph = phi.get(pr);
       curB.add(pseudo.builder()
         .strs(new vector<String>("#phi_nonCircle"))
         .build());
+      // same place don't move
+      if(sameColor(ph.getOp2(), ph.getRes())) {
+        continue;
+      }
       String t0 = "t6";
       if (ph.getOp2() != null)
         t0 = mem2a(ph.getOp2(), 6, tBool(ph.getTp().equals("i1")));
@@ -931,8 +966,7 @@ public class asmBuilder implements irVisitor {
         vrM.setSize(6 + 8);
         // entry storeT
         blck.setLabel(func.getName());
-        vrM.storeDef(); // size currect
-        curB.adS("sp", "sp", -(vrM.getSize() / 4 * 16));
+        vrM.storeDef(regColor.getReg(node.getLive().in)); // size currect
       }
     }
     if (node.getStmts() != null)
