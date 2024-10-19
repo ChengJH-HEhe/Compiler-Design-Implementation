@@ -90,19 +90,13 @@ public class VarRegManager {
     
     // 8~maxargs - i
   }
-
-  void restoreCall() {
-    for (int i = 0; i < 5; ++i) {
-      if(in.contains("t" + i))
-      curB.add(riscS.builder()
-          .op("lw")
-          .rs2("t" + i)
-          .imm((maxArgs + i) * 4)
-          .rs1("sp")
-          .build());
+  String result;
+  void restoreCall(boolean ret) {
+    if(ret == false) {
+      result = null;
     }
     for (int i = 0; i < 8; ++i) {
-      if(in.contains("a" + i) || i < aNum)
+      if((in.contains("a" + i) || i < aNum) && (result == null || !result.equals("a" + i)))
       curB.add(riscS.builder()
           .op("lw")
           .rs2("a" + i)
@@ -110,6 +104,16 @@ public class VarRegManager {
           .rs1("sp")
           .build());
     }
+    for (int i = 0; i < 5; ++i) {
+      if(in.contains("t" + i) && (result == null || !result.equals("t" + i)))
+      curB.add(riscS.builder()
+          .op("lw")
+          .rs2("t" + i)
+          .imm((maxArgs + i) * 4)
+          .rs1("sp")
+          .build());
+    }
+    
     
   }
   private HashSet<String> out;

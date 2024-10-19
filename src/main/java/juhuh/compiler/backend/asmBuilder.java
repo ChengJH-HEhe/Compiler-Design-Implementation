@@ -261,8 +261,8 @@ public class asmBuilder implements irVisitor {
           var regname = regColor.getRegName(res);
           int aid = Integer.parseInt(regname.substring(1));
           if (regname.charAt(0) != 'a'
-              || aid >= Math.min(regColor.argsId, Integer.parseInt(num.substring(1))))
-            curB.add(pseudo.builder()
+              || aid >= Math.min(regColor.argsId, Integer.parseInt(num.substring(1)))) 
+              curB.add(pseudo.builder()
                 .strs(new vector<String>("mv", num, regname))
                 .build());
           else {
@@ -387,6 +387,17 @@ public class asmBuilder implements irVisitor {
     if (status == true)
       return;
     var str = mem2a(node.getCond(), 5, "b");
+    if (str.equals("0")) {
+      curB.add(riscJ.builder()
+          .label(node.getIffalse())
+          .build());
+      return;
+    } else if (str.equals("1")) {
+      curB.add(riscJ.builder()
+          .label(node.getIftrue())
+          .build());
+      return;
+    }
     curB.add(pseudo.builder()
         .strs(new vector<String>("beqz", str, ".false" + branCount))
         .build());
@@ -455,26 +466,23 @@ public class asmBuilder implements irVisitor {
     curB.add(pseudo.builder()
         .strs(new vector<String>("call", node.getFunc().getName()))
         .build());
-    curB.add(pseudo.builder()
-        .strs(new vector<String>("mv", "t6", "a0"))
-        .build());
-    vrM.restoreCall();
+
     if (!node.getRes().equals("") && !node.getRes().equals("void")) {
       // not void call
       var tp = tBool(node.getFunc().getRetType().equals(SemanticChecker.boolType));
-      var res = regColor.getResult(node.getRes(), "t6", tp, vrM);
+      var res = regColor.getResult(node.getRes(), "a0", tp, vrM);
+
       // store retval to res
-      if (res == null) {
-        // store to z0
-        curB.add(pseudo.builder()
-            .strs(new vector<String>("#mv", "z0", "t6"))
-            .build());
-      } else {
-        if (!(res instanceof pseudo))
-          ((riscS) res).setRs2("t6");
+      if (res != null) {
         curB.add(res);
+        if ((res instanceof pseudo)) {
+          vrM.result = ((pseudo) res).getStrs().get(1);
+          vrM.restoreCall(true);
+          return;
+        }
       }
     }
+    vrM.restoreCall(false);
     // store a regs
   }
 
@@ -486,8 +494,8 @@ public class asmBuilder implements irVisitor {
     curB.add(pseudo.builder()
         .strs(new vector<String>("#getElement"))
         .build());
+    // res = ptr + (offset*4?)
     var tmp = getPtr(node.getPtrval()); // 存放地址寄存器
-
     // t0
     String offset = "t5";
     if (node.getId1().equals("0")) {
@@ -496,14 +504,18 @@ public class asmBuilder implements irVisitor {
       offset = Integer.toString((Integer) (Integer.parseInt(node.getId1()) * 4));
     else {
       offset = mem2a(node.getId1(), 5, "w");
+      if (isImm(offset))
+        offset = Integer.toString((Integer) (Integer.parseInt(node.getId1()) * 4));
       // t0 <<= 2; offset
-      curB.add(riscRI.builder()
-          .op("slli")
-          .rd("t5")
-          .rs1(offset)
-          .imm(2)
-          .build());
-      offset = "t5";
+      else {
+        curB.add(riscRI.builder()
+            .op("slli")
+            .rd("t5")
+            .rs1(offset)
+            .imm(2)
+            .build());
+        offset = "t5";
+      }
     }
     // tmp += t0
     var res = regColor.getResult(node.getRes(), "t6", "w", vrM);
@@ -513,6 +525,17 @@ public class asmBuilder implements irVisitor {
         .rs1(tmp)
         .rs2(offset)
         .build();
+    // spj for offset.
+    if(offset.equals("0")) {
+      if (res instanceof riscS) {
+        ((riscS)res).setRs2(tmp);
+        curB.add(res);
+      } else {
+        (((pseudo) res)).getStrs().set(2, tmp);
+        curB.add(res);
+      }
+      return;
+    } 
     if (!offset.equals("t5")) {
       ((riscR) calc).setOp("addi");
     }
@@ -896,10 +919,12 @@ public class asmBuilder implements irVisitor {
     var stc = regColor.getCol(st);
     if (edc == null)
       return true;
-    if (stc == null) {
+    if (isImm(st)) {
       // direct store into ed
       return movImm(st, ed);
     }
+    if (stc == null)
+      return false;
     return stc.equals(edc);
   }
 
@@ -930,8 +955,8 @@ public class asmBuilder implements irVisitor {
                 .build());
             ((riscS) res).setRs2("t6");
           }
-          curB.add(res);
         }
+        curB.add(res);
       }
     }
 

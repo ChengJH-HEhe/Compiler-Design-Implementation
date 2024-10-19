@@ -66,6 +66,8 @@ public class riscR extends asmNode {
       }
       if (psu != null)
         return psu.toString();
+      else
+        return "";
     }
     else if(asmBuilder.isImm(rs2)) {
       if(op.equals("div") || op.equals("rem") || op.equals("mul")) {
