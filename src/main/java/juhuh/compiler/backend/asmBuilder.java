@@ -388,6 +388,8 @@ public class asmBuilder implements irVisitor {
     if (status == true)
       return;
     var str = mem2a(node.getCond(), 5, "b");
+    if(str == null)
+      str = "0";
     if (str.equals("0")) {
       curB.add(riscJ.builder()
           .label(node.getIffalse())
