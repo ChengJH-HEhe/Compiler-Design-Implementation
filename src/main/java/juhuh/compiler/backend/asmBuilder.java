@@ -300,6 +300,7 @@ public class asmBuilder implements irVisitor {
   }
 
   public static boolean isImm(String im) {
+    if(im == null) return false;
     if (im.equals("null") || im.equals("false") || im.equals("true"))
       return true;
     if (im.charAt(0) == 's' || im.charAt(0) == 'a' || im.charAt(0) == 't' || im.charAt(0) == '%'
