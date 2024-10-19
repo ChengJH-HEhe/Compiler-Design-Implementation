@@ -46,8 +46,9 @@ public class regCol {
     return res.id;
   }
 
+  // s0~11 a7~4 t0~4
   public String getRegName(int id) {
-    // s0~11 a7~4 t0~4 a3~0
+    if(id < 0) return null;
     if (id <= 11)
       return "s" + id;
     else {
@@ -58,8 +59,10 @@ public class regCol {
         id -= 4;
         if (id <= 4)
           return "t" + id;
-        else
+        else{
+          // assert(false);
           return "a" + (8 - id);
+        }
       }
     }
   }
@@ -149,7 +152,9 @@ public class regCol {
       }
     }
   }
-
+  public boolean used(int num) {
+    return inUse.contains(num);
+  }
   private int findCol() {
     for (int i = 0; i < K; i++) {
       if (!inUse.contains(i)) {
@@ -185,9 +190,16 @@ public class regCol {
       return 19 - num;
   }
 
+  // change: a'i' shouldn't be allocated.
+
   public void addArg(String name, int num) {
     color c = new color();
-    if (num <= 7) {
+    // if (num <= 3) {
+    //   c.spilled = false;
+    //   c.id = 19 - (7 - num);
+    //   inUse.add(c.id);
+    // } else 
+    if(num <= 7){
       c.spilled = false;
       c.id = anum(num);
       inUse.add(c.id);

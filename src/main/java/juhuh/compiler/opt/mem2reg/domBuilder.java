@@ -36,9 +36,9 @@ public class domBuilder implements irVisitor {
     this.asm = asm;
   }
 
-  public void delPhi(irRoot root) {
+  public void delPhi(irRoot root, allocator alloc) {
     for (var def : root.getFDef())
-      delPhi(def);
+      delPhi(def, alloc);
   }
 
   public void visit(irRoot node) throws error {
@@ -50,7 +50,7 @@ public class domBuilder implements irVisitor {
 
   private void initBlock(irBlock block) {
     // consider block.name == "entry", it will be put at first
-    //System.err.println("init block " + block.getLabel() + " " + cnt);
+    // System.err.println("init block " + block.getLabel() + " " + cnt);
     id.put(block.getLabel(), cnt);
     id2B.add(block);
     ++cnt;
@@ -146,16 +146,17 @@ public class domBuilder implements irVisitor {
       if (flag == false) {
         // this block is unreachable
         id2B.get(i).setUnreachable(true);
-        //System.err.println(id2B.get(i).getLabel() + " has no idom");
+        // System.err.println(id2B.get(i).getLabel() + " has no idom");
       } else {
-        //System.err.println("idom for " + id2B.get(i).getLabel() + " is  " + id2B.get(doms.get(i).getIDom()).getLabel());
+        // System.err.println("idom for " + id2B.get(i).getLabel() + " is " +
+        // id2B.get(doms.get(i).getIDom()).getLabel());
       }
     }
     // set domFrontier in preds.dom \ i.dom
     for (int i = 0; i < cnt; ++i) {
       if (id2B.get(i).isUnreachable())
         continue;
-      //System.err.println(domFlag[i]);
+      // System.err.println(domFlag[i]);
       tmp.clear();
       var tmp1 = (BitSet) domFlag[i].clone();
       for (var pred : preds[i]) {
@@ -166,7 +167,7 @@ public class domBuilder implements irVisitor {
       tmp.set(i, false);
       for (int j = tmp.nextSetBit(0); j >= 0; j = tmp.nextSetBit(j + 1)) {
         doms.get(j).getDomF().add(i);
-        //System.err.println(j + " domF " + i);
+        // System.err.println(j + " domF " + i);
       }
     }
   }
@@ -358,9 +359,11 @@ public class domBuilder implements irVisitor {
 
   }
 
-  
+  vector<Integer>[] outCnt;
   // redef critical edge
-  private void delPhi(irFuncDef curFunc) {
+
+  @SuppressWarnings("unchecked")
+  private void delPhi(irFuncDef curFunc, allocator alloc) {
     // phi -> add 0 : spj in asmBuilder
     // problem: critical edge? domF must have more than one pred,(endpoint ok) but
     // thisblock's outdeg may be one(startpoint)
@@ -368,18 +371,31 @@ public class domBuilder implements irVisitor {
     // if st is one-child, then add 0 in this block
     // else add 0 in a new created block
     boolean[] inOnly = new boolean[cnt];
-    @SuppressWarnings("unchecked")
     vector<Integer>[] outCnt = new vector[cnt];
-    for(int i = 0; i < cnt; ++i)
+    for (int i = 0; i < cnt; ++i)
       outCnt[i] = new vector<>();
     for (int i = 1; i < cnt; ++i) {
       for (var pre : preds[i])
         outCnt[pre].add(i);
     }
     for (int i = 0; i < cnt; ++i) {
-      if (outCnt[i].size() == 1) {
-        inOnly[i] = true;
+      inOnly[i] = (outCnt[i].size() == 1);
+      boolean used = false;
+      for (var Nxt : outCnt[i]) {
+        // !inOnly[i] -> add new Block
+        var nxt = id2B.get(Nxt);
+        // nxt block's find this block's value should add 0 in this block
+        for (var phiLhs : nxt.getPhi().entrySet())
+          if (phiLhs.getValue().getLabel2val().get(id2B.get(i).getLabel()) != null &&
+              alloc.exist(phiLhs.getValue().getReg())) {
+            used = true;
+            break;
+          }
+        if (used)
+          break;
       }
+      if(!used)
+        inOnly[i] = true;
     }
     // st not only-child, -> endterm is still certain
     // add 0 in asmbuilder
@@ -393,13 +409,12 @@ public class domBuilder implements irVisitor {
       if (!inOnly[i]) {
         // add 0 in new block
         block.setTerminal(block.getEndTerm());
-
         var newBlock = irBlock.builder()
             .label("_phi." + block.getLabel())
             .stmts(new vector<irStmt>())
             .terminalstmt(block.getTerminalstmt())
             .build();
-        if(block.getLabel().equals("entry"))
+        if (block.getLabel().equals("entry"))
           newBlock.setLabel("_phi." + curFunc.getFName());
         newBlock.setPhiDel(new vector<irBinary>());
         block.setTerminalstmt(irJump.builder().dest(newBlock.getLabel()).build());
@@ -409,17 +424,18 @@ public class domBuilder implements irVisitor {
       for (var Nxt : outCnt[i]) {
         var nxt = id2B.get(Nxt);
         // nxt block's find this block's value should add 0 in this block
-        for (var phiLhs : nxt.getPhi().entrySet()) {
-          if (phiLhs.getValue().getLabel2val().get(block.getLabel()) != null) {
-            block.getPhiDel().add(irBinary.builder()
-                .res(phiLhs.getKey() + "." + nxt.getLabel())
-                .op("add")
-                .op2(phiLhs.getValue().getLabel2val().get(block.getLabel()))
-                .op1("0")
-                .tp(phiLhs.getValue().getTp())
-                .build());
+        for (var phiLhs : nxt.getPhi().entrySet())
+          if (alloc.exist(phiLhs.getValue().getReg())) {
+            if (phiLhs.getValue().getLabel2val().get(block.getLabel()) != null) {
+              block.getPhiDel().add(irBinary.builder()
+                  .res(phiLhs.getKey() + "." + nxt.getLabel())
+                  .op("add")
+                  .op2(phiLhs.getValue().getLabel2val().get(block.getLabel()))
+                  .op1("0")
+                  .tp(phiLhs.getValue().getTp())
+                  .build());
+            }
           }
-        }
       }
       if (!inOnly[i]) {
         id.put(block.getLabel(), tmpcnt);
@@ -433,7 +449,7 @@ public class domBuilder implements irVisitor {
   @Override
   public void visit(irFuncDef node) throws error {
     // cnt only acccesible in this function
-    //System.err.println("visit func " + node.getFName());
+    // System.err.println("visit func " + node.getFName());
     initFunc(node);
     // build graph postReverseOrder
     initPreds(node);
@@ -441,10 +457,10 @@ public class domBuilder implements irVisitor {
     // build dominator tree using postReverseOrder
     // reverse postRev
     // for (var i : postRev) {
-    //   System.err.print(i + " ");
+    // System.err.print(i + " ");
     // }
-    //System.err.println("postRevOrder");
-    
+    // System.err.println("postRevOrder");
+
     getDom();
     // place PHI cmd
     placePhi();
@@ -463,9 +479,9 @@ public class domBuilder implements irVisitor {
     alloc.visit(node);
     alloc.spill2Col(node.getParavaluelist());
     // delphi
-    delPhi(node);
+    delPhi(node, alloc);
     // asm rewrite
-    
+
     asm.setCol(alloc.regColor);
     asm.visit(node);
   }
@@ -491,7 +507,7 @@ public class domBuilder implements irVisitor {
       for (var j : preds[i]) {
         if (domFlag[j].get(i)) {
           loopHeader.put(i, j);
-          //System.err.println(id2B.get(i).getLabel() + " -> " + id2B.get(j).getLabel());
+          // System.err.println(id2B.get(i).getLabel() + " -> " + id2B.get(j).getLabel());
         }
       }
     }
@@ -501,7 +517,7 @@ public class domBuilder implements irVisitor {
       LoopDfs(header.getKey(), header.getValue());
     }
     // for (int i = 0; i < cnt; ++i)
-    //   //System.err.println(id2B.get(i).getLabel() + " depth : " + loopBody[i]);
+    // //System.err.println(id2B.get(i).getLabel() + " depth : " + loopBody[i]);
   }
 
   @Override
@@ -525,7 +541,7 @@ public class domBuilder implements irVisitor {
       if (res != null)
         return res;
     }
-    //System.err.println("**** there is no pre-Def for " + Ptr + " !!!!");
+    // System.err.println("**** there is no pre-Def for " + Ptr + " !!!!");
     return null;
   }
 

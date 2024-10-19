@@ -13,22 +13,37 @@ public class riscR extends asmNode {
   private String rd;
   private String rs1;
   private String rs2;
-
+  public static boolean isBImm(String im) {
+    if(im == null) return false;
+    if (im.equals("null") || im.equals("false") || im.equals("true"))
+      return true;
+    if (im.charAt(0) == 's' || im.charAt(0) == 'a' || im.charAt(0) == 't' || im.charAt(0) == '%'
+        || im.charAt(0) == '@')
+      return false;
+    return true;
+  }
+  public static int Imm(String imm) {
+    if (imm.equals("null") || imm.equals("false"))
+      return 0;
+    if (imm.equals("true"))
+      return 1;
+    return Integer.parseInt(imm);
+  }
   @Override
   public String toString() {
     var psu = pseudo.builder()
         .strs(new vector<String>("li", rd))
         .build();
-    if (asmBuilder.isImm(rs1) && asmBuilder.isImm(rs2)) {
+    if (isBImm(rs1) && isBImm(rs2)) {
       switch (op) {
         case "div":
-          if (asmBuilder.Imm(rs2) == 0)
+          if (Imm(rs2) == 0)
             psu = null;
           else
             psu.getStrs().add(Integer.toString(asmBuilder.Imm(rs1) / asmBuilder.Imm(rs2)));
           break;
         case "rem":
-          if (asmBuilder.Imm(rs2) == 0)
+          if (Imm(rs2) == 0)
             psu = null;
           else
             psu.getStrs().add(Integer.toString(asmBuilder.Imm(rs1) % asmBuilder.Imm(rs2)));
@@ -73,7 +88,7 @@ public class riscR extends asmNode {
       if(op.equals("div") || op.equals("rem") || op.equals("mul")) {
         psu.getStrs().rmlst();
         psu.getStrs().add("t6");
-        psu.getStrs().add(Integer.toString(asmBuilder.Imm(rs2)));
+        psu.getStrs().add(Integer.toString(Imm(rs2)));
         return psu.toString() + "\n  " + op + " " + rd + ", " + rs1 + ", " + "t6";
       }
     } else if(asmBuilder.isImm(rs1)) {

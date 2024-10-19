@@ -31,6 +31,10 @@ public class allocator implements irVisitor {
   // decide which to spill?
   int curBlock = 0, curStmt = 0;
 
+  public boolean exist(String str) {
+    return regs.containsKey(str);
+  }
+
   @SuppressWarnings("unchecked")
   public allocator(domBuilder Dom) {
     dom = Dom;

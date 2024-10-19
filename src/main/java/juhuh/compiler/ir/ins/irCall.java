@@ -13,6 +13,12 @@ public class irCall extends irIns{
   String res;
   FuncInfo func;
   vector<String> type, val;
+  vector<String> reg;
+  public void addReg(int num) {
+    if(reg == null)
+      reg = new vector<String>();
+    reg.add("s" + num);
+  }
   @Override
   public String toString(){
     String s = "";
