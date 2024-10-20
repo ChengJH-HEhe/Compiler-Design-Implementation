@@ -69,13 +69,13 @@ public class asmBuilder implements irVisitor {
       sUsed = new HashSet<String>();
     }
     // entry -= size
-    visit(node.getEntry());
     for (var get : node.getBody()) {
       if (get.isUnreachable())
-        continue;
+      continue;
       get.accept(this);
     }
     // ret += size;
+    visit(node.getEntry());
     visit(node.getRet());
   }
 
@@ -937,7 +937,6 @@ public class asmBuilder implements irVisitor {
   private class costa {
     // in_num, nxt;
     public int in_id;
-    public color st;
     public HashMap<color, Integer> nxt;
   }
 
@@ -1013,6 +1012,9 @@ public class asmBuilder implements irVisitor {
   private void nxtremove(costa co, color ed) {
     co.nxt.remove(ed);
   }
+  private void nxtClear(costa co) {
+    co.nxt.clear();
+  }
 
   private void shuPhi(vector<irBinary> phi) {
     // rearrange the order
@@ -1059,11 +1061,9 @@ public class asmBuilder implements irVisitor {
         coInfo.get(edp).nxt = new HashMap<color, Integer>();
         coInfo.get(edp).in_id = -1;
       }
-      coInfo.get(stp).st = pr.st;
       coInfo.get(edp).in_id = pr.num;
       coInfo.get(stp).nxt.put(pr.ed, pr.num);
     }
-
     Queue<Integer> topo = new LinkedList<Integer>();
     // add phi
     for (var pr : coInfo.entrySet()) {
@@ -1097,11 +1097,13 @@ public class asmBuilder implements irVisitor {
         // pr def <- use
         circle.clear();
         // findcircle to add edge
+        // pr = 2, edge_num
         int cur = pr;
         do {
           // in_id
+          // 2 -> st = 2
           var st = regColor.col2i(edge.get(coInfo.get(cur).in_id).st);
-          nxtremove(coInfo.get(st), coInfo.get(cur).st);
+          nxtClear(coInfo.get(st));
           if (st != pr) {
             circle.add(coInfo.get(cur).in_id);
             cur = st;
@@ -1169,6 +1171,7 @@ public class asmBuilder implements irVisitor {
       if(node.getLive() != null)
         for (var str : regColor.getReg(node.getLive().in))
           sUsed.add(str);
+      
     }
     if (node.getStmts() != null)
       for (irStmt ins : node.getStmts()) {
