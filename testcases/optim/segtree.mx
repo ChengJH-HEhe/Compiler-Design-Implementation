@@ -75,7 +75,7 @@ void init() {
     for(i = 2; i < p; ++i)
         for(j = 1; j <= 15; ++j)
             c[i] = square(c[i]) % p;
-    for(i = 2; i < p; ++i) {
+    for(i = 0; i < p; ++i) {
         int j;
         int x = c[i];
         for(j = 1; ;++j) {

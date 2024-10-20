@@ -1,8 +1,18 @@
 /*
 Test Package: Optim
 Author: Zhekai Zhang, 15
-//#input sha_1.in
-//#output sha_1.ans
+Input:
+=== input ===
+1 acm2015
+2 ABC64A57029F21F165A96BDB59F0351C7C7D1769
+0
+=== end ===
+Output:
+=== output ===
+5B38674EB4BD02CEC1D41C8DE3CC14A9872A2656
+ACM
+
+=== end ===
 ExitCode: 0
 InstLimit: -1
 */
