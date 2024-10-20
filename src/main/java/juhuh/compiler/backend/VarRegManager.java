@@ -12,7 +12,7 @@ public class VarRegManager {
   // todo init for spilled vars
   // private HashMap<String, Integer> Var2Id = new HashMap<String, Integer>();
 
-  private int size = 0, maxArgs = 0; // t0~t4
+  private int size = 0, maxArgs = 1; // t0~t4
   private int aNum = 0;
   private asmBlock curB;
 
@@ -30,9 +30,9 @@ public class VarRegManager {
       System.err.println("Error: getOffset(-1)");
     }
     // args -id-1 < aNum - 8 selfArgs
-    int id22 = getSize() - 12 - (-id - 1 - Math.max(0, aNum - 8)); // >=
+    int id22 = getSize() - mxS - (-id - 1 - Math.max(0, aNum - 8)); // >=
     if ((-id - 1) < aNum - 8) {
-      id22 = getSize() + (aNum - 8) - 1 - (-id - 1);
+      id22 = getSize() + (aNum - 8) - (-id - 1);
     } // > 8 selfArgs
     // if(id22 <= maxArgs + 5 + Math.min(aNum, 8) )
     // System.err.println("bug!");
@@ -51,8 +51,8 @@ public class VarRegManager {
   }
 
   public int getSize() {
-    maxArgs += ((size + maxArgs) % 4 == 0 ? 0 : (4 - (size + maxArgs) % 4));
-    return size + maxArgs + 12;
+    int res = mxA + size + mxS;
+    return res + (4 - res&3) % 4;
   }
 
   // 16 multiply
@@ -68,7 +68,7 @@ public class VarRegManager {
   HashSet<String> in;
   vector<String> regSt;
   String[] imReg;
-
+  int mxS = 0, mxA = 1;
   String[] storeCall(String def, HashSet<String> in, int argSize) {
     // curT[i] = size + i
     this.in = in;
@@ -78,7 +78,7 @@ public class VarRegManager {
       if (!in.contains("s" + i) && (def == null || !def.equals("s" + i)))
         regSt.add("s" + i);
     imReg = new String[13];
-    int cur = 0;
+    int cur = 0, cur1 = maxArgs;
     for (int i = 0; i < 5; ++i) {
       if (in.contains("t" + i))
         if (cur != regSt.size()) {
@@ -87,13 +87,16 @@ public class VarRegManager {
           curB.add(pseudo.builder()
               .strs(new vector<String>("mv", imReg[i], "t" + i))
               .build());
-        } else
+        } else{
+          imReg[i] = Integer.toString((cur1)*4);
           curB.add(riscS.builder()
               .op("sw")
               .rs2("t" + i)
-              .imm((maxArgs + i) * 4)
+              .imm((cur1) * 4)
               .rs1("sp")
               .build());
+          ++cur1;
+        }
     }
     // caller ti ra ai
     // a0~amin(num-1,7) 也需要
@@ -105,14 +108,18 @@ public class VarRegManager {
           curB.add(pseudo.builder()
               .strs(new vector<String>("mv", imReg[5 + i], "a" + i))
               .build());
-        } else
+        } else {
+          imReg[5 + i] = Integer.toString((cur1)*4);
+          cur1++;
           curB.add(riscS.builder()
-              .op("sw")
-              .rs2("a" + i)
-              .imm((maxArgs + 5 + i) * 4)
-              .rs1("sp")
-              .build());
-    }
+          .op("sw")
+          .rs2("a" + i)
+          .imm(Integer.parseInt(imReg[5+i]))
+          .rs1("sp")
+          .build());
+        }
+      }
+      mxA = Math.max(mxA, cur1);
     return imReg;
     // 8~maxargs - i
   }
@@ -124,7 +131,7 @@ public class VarRegManager {
     }
     for (int i = 0; i < 8; ++i) {
       if ((i == 0 || in.contains("a" + i)) && (result == null || !result.equals("a" + i)))
-        if (imReg[5 + i] != null) {
+        if (imReg[5 + i].charAt(0) == 's') {
           curB.add(pseudo.builder()
               .strs(new vector<String>("mv", "a" + i, imReg[5 + i]))
               .build());
@@ -132,13 +139,13 @@ public class VarRegManager {
           curB.add(riscS.builder()
               .op("lw")
               .rs2("a" + i)
-              .imm((maxArgs + 5 + i) * 4)
+              .imm(Integer.parseInt(imReg[5+i]))
               .rs1("sp")
               .build());
     }
     for (int i = 0; i < 5; ++i) {
       if (in.contains("t" + i) && (result == null || !result.equals("t" + i)))
-        if (imReg[i] != null) {
+        if (imReg[i].charAt(0) == 's') {
           curB.add(pseudo.builder()
               .strs(new vector<String>("mv", "t" + i, imReg[i]))
               .build());
@@ -146,31 +153,33 @@ public class VarRegManager {
           curB.add(riscS.builder()
               .op("lw")
               .rs2("t" + i)
-              .imm((maxArgs + i) * 4)
+              .imm(Integer.parseInt(imReg[i]))
               .rs1("sp")
               .build());
     }
-
   }
 
   private HashSet<String> out;
-
+  private int[] sReg;
   void storeDef(HashSet<String> out) {
     // store s0~s11
     this.out = out;
+    sReg = new int[12];
+    int cur = 0;
     for (int i = 0; i < 12; ++i) {
       if (out.contains("s" + i))
         curB.add(riscS.builder()
             .op("sw")
             .rs2("s" + i)
-            .imm(-(i + 1) * 4)
+            .imm(-(sReg[i] = ++cur) * 4)
             .rs1("sp")
             .build());
     }
+    mxS = cur;
     curB.adS("sp", "sp", -(getSize() / 4 * 16));
     curB.add(riscS.builder().op("sw")
         .rs2("ra")
-        .imm((maxArgs + 5 + 8) * 4)
+        .imm(0)
         .rs1("sp")
         .build());
   }
@@ -180,7 +189,7 @@ public class VarRegManager {
     // opt#1 ra store;
     curB.add(riscL.builder().op("lw")
         .rd("ra")
-        .imm((maxArgs + 5 + 8) * 4)
+        .imm(0)
         .rs1("sp")
         .build());
     curB.adS("sp", "sp", getSize() * 4);
@@ -189,7 +198,7 @@ public class VarRegManager {
         curB.add(riscS.builder()
             .op("lw")
             .rs2("s" + i)
-            .imm(-(i + 1) * 4)
+            .imm(-(sReg[i]) * 4)
             .rs1("sp")
             .build());
     }
@@ -198,9 +207,8 @@ public class VarRegManager {
 
   void argsInc(int sz) {
     if (sz > 8)
-      maxArgs = Math.max(maxArgs, sz - 8);
+      maxArgs = Math.max(maxArgs, sz - 8 + 1);
   }
-
   // t0-6 loop %7 int is the reg id
   // call add args, add before call
 

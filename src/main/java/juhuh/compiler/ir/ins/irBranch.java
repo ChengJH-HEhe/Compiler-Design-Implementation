@@ -7,9 +7,11 @@ import juhuh.compiler.util.error.error;
 @lombok.Setter
 public class irBranch extends irIns{
   public String cond, iftrue, iffalse;
+  public irIcmp cmp;
   @Override 
   public String toString() {
-    return "br i1 " + cond +", label %" + iftrue + ", label %" + iffalse;
+    String s = (cmp == null? "" : cmp.toString());
+    return s + "\n  br i1 " + cond +", label %" + iftrue + ", label %" + iffalse;
   }
   @Override
   public void accept(irVisitor visitor) throws error{

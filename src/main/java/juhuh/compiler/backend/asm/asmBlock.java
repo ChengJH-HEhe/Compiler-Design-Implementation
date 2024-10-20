@@ -12,7 +12,7 @@ import juhuh.compiler.util.vector;
 public class asmBlock extends asmNode {
   private String label;
   private vector<asmNode> nodes;
-
+  
   public void add(asmNode ins) {
     nodes.add(ins);
   }

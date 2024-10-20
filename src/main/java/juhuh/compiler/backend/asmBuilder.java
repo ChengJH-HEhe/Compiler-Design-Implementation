@@ -266,17 +266,16 @@ public class asmBuilder implements irVisitor {
           int aid = Integer.parseInt(regname.substring(1));
           // aid
           if (regname.charAt(0) != 'a'
-              || aid >= Math.min(regColor.argsId, Integer.parseInt(num.substring(1))))
+              || aid >= Integer.parseInt(num.substring(1)))
             curB.add(pseudo.builder()
                 .strs(new vector<String>("mv", num, regname))
                 .build());
           else {
-            if (imReg[5 + aid] == null) {
-              int id = vrM.getMaxargs() + 5 + aid;
+            if (imReg[5 + aid].charAt(0) != 's') {
               curB.add(riscL.builder()
                   .op("lw")
                   .rd(num)
-                  .imm(id * 4)
+                  .imm(Integer.parseInt(imReg[5 + aid]))
                   .rs1("sp")
                   .build());
             } else {
@@ -399,6 +398,7 @@ public class asmBuilder implements irVisitor {
   public void visit(irBranch node) throws error {
     if (status == true)
       return;
+    
     var str = mem2a(node.getCond(), 5, "b");
     if (str == null)
       str = "0";
@@ -413,9 +413,17 @@ public class asmBuilder implements irVisitor {
           .build());
       return;
     }
-    curB.add(pseudo.builder()
-        .strs(new vector<String>("beqz", str, ".false" + branCount))
+    if(node.getCmp() != null) {
+      var cmp = node.getCmp();
+      curB.add(pseudo.builder()
+        .strs(new vector<String>("b" +cmp.getOp().substring(1), 
+          mem2a(cmp.getOp1(), 5, "w"),mem2a(cmp.getOp2(), 6, "w"),".false" + branCount))
         .build());
+    } else {
+      curB.add(pseudo.builder()
+      .strs(new vector<String>("beqz", str, ".false" + branCount))
+      .build());
+    }
     curB.add(riscJ.builder()
         .label(node.getIftrue())
         .build());
@@ -534,6 +542,10 @@ public class asmBuilder implements irVisitor {
     var tmp = getPtr(node.getPtrval()); // 存放地址寄存器
     // t0
     String offset = "t5";
+    if(node.getId2() != null) {
+      node.setId1(node.getId2());
+      node.setTp1(node.getTp2());
+    }
     if (node.getId1().equals("0")) {
       offset = "0";
     } else if (node.getId1().getBytes()[0] != '%')
@@ -1005,6 +1017,8 @@ public class asmBuilder implements irVisitor {
   private void shuPhi(vector<irBinary> phi) {
     // rearrange the order
     // mv use -> def col->col
+    if(phi == null)
+      return;
     vector<pair> edge = new vector<pair>();
 
     // new vector immediate -> def
@@ -1147,7 +1161,6 @@ public class asmBuilder implements irVisitor {
     vrM.setCurB(curB, curFunc.getParatypelist().size());
     if (status == false) {
       if (node.getLabel().equals("entry")) {
-        vrM.setSize(6 + 8);
         // entry storeS
         blck.setLabel(func.getName());
         vrM.storeDef(sUsed); // size currect

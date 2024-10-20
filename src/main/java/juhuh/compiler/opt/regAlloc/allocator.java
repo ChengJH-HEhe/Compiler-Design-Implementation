@@ -32,7 +32,9 @@ public class allocator implements irVisitor {
   int curBlock = 0, curStmt = 0;
 
   public boolean exist(String str) {
-    return regs.containsKey(str);
+    if(str.charAt(0) == '%')
+      return regs.containsKey(str);
+    else return true;
   }
 
   @SuppressWarnings("unchecked")
@@ -302,7 +304,6 @@ public class allocator implements irVisitor {
     // color phi def when out contains def
     for (var phiuse : dom.id2B.get(blockId).getPhi().entrySet()) {
       var def = phiuse.getValue().getReg();
-
       if (out.contains(def)) {
         regColor.addReg(def, false);
       }

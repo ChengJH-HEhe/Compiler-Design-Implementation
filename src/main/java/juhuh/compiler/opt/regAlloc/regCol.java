@@ -46,25 +46,42 @@ public class regCol {
     return res.id;
   }
 
-  // s0~11 a7~4 t0~4
+// t0~4 s0~2 a7~4 s3~s11  a3~0
+String[] arg = {
+  "a0","a1","a2", "a3","a4",
+  "t0","t1","t2","t3","t4",
+  "s0","s1","s2",
+  "a7","a6","a5",
+  "s3","s4","s5","s6",
+  "s7","s8","s9","s10","s11",
+};
+  
+private int anum(int num) {
+  for(int i = 0; i < K; ++i)
+    if(arg[i].equals("a" + num))
+      return i;
+  // lol
+  return 233333333;
+}
   public String getRegName(int id) {
     if(id < 0) return null;
-    if (id <= 11)
-      return "s" + id;
-    else {
-      id -= 12;
-      if (id <= 3)
-        return "a" + (7 - id);
-      else {
-        id -= 4;
-        if (id <= 4)
-          return "t" + id;
-        else{
-          // assert(false);
-          return "a" + (8 - id);
-        }
-      }
-    }
+    return arg[id];
+    // if (id <= 11)
+    //   return "s" + id;
+    // else {
+    //   id -= 12;
+    //   if (id <= 3)
+    //     return "a" + (7 - id);
+    //   else {
+    //     id -= 4;
+    //     if (id <= 4)
+    //       return "t" + id;
+    //     else{
+    //       // assert(false);
+    //       return "a" + (8 - id);
+    //     }
+    //   }
+    // }
   }
 
   public asmNode getColResult(color co, String resul, String tp, VarRegManager VRM) {
@@ -156,6 +173,7 @@ public class regCol {
     return inUse.contains(num);
   }
   private int findCol() {
+    
     for (int i = 0; i < K; i++) {
       if (!inUse.contains(i)) {
         inUse.add(i);
@@ -181,13 +199,6 @@ public class regCol {
     c.spilled = true;
     c.id = -114514;
     regs.put(reg, c);
-  }
-
-  private int anum(int num) {
-    if (num <= 3)
-      return K - num - 1;
-    else
-      return 19 - num;
   }
 
   // change: a'i' shouldn't be allocated.

@@ -283,6 +283,7 @@ public class domBuilder implements irVisitor {
       // set this domf's def
       var setPhi = id2B.get(domf).getPhi();
       for (var entry : setPhi.entrySet()) {
+        
         entry.getValue().getLabel2val().put(block.getLabel(), replacePtr(block,
             entry.getKey()));
       }
@@ -424,7 +425,9 @@ public class domBuilder implements irVisitor {
       for (var Nxt : outCnt[i]) {
         var nxt = id2B.get(Nxt);
         // nxt block's find this block's value should add 0 in this block
-        for (var phiLhs : nxt.getPhi().entrySet())
+        for (var phiLhs : nxt.getPhi().entrySet()) {
+          if(phiLhs.getValue().getReg().equals("%.1.for.cond.1"))
+            System.err.println("debug");
           if (alloc.exist(phiLhs.getValue().getReg())) {
             if (phiLhs.getValue().getLabel2val().get(block.getLabel()) != null) {
               block.getPhiDel().add(irBinary.builder()
@@ -436,6 +439,7 @@ public class domBuilder implements irVisitor {
                   .build());
             }
           }
+        }
       }
       if (!inOnly[i]) {
         id.put(block.getLabel(), tmpcnt);

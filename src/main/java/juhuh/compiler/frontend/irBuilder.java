@@ -669,6 +669,8 @@ public class irBuilder implements astVisitor<irNode> {
         .res("0")
         .ptr("%." + i)
         .build());
+    curFunc.curBlock.setVal("%." + i, "0", "i32");
+    
     var resCond = curFunc.tmprename(); // load i
     var brCond = curFunc.tmprename(); // determine i <= size
 
@@ -944,25 +946,17 @@ public class irBuilder implements astVisitor<irNode> {
     // reg ptr? -> name null else name = Store
     ClassInfo info = (ClassInfo) gScope.getTypeFromName(((typeinfo) node.getExpr().getType()).getName());
 
-    var resul1 = curFunc.tmprename();
-
-    var gep = irGetElement.builder()
-        .res(resul1)
-        .tp("%class." + info.getName())
-        .ptrval(res.toString())
-        .tp1("i32").id1("0")
-        .build();
-    add(gep);
     reg.setPtr(curFunc.tmprename());
-    reg.setName(curFunc.tmprename());
-    var gep1 = irGetElement.builder()
+    var gep = irGetElement.builder()
         .res(reg.getPtr())
         .tp(tp((typeinfo) node.getType()))
-        .ptrval(resul1)
-        .tp1("i32")
-        .id1(info.varsId.get(node.getMember()).toString())
+        .ptrval(res.toString())
+        .tp1("i32").id1("0")
+        .tp2("i32")
+        .id2(info.varsId.get(node.getMember()).toString())
         .build();
-    add(gep1);
+    add(gep);
+    reg.setName(curFunc.tmprename());
     add(irLoad.builder()
         .res(reg.getName())
         .tp(tp((typeinfo) node.getType()))
@@ -1438,24 +1432,17 @@ public class irBuilder implements astVisitor<irNode> {
       // member of class (this)? ptr re handle
       if (ptr.charAt(1) == '0' && ptr.length() > 2) {
         // this.i
-        var resul = curFunc.tmprename();
-        var gep = irGetElement.builder()
-            .res(resul)
-            .tp("%class." + curS.findCLASS().getName())
-            .ptrval("%this") // this -> this.addr -> this
-            .tp1("i32").id1("0")
-            .build();
-        add(gep);
         var resul1 = curFunc.tmprename();
-        var gep1 = irGetElement.builder()
+        var gep = irGetElement.builder()
             .res(resul1)
             .tp(basetp((typeinfo) node.getType()))
-            .ptrval(resul) // this -> this.addr -> this
-            .tp1("i32")
-            .id1(ptr.substring(2))
+            .ptrval("%this") // this -> this.addr -> this
+            .tp1("i32").id1("0")
+            .tp2("i32")
+            .id2(ptr.substring(2))
             .build();
         reg.setPtr(resul1);
-        add(gep1);
+        add(gep);
         reg.setName(curFunc.tmprename());
         add(irLoad.builder()
             .res(reg.getName())

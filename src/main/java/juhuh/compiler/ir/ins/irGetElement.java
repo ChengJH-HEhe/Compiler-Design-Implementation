@@ -6,12 +6,14 @@ import juhuh.compiler.util.error.error;
 @lombok.Getter
 @lombok.Setter
 public class irGetElement extends irIns{
-  String res, tp, ptrval, tp1;
-  String id1;
+  String res, tp, ptrval, tp1, tp2;
+  String id1, id2;
   @Override
   public String toString(){
-    return res + " = getelementptr " + tp + ", ptr " + ptrval + ", " + 
-    (tp1 + " " + id1);  
+    String s =  res + " = getelementptr " + tp + ", ptr " + ptrval + ", " + 
+    (tp1 + " " + id1) ;
+    if(tp2 != null) s += ", " + (tp2 + " " + id2);  
+    return s;
   }
   @Override
   public void accept(irVisitor visitor) throws error{
