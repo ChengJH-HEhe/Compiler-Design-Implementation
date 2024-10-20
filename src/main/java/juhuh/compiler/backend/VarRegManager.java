@@ -12,8 +12,8 @@ public class VarRegManager {
   // todo init for spilled vars
   // private HashMap<String, Integer> Var2Id = new HashMap<String, Integer>();
 
-  private int size = 0, maxArgs = 1; // t0~t4
-  private int aNum = 0;
+  private int size = 0, maxArgs = 0; // t0~t4
+  private int aNum = 0, callNum = 0;
   private asmBlock curB;
 
   // local start with num = : ; start with alpha, alloca, first scan, add all
@@ -22,7 +22,9 @@ public class VarRegManager {
     curB = B;
     this.aNum = aNum;
   }
-
+  public void setCall(int callNum) {
+    this.callNum = callNum;
+  }
   // (sp(after)) | callargs(maxArgs)(storeCall(selfargs, t0~t4, ra), ) |
   // spillcount | (s0~s11 sp when loadDef/storeDef)
   public int getOffset(int id) {
@@ -42,7 +44,7 @@ public class VarRegManager {
   }
 
   public int getCallArgs(int id) {
-    return aNum - id;
+    return callNum - id;
   }
 
   // CALL ONLY TWICE!
@@ -78,7 +80,7 @@ public class VarRegManager {
       if (!in.contains("s" + i) && (def == null || !def.equals("s" + i)))
         regSt.add("s" + i);
     imReg = new String[13];
-    int cur = 0, cur1 = maxArgs;
+    int cur = 0, cur1 = maxArgs+1;
     for (int i = 0; i < 5; ++i) {
       if (in.contains("t" + i))
         if (cur != regSt.size()) {
@@ -179,7 +181,7 @@ public class VarRegManager {
     curB.adS("sp", "sp", -(getSize() / 4 * 16));
     curB.add(riscS.builder().op("sw")
         .rs2("ra")
-        .imm(0)
+        .imm(maxArgs * 4)
         .rs1("sp")
         .build());
   }
@@ -189,7 +191,7 @@ public class VarRegManager {
     // opt#1 ra store;
     curB.add(riscL.builder().op("lw")
         .rd("ra")
-        .imm(0)
+        .imm(maxArgs * 4)
         .rs1("sp")
         .build());
     curB.adS("sp", "sp", getSize() * 4);

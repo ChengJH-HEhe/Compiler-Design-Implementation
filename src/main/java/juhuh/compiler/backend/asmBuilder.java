@@ -451,6 +451,8 @@ public class asmBuilder implements irVisitor {
         }
       return;
     }
+    // update vrM.anum;
+    vrM.setCall(node.getType().size());
     // BUG: a0~a7 preserved by call node
     curB.add(pseudo.builder()
         .strs(new vector<String>("#Call  "))
