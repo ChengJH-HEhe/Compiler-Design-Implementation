@@ -18,6 +18,13 @@ public class VarRegManager {
 
   // local start with num = : ; start with alpha, alloca, first scan, add all
   // first add return -1 for func sp member check
+  public void setMxS(HashSet<String> s) {
+    mxS = 0;
+    for(var str : s) {
+      if(str.charAt(0) == 's')
+        ++mxS;
+    }
+  }
   public void setCurB(asmBlock B, int aNum) {
     curB = B;
     this.aNum = aNum;
@@ -28,9 +35,6 @@ public class VarRegManager {
   // (sp(after)) | callargs(maxArgs)(storeCall(selfargs, t0~t4, ra), ) |
   // spillcount | (s0~s11 sp when loadDef/storeDef)
   public int getOffset(int id) {
-    if (id == -1) {
-      System.err.println("Error: getOffset(-1)");
-    }
     // args -id-1 < aNum - 8 selfArgs
     int id22 = getSize() - mxS - (-id - 1 - Math.max(0, aNum - 8)); // >=
     if ((-id - 1) < aNum - 8) {
@@ -44,7 +48,7 @@ public class VarRegManager {
   }
 
   public int getCallArgs(int id) {
-    return callNum - id;
+    return callNum - 1 - id;
   }
 
   // CALL ONLY TWICE!

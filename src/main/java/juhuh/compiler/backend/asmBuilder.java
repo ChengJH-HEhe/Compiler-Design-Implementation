@@ -129,6 +129,7 @@ public class asmBuilder implements irVisitor {
     // t0~t4 store into the sp + i
     status = true;
     visitFunc(node);
+    vrM.setMxS(sUsed);
     status = false;
     // entry storeA > 8, store T
 
@@ -1173,7 +1174,6 @@ public class asmBuilder implements irVisitor {
       if(node.getLive() != null)
         for (var str : regColor.getReg(node.getLive().in))
           sUsed.add(str);
-      
     }
     if (node.getStmts() != null)
       for (irStmt ins : node.getStmts()) {
