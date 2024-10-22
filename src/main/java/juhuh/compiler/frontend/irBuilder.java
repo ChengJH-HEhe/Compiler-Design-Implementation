@@ -3,6 +3,7 @@ package juhuh.compiler.frontend;
 import java.util.LinkedList;
 import java.util.Stack;
 
+
 import juhuh.compiler.ast.node.astNode;
 import juhuh.compiler.ast.node.astRoot;
 import juhuh.compiler.ast.node.def.*;
@@ -949,7 +950,7 @@ public class irBuilder implements astVisitor<irNode> {
     reg.setPtr(curFunc.tmprename());
     var gep = irGetElement.builder()
         .res(reg.getPtr())
-        .tp(tp((typeinfo) node.getType()))
+        .tp(basetp(info.vars.get(node.getMember())))
         .ptrval(res.toString())
         .tp1("i32").id1("0")
         .tp2("i32")
@@ -1153,7 +1154,8 @@ public class irBuilder implements astVisitor<irNode> {
         .build();
 
   }
-
+  // TODO select: cond marked;
+  private String cond;
   @Override
   public irNode visit(astBinaryExprNode node) throws error {
     // calc the res to the curFunc.curBlock & return the res to a register node
@@ -1161,18 +1163,22 @@ public class irBuilder implements astVisitor<irNode> {
       // short circuit
       int target = node.getOp().equals("LogicAnd") ? 0 : 1;
       // and 1 -> log.false
+      cond = "%log.res" + binaryCount;
+      curFunc.getEntry().add(irAlloca.builder()
+          .res(cond)
+          .tp("i1")
+          .build());
 
-      String[] label = { "log.rhs" + (binaryCount), "log.end" + (binaryCount),
-          "log.lhs" + (binaryCount), };
+      String[] label = { "log.rhs" + (binaryCount), "log.lhs" + (binaryCount),"log.end" + (binaryCount),
+           "log.cond" + (binaryCount)};
       binaryCount++;
       // iftrue -> res1赋值
       // iffalse 跳过res2赋值
-      var lhs = (irBlock.builder()
-          .label(label[2])
+      var codi = (irBlock.builder()
+          .label(label[3])
           .stmts(new vector<irStmt>())
           .build());
-
-      var endBTerm = switchBlock(lhs);
+      var endBTerm = switchBlock(codi);
 
       entity res1 = (entity) (node.getLhs()).accept(this);
       // lhs may still not right
@@ -1182,42 +1188,34 @@ public class irBuilder implements astVisitor<irNode> {
           .iffalse(label[target ^ 1])
           .build());
 
-      var rhs = (irBlock.builder()
-          .label(label[0])
-          .stmts(new vector<irStmt>())
-          .build());
-      joinBlock(rhs, curBTerm);
-      curBTerm = irJump.builder()
-          .dest(label[1])
-          .build();
-      entity res2 = (entity) (node.getRhs()).accept(this);
+      var lhs = (irBlock.builder().label(label[1]).stmts(new vector<irStmt>()).build());
+      joinBlock(lhs, curBTerm);
+      curBTerm = irJump.builder().dest(label[2]).build();
       // 3 m -> 同一级
+      lhs.setVal(cond, res1.toString(), "i1");
+      lhs.add(irStore.builder().res(res1.toString()).ptr(cond).tp("i1").build());
+      
+      var rhs = (irBlock.builder().label(label[0]).stmts(new vector<irStmt>()).build());
+      joinBlock(rhs, curBTerm);
+      // 3 m -> 同一级
+      entity res2 = (entity) (node.getRhs()).accept(this);
+      rhs.setVal(cond, res2.toString(), "i1");
+      rhs.add(irStore.builder().res(res2.toString()).ptr(cond).tp("i1").build());
+
       var endB = irBlock.builder()
-          .label(label[1])
+          .label(label[2])
           .stmts(new vector<irStmt>())
           .endTerm(endBTerm)
           .build();
       joinBlock(endB, curBTerm);
 
       String resul = curFunc.tmprename();
-      if (node.getOp().equals("LogicOr"))
-        add(irSelect.builder()
-            .res(resul)
-            .cond(res1.toString())
-            .tp1(tp((typeinfo) node.getLhs().getType()))
-            .val1(res1.toString())
-            .tp2(tp((typeinfo) node.getRhs().getType()))
-            .val2(res2.toString())
-            .build());
-      else
-        add(irSelect.builder()
-            .res(resul)
-            .cond(res1.toString())
-            .tp1(tp((typeinfo) node.getRhs().getType()))
-            .val1(res2.toString())
-            .tp2(tp((typeinfo) node.getLhs().getType()))
-            .val2(res1.toString())
-            .build());
+      endB.setFirstLoad(cond, resul);
+      endB.add(irLoad.builder()
+        .res(resul)
+        .ptr(cond)
+        .tp("i1")
+      .build());
       return register.builder()
           .name(resul)
           .build();
@@ -1271,7 +1269,7 @@ public class irBuilder implements astVisitor<irNode> {
             .name(resul)
             .build();
       } else {
-        // arithexpr done
+        // arith expr done
         entity res1 = (entity) (node.getLhs()).accept(this);
         entity res2 = (entity) (node.getRhs()).accept(this);
         String resul = curFunc.tmprename();

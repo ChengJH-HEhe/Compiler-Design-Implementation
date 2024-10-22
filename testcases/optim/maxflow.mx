@@ -19,22 +19,28 @@ int ans = 0;
 int[] visit = new int[110];
 int[] pre = new int[110];
 int[] f = new int[110];
-int i;
-int j;
+int i1;
+int j1;
 int open;
 int closed;
 
 void origin(int N)
 {
+    int i = i1;
+    int j = j1;
 	c = new int[N][];
     for (i = 0; i < N; i ++ ) {
 		c[i] = new int[N];
         for (j = 0; j < N; j ++ )
         c[i][j] = 0;
-    }	
+    }
+    i1 = i;	
+    j1 = j;
 }
 
 int build(int start, int ending) {
+    int i = i1;
+    int j = j1;
     for (i = 1; i <= 49; i++) {
         for (j = 50; j <= 98-i+1; j++) {
             c[i][j] = 1;
@@ -44,12 +50,16 @@ int build(int start, int ending) {
         c[start][i] = 1;
     for (i = 50; i <= 98; i++)
         c[i][ending] = 1;
+    i1 = i;
+    j1 = j;
     return 0;
 }
 
 int find(int ending, int start, int flag) {
     open = 0;
     closed = 1;
+    int i = i1;
+    int j = j1;
     for (i = 1; i <= ending; i++) {
         visit[i] = 0;
     }
@@ -69,11 +79,15 @@ int find(int ending, int start, int flag) {
                 if (closed==ending) flag=1;
             }
     }
+    i1 = i;
+    j1 = j;
     return flag;
 }
 
 int improve(int ending) {
-    i=ending;
+    int i = i1;
+    int j = j1;
+    i = ending;
     ans++;
     while (pre[i]>0) {
         j=pre[i];
@@ -81,6 +95,8 @@ int improve(int ending) {
         c[i][j]++;
         i=j;
     }
+    i1 = i;
+    j1 = j;
     return 0;
 }
 

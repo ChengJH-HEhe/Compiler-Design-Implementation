@@ -36,14 +36,18 @@ public class allocator implements irVisitor {
       return regs.containsKey(str);
     else return true;
   }
-
+  irFuncDef curfunc;
   @SuppressWarnings("unchecked")
-  public allocator(domBuilder Dom) {
+  public allocator(domBuilder Dom, irFuncDef func) {
     dom = Dom;
+    curfunc = func;
     liveStmt = new vector[Dom.cnt];
     for (int i = 0; i < Dom.cnt; i++) {
       liveStmt[i] = new vector<live>();
     }
+    visit(func);
+    spill2Col(func.getParavaluelist());
+
   }
 
   // liveout livein add
@@ -74,7 +78,6 @@ public class allocator implements irVisitor {
   }
 
   void scanBlock(int blockId, String regName) {
-
     if (scanned.get(blockId)) {
       return;
     }
@@ -91,7 +94,8 @@ public class allocator implements irVisitor {
     assert (curStmt >= 0);
     if (curStmt == 0) {
       // no preceding
-      liveStmt[curBlock].get(curStmt).In(reg);
+      if(!liveStmt[curBlock].get(curStmt).In(reg))
+        return;
       var setPhi = dom.id2B.get(curBlock).getPhi();
       if (setPhi != null) {
         for (var phi : setPhi.entrySet()) {
@@ -106,16 +110,18 @@ public class allocator implements irVisitor {
       }
     } else {
       // Code that may throw an exception
-      liveStmt[curBlock].get(curStmt).In(reg);
-      --curStmt;
-      scanOut();
+      if(liveStmt[curBlock].get(curStmt).In(reg)){
+        --curStmt;
+        scanOut();
+      }
     }
   }
 
   void scanOut() {
     assert (curStmt >= 0);
     var def = liveStmt[curBlock].get(curStmt).def;
-    liveStmt[curBlock].get(curStmt).Out(reg);
+    
+    if(liveStmt[curBlock].get(curStmt).Out(reg))
     if (!def.contains(reg)) {
       scanIn();
     }
@@ -196,6 +202,8 @@ public class allocator implements irVisitor {
       addphiDef(live, block);
 
     // phi use -> phi def effective.
+
+    // scan 
     scanned = new BitSet(dom.cnt);
     // begin ssa liveness analysis
     // initialization
@@ -208,7 +216,7 @@ public class allocator implements irVisitor {
         // scan use for phi
         scanPhi(block);
         // scan use for specified variable
-        for (int j = 0; j < liveStmt[i].size(); j++) {
+        for (int j = liveStmt[i].size() - 1; j >= 0; j--) {
           var stmt = liveStmt[i].get(j);
           if (stmt.use != null && stmt.use.contains(reg)) {
             curStmt = j;
@@ -263,7 +271,7 @@ public class allocator implements irVisitor {
         return true;
     // spill normal stmt
     for (int i = 0; i < dom.cnt; ++i) {
-      for (int j = 0; j < liveStmt[i].size(); ++j) {
+      for (int j = liveStmt[i].size() - 1; j >= 0; --j) {
         var stmt = liveStmt[i].get(j);
         if (stmt.out.contains(reg)) {
           int sz = stmt.out.size();

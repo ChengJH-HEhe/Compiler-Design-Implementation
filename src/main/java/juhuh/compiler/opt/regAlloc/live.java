@@ -31,10 +31,16 @@ public class live {
     }
     use.add(u);
   }
-  void Out(String o) {
+  boolean Out(String o) {
+    if(out.contains(o)) 
+      return false;
     out.add(o);
+    return true;
   }
-  void In(String i) {
+  boolean In(String i) {
+    if(in.contains(i))
+      return false; 
     in.add(i);
+    return true;
   }
 }

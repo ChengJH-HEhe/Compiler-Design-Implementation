@@ -11,6 +11,7 @@ import juhuh.compiler.ir.def.*;
 import juhuh.compiler.ir.ins.*;
 import juhuh.compiler.ir.stmt.irBlock;
 import juhuh.compiler.ir.stmt.irStmt;
+import juhuh.compiler.opt.cfgBuilder;
 import juhuh.compiler.opt.regAlloc.allocator;
 import juhuh.compiler.util.vector;
 import juhuh.compiler.util.error.error;
@@ -26,14 +27,43 @@ public class domBuilder implements irVisitor {
   private vector<Integer>[] dom;
   private vector<Integer> postRev;
   BitSet[] domFlag;
+  boolean mem2reg = true;
 
   HashMap<Integer, Integer> loopHeader;
   public int[] loopBody;
 
   private asmBuilder asm;
 
-  public domBuilder(asmBuilder asm) {
+  public domBuilder(asmBuilder asm, cfgBuilder cfg, irFuncDef node) {
     this.asm = asm;
+    // cnt only acccesible in this function
+    // System.err.println("visit func " + node.getFName());
+    initFunc(node);
+    // build graph postReverseOrder
+
+    initPreds(node);
+    Visit();
+    initCFG(cfg);
+
+    // build dominator tree using postReverseOrder
+    // reverse postRev
+
+    getDom();
+    System.err.println("dom Build done");
+    // place PHI cmd
+    if (mem2reg) {
+      placePhi(); // phi Def
+
+      // firstLoad -> phiDef
+      // phi rhs -> def
+      // rename regs
+      path = new vector<>();
+      renameRegs(0);
+
+      path = new vector<>();
+      renameReg(0);
+
+    }
   }
 
   public void delPhi(irRoot root, allocator alloc) {
@@ -42,10 +72,7 @@ public class domBuilder implements irVisitor {
   }
 
   public void visit(irRoot node) throws error {
-    asm.visit(node);
-    for (var def : node.getFDef()) {
-      visit(def);
-    }
+    assert (false);
   }
 
   private void initBlock(irBlock block) {
@@ -227,14 +254,9 @@ public class domBuilder implements irVisitor {
     return !(reg.charAt(0) == '%' || reg.charAt(0) == '@');
   }
 
-  private void renameReg(int index) {
-    // entry block has alloca need to neglect
+  public void renameRegs(int index) {
     irBlock block = id2B.get(index);
     path.add(block);
-    // upd thisblock's firstload reg->ptr replace vecStmt
-    var vecStmt = block.getStmts();
-    // replace stmts
-
     if (block.getRegs() != null)
       for (var entry : block.getRegs().entrySet()) {
         if (entry.getValue() != null)
@@ -243,52 +265,57 @@ public class domBuilder implements irVisitor {
             entry.setValue(replace(block, entry.getValue()));
           }
       }
+    for (var child : ch[index]) {
+      renameRegs(child);
+    }
+    path.rmlst();
+  }
+
+  private void renameReg(int index) {
+    // entry block has alloca need to neglect
+    irBlock block = id2B.get(index);
+    path.add(block);
+    // upd thisblock's firstload reg->ptr replace vecStmt
+    var vecStmt = block.getStmts();
+    // replace stmts
+    vector<irStmt> vec = new vector<irStmt>();
     if (vecStmt != null) {
-      vector<irStmt> vec = new vector<irStmt>();
       for (int i = 0; i < vecStmt.size(); ++i) {
         var stmt = (irIns) (vecStmt.get(i));
-        if (stmt instanceof irAlloca ||
-            (stmt instanceof irLoad && isTmpName(((irLoad) stmt).getPtr())) ||
+        if (stmt instanceof irAlloca)
+          continue;
+        stmt.accept(this);
+        if ((stmt instanceof irLoad && isTmpName(((irLoad) stmt).getPtr())) ||
             (stmt instanceof irStore && isTmpName(((irStore) stmt).getPtr()))) {
           continue;
         }
         // distinguish from phi or from lastBlock?
         // stmt's val
-        stmt.accept(this);
         vec.add(stmt);
         // if from phi then replace it by thisBlock's phi
         // if from lastBlock then replace it by lastBlock's lastDef
       }
-      // upd block's lastdef equals firstload
-      block.setStmts(vec);
     }
-    irIns endT;
-    if (block.getTerminalstmt() != null) {
-      block.getTerminalstmt().accept(this);
-      endT = block.getTerminalstmt();
-    } else {
-      block.getEndTerm().accept(this);
-      endT = block.getEndTerm();
-    }
+    var stmt = block.getTerminalstmt() == null ? block.getEndTerm() : block.getTerminalstmt();
+    stmt.accept(this);
+    // upd block's lastdef equals firstload
+    block.setStmts(vec);
+    block.setTerminalstmt(stmt);
     // ENSURE: regs correct(lstdef)
-    // upd CFG's nxt Phi's rhs using def
-    var vec = new vector<Integer>();
-    if (endT instanceof irJump) {
-      vec.add(id.get(((irJump) endT).getDest()));
-    } else if (endT instanceof irBranch) {
-      vec.add(id.get(((irBranch) endT).iftrue));
-      vec.add(id.get(((irBranch) endT).iffalse));
-    }
-    for (var domf : vec) {
-      // set this domf's def
-      var setPhi = id2B.get(domf).getPhi();
+    // upd CFG's nxt Phi's rhs using findVal
+
+    for (var nxt : outCnt[index]) {
+      // set this nxt's def
+      var setPhi = id2B.get(nxt).getPhi();
       for (var entry : setPhi.entrySet()) {
-        
-        entry.getValue().getLabel2val().put(block.getLabel(), replacePtr(block,
-            entry.getKey()));
+        if (block.getLabel().equals("log.end1") && entry.getKey().equals("%log.res1"))
+          System.err.println("Debug");
+        var repl = replace(block, replacePtr(block, entry.getKey()));
+        entry.getValue().getLabel2val().put(block.getLabel(), repl);
       }
     }
-    for (var child : ch[id.get(block.getLabel())]) {
+
+    for (var child : ch[index]) {
       renameReg(child);
     }
     path.rmlst();
@@ -309,18 +336,20 @@ public class domBuilder implements irVisitor {
     for (int i = 0; i < cnt; ++i) {
       var block = id2B.get(i);
       for (var entry : block.getPhi().entrySet()) {
+        // LhsPhiDef setVal ; only null -> phi.
         if (block.findVal(entry.getKey()) == null)
           block.setVal(entry.getKey(), entry.getValue().getReg(), entry.getValue().getTp());
       }
     }
   }
 
+  // visit every block to add phi Def
   private void visitPhi(int i) {
 
     var block = id2B.get(i);
     if (block.isUnreachable())
       return;
-    // if ptr2reg's reg equals lastDef, i.e. no actual def, not add phi
+    // (WRONG!) if ptr2reg's reg equals lastDef, i.e. no actual def, not add phi
     BitSet visited = new BitSet(cnt);
     Queue<Integer> q = new LinkedList<>();
     q.offer(i);
@@ -334,6 +363,7 @@ public class domBuilder implements irVisitor {
       }
     }
     // regs may only contain firstload result
+
     if (block.getRegs() != null)
       for (var entry : block.getRegs().entrySet()) {
         // fix: entry's reg not first load
@@ -357,13 +387,24 @@ public class domBuilder implements irVisitor {
       }
     // curBlocks regs should update with curBlock's phi-lhs
     // find-first-load only store %_
-
   }
 
   vector<Integer>[] outCnt;
-  // redef critical edge
 
+  // redef critical edge
   @SuppressWarnings("unchecked")
+  public void initCFG(cfgBuilder cfg) {
+    outCnt = new vector[cnt];
+    for (int i = 0; i < cnt; ++i)
+      outCnt[i] = new vector<>();
+    for (int i = 1; i < cnt; ++i) {
+      for (var pre : preds[i])
+        outCnt[pre].add(i);
+    }
+    cfg.accept(cnt, outCnt, preds, id, id2B);
+
+  }
+
   private void delPhi(irFuncDef curFunc, allocator alloc) {
     // phi -> add 0 : spj in asmBuilder
     // problem: critical edge? domF must have more than one pred,(endpoint ok) but
@@ -372,13 +413,6 @@ public class domBuilder implements irVisitor {
     // if st is one-child, then add 0 in this block
     // else add 0 in a new created block
     boolean[] inOnly = new boolean[cnt];
-    vector<Integer>[] outCnt = new vector[cnt];
-    for (int i = 0; i < cnt; ++i)
-      outCnt[i] = new vector<>();
-    for (int i = 1; i < cnt; ++i) {
-      for (var pre : preds[i])
-        outCnt[pre].add(i);
-    }
     for (int i = 0; i < cnt; ++i) {
       inOnly[i] = (outCnt[i].size() == 1);
       boolean used = false;
@@ -395,7 +429,7 @@ public class domBuilder implements irVisitor {
         if (used)
           break;
       }
-      if(!used)
+      if (!used)
         inOnly[i] = true;
     }
     // st not only-child, -> endterm is still certain
@@ -426,7 +460,7 @@ public class domBuilder implements irVisitor {
         var nxt = id2B.get(Nxt);
         // nxt block's find this block's value should add 0 in this block
         for (var phiLhs : nxt.getPhi().entrySet()) {
-          if(phiLhs.getValue().getReg().equals("%.1.for.cond.1"))
+          if (phiLhs.getValue().getReg().equals("%.1.for.cond.1"))
             System.err.println("debug");
           if (alloc.exist(phiLhs.getValue().getReg())) {
             if (phiLhs.getValue().getLabel2val().get(block.getLabel()) != null) {
@@ -450,27 +484,12 @@ public class domBuilder implements irVisitor {
     }
   }
 
+  public allocator alloc;
+
   @Override
   public void visit(irFuncDef node) throws error {
-    // cnt only acccesible in this function
-    // System.err.println("visit func " + node.getFName());
-    initFunc(node);
-    // build graph postReverseOrder
-    initPreds(node);
-    Visit();
-    // build dominator tree using postReverseOrder
-    // reverse postRev
-    // for (var i : postRev) {
-    // System.err.print(i + " ");
-    // }
-    // System.err.println("postRevOrder");
-
-    getDom();
-    // place PHI cmd
-    placePhi();
-    // rename regs
-    path = new vector<>();
-    renameReg(0);
+    if (!mem2reg)
+      return;
     // reset phi: add 0, xi -> opt phi
     // ir should be right
 
@@ -479,13 +498,12 @@ public class domBuilder implements irVisitor {
     // first step: loop header, loop body classify
     defLoop();
     // spill use & color
-    var alloc = new allocator(this);
-    alloc.visit(node);
-    alloc.spill2Col(node.getParavaluelist());
+
+    alloc = new allocator(this, node);
+
     // delphi
     delPhi(node, alloc);
     // asm rewrite
-
     asm.setCol(alloc.regColor);
     asm.visit(node);
   }
@@ -550,16 +568,21 @@ public class domBuilder implements irVisitor {
   }
 
   private String replace(irBlock block, String oldReg) {
-    var res = block.findFirstLoad(oldReg);
-    String ans = "";
-    if (res != null) {
-      if (block.getPhi().containsKey(res))
-        ans = res + "." + block.getLabel(); // phi has contain the ptr name if needed
-      else {
-        ans = findPre(res);
+    String ans = oldReg;
+    // if(oldReg.equals("_26")) {
+    //   System.err.println("233333");
+    // }
+    for (int i = path.size() - 1; i >= 0; --i) {
+      var Block = path.get(i);
+      var res = Block.findFirstLoad(oldReg);
+      if (Block.findFirstLoad(oldReg) != null) {
+        if (Block.getPhi().containsKey(res))
+          ans = res + "." + Block.getLabel(); // phi has contain the ptr name if needed
+        else
+          ans = findPre(res);
+        return ans;
       }
-    } else
-      ans = oldReg;
+    }
     return ans;
   }
 
@@ -595,6 +618,8 @@ public class domBuilder implements irVisitor {
   @Override
   public void visit(irBranch node) throws error {
     // do nothing
+    var block = path.getlst();
+    node.setCond(replace(block, node.getCond()));
   }
 
   @Override
@@ -636,7 +661,8 @@ public class domBuilder implements irVisitor {
   public void visit(irLoad node) throws error {
     // done previously
     var block = path.getlst();
-    node.setPtr(replace(block, node.getPtr()));
+    if (!isTmpName(node.getPtr()))
+      node.setPtr(replace(block, node.getPtr()));
     node.setRes(replace(block, node.getRes()));
   }
 
@@ -645,7 +671,8 @@ public class domBuilder implements irVisitor {
     // getelementptr's result should be added too
     // but if not?
     var block = path.getlst();
-    node.setPtr(replace(block, node.getPtr()));
+    if (!isTmpName(node.getPtr()))
+      node.setPtr(replace(block, node.getPtr()));
     node.setRes(replace(block, node.getRes()));
   }
 

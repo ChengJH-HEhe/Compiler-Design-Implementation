@@ -52,6 +52,22 @@ public class irBlock extends irStmt{
     regs.put(ptr, reg);
     mtp.put(ptr, tp);
   }
+  // TODO acquire each irIns useless or not.
+  private boolean phiEmpty() {
+    for(var p : phi.values())
+      if(!p.useless)
+        return false;
+    return true;
+  }
+  public boolean isEmpty() {
+    if (phiDel != null && !phiEmpty())
+      return false;
+    if(stmts != null)
+      for(var stmt : stmts)
+        if(!stmt.isUseless())
+          return false;
+    return true;
+  }
   public String findVal(String ptr) {
     if(regs == null)  {
       regs = new HashMap<>();

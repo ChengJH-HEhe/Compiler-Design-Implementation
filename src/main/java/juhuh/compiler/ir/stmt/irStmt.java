@@ -10,6 +10,7 @@ import juhuh.compiler.util.error.error;
 
 public class irStmt extends irNode{
   String indent;
+  public boolean useless;
   @Override
   public String toString() {
     return indent;

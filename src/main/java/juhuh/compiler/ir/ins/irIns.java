@@ -8,6 +8,7 @@ import juhuh.compiler.util.error.error;
 @lombok.Getter
 @lombok.Setter
 public class irIns extends irStmt{
+  
   @Override
   public String toString(){
     throw new UnsupportedOperationException("irIns toString");
