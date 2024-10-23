@@ -1,5 +1,6 @@
 package juhuh.compiler.opt.regAlloc;
 
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -9,14 +10,15 @@ import juhuh.compiler.backend.asm.*;
 import juhuh.compiler.backend.asm.ins.pseudo;
 import juhuh.compiler.backend.asm.ins.riscS;
 import juhuh.compiler.util.*;
+import juhuh.compiler.util.error.error;
 
 public class regCol {
   HashMap<String, color> regs;
-  HashSet<Integer> inUse;
+  BitSet inUse, spReg;;
   public int spillCount = 0, argsId = 0;
   int K = 25;
 
-  public void setSpillCount(HashSet<String> out) {
+  public int getSpillCount(HashSet<String> out) {
     int count = 0;
     for (var str : out) {
       if (regs.get(str) != null && regs.get(str).spilled) {
@@ -24,16 +26,17 @@ public class regCol {
           count++;
       }
     }
-    spillCount = Math.max(spillCount, count + Math.max(0, argsId - 8));
+    return count + Math.max(0, argsId - 8);
+  }
+  public void setSpillCount(int cnt) {
+    spillCount = cnt;
+    spReg = new BitSet(cnt);
   }
 
   public regCol() {
     regs = new HashMap<String, color>();
-    inUse = new HashSet<Integer>();
-    spillregs = new HashSet<>();
-    for (int i = 0; i < spillCount; i++) {
-      spillregs.add(i);
-    }
+    inUse = new BitSet(25);
+    
   }
 
   public color getCol(String name) {
@@ -157,39 +160,40 @@ private int anum(int num) {
       liveIn.remove(def);
 
     for (int i = 0; i < spillCount; ++i)
-      spillregs.add(i);
-    inUse.clear();
+      spReg.set(i);
+    for(int i = 0; i < K; ++i)
+      inUse.set(i);
     for (String reg : liveIn) {
       if (regs.get(reg) != null) {
         var col = regs.get(reg);
         if (!col.spilled)
-          inUse.add(col.id);
+          inUse.flip(col.id);
         else
-          spillregs.remove(col.id);
+          if(col.id != -114514)
+            spReg.flip(col.id);
       }
     }
   }
   public boolean used(int num) {
-    return inUse.contains(num);
+    return !inUse.get(num);
   }
   private int findCol() {
     
-    for (int i = 0; i < K; i++) {
-      if (!inUse.contains(i)) {
-        inUse.add(i);
-        // System.err.println("Register " + i + " is found");
-        return i;
-      }
+    int res = inUse.nextSetBit(0);
+    if(res == -1) {
+      throw new error("no more color");
     }
-    System.err.println("No available color for " + K + " colors");
-    return 23333333;
+    inUse.flip(res);
+    return res;
   }
 
-  private HashSet<Integer> spillregs;
 
   private int findSpilled() {
-    int res = spillregs.iterator().next();
-    spillregs.remove(res);
+    int res = spReg.nextSetBit(0);
+    if(res == -1) {
+      throw new error("no more sp");
+    }
+    spReg.flip(res);
     return res;
   }
 
@@ -213,7 +217,6 @@ private int anum(int num) {
     if(num <= 7){
       c.spilled = false;
       c.id = anum(num);
-      inUse.add(c.id);
     } else {
       c.spilled = true;
       c.id = num - 8;
@@ -224,8 +227,8 @@ private int anum(int num) {
   public void addReg(String reg, boolean isSpilled) {
     color c = new color();
     if (regs.get(reg) != null && regs.get(reg).id == -114514) {
-      if (reg.equals("%a"))
-        System.err.println("debug");
+      // if (reg.equals("%a"))
+      //   System.err.println("debug");
       c.spilled = true;
       c.id = findSpilled();
       regs.put(reg, c);
@@ -251,10 +254,10 @@ private int anum(int num) {
     }
     var col = regs.get(reg);
     if (!col.spilled)
-      inUse.remove(col.id);
+      inUse.set(col.id);
     else {
       if (col.id != -114514)
-        spillregs.add(col.id);
+        spReg.set(col.id);
     }
   }
 }

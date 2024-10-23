@@ -32,11 +32,14 @@ public class allocator implements irVisitor {
   int curBlock = 0, curStmt = 0;
 
   public boolean exist(String str) {
-    if(str.charAt(0) == '%')
+    if (str.charAt(0) == '%')
       return regs.containsKey(str);
-    else return true;
+    else
+      return true;
   }
+
   irFuncDef curfunc;
+
   @SuppressWarnings("unchecked")
   public allocator(domBuilder Dom, irFuncDef func) {
     dom = Dom;
@@ -85,7 +88,13 @@ public class allocator implements irVisitor {
     int tmp1 = curBlock, tmp2 = curStmt;
     curBlock = blockId;
     curStmt = liveStmt[curBlock].size() - 1;
-    scanOut();
+    assert (curStmt >= 0);
+    var def = liveStmt[curBlock].get(curStmt).def;
+
+    if (liveStmt[curBlock].get(curStmt).Out(reg))
+      if (!def.contains(reg)) {
+        scanIn();
+      }
     curBlock = tmp1;
     curStmt = tmp2;
   }
@@ -94,12 +103,12 @@ public class allocator implements irVisitor {
     assert (curStmt >= 0);
     if (curStmt == 0) {
       // no preceding
-      if(!liveStmt[curBlock].get(curStmt).In(reg))
+      if (!liveStmt[curBlock].get(curStmt).In(reg))
         return;
       var setPhi = dom.id2B.get(curBlock).getPhi();
       if (setPhi != null) {
         for (var phi : setPhi.entrySet()) {
-          // phi def use reg?
+          // phi def reg?
           if (phi.getValue() != null && phi.getValue().getReg().equals(reg)) {
             return;
           }
@@ -110,25 +119,21 @@ public class allocator implements irVisitor {
       }
     } else {
       // Code that may throw an exception
-      if(liveStmt[curBlock].get(curStmt).In(reg)){
+      if (liveStmt[curBlock].get(curStmt).In(reg)) {
         --curStmt;
-        scanOut();
+        assert (curStmt >= 0);
+        var def = liveStmt[curBlock].get(curStmt).def;
+
+        if (liveStmt[curBlock].get(curStmt).Out(reg))
+          if (!def.contains(reg)) {
+            scanIn();
+          }
       }
     }
   }
 
-  void scanOut() {
-    assert (curStmt >= 0);
-    var def = liveStmt[curBlock].get(curStmt).def;
-    
-    if(liveStmt[curBlock].get(curStmt).Out(reg))
-    if (!def.contains(reg)) {
-      scanIn();
-    }
-  }
-
   private HashMap<String, Integer> phi2blckId = new HashMap<>();
-
+  // private HashMap<String, vector<Integer>> useB = new HashMap<>();
   void findphiDef() {
     for (int i = 0; i < dom.cnt; i++) {
       for (var stmt : dom.id2B.get(i).getPhi().entrySet()) {
@@ -193,30 +198,41 @@ public class allocator implements irVisitor {
     visit(node.getRet());
     for (var in : node.getRet().getLive().in)
       live.in.add(in);
+
     // phi def in regs, then phi use is all effective, should be added.
     findphiDef();
     // phi.def si?
     addphiDef(live, node.getEntry());
     addphiDef(live, node.getRet());
+
     for (var block : node.getBody())
       addphiDef(live, block);
 
     // phi use -> phi def effective.
-
-    // scan 
+    System.err.println("begin scan");
+    // scan
     scanned = new BitSet(dom.cnt);
     // begin ssa liveness analysis
     // initialization
+    int num = 1;
     for (var reg1 : regs.keySet()) {
       reg = reg1;
+      System.err.println("scan " + (++num) + " " +  reg);
       scanned.clear();
       for (int i = 0; i < dom.cnt; i++) {
         curBlock = i;
-        var block = dom.id2B.get(i);
+        var Node = dom.id2B.get(i);
         // scan use for phi
-        scanPhi(block);
+        for (var stmt : Node.getPhi().entrySet()) {
+          var phi = stmt.getValue();
+          for (var val : phi.getLabel2val().entrySet()) {
+            if (val.getValue() != null && val.getValue().equals(reg)) {
+              scanBlock(dom.id.get(val.getKey()), val.getValue());
+            }
+          }
+        }
         // scan use for specified variable
-        for (int j = liveStmt[i].size() - 1; j >= 0; j--) {
+        for (int j = 0; j < liveStmt[i].size(); j++) {
           var stmt = liveStmt[i].get(j);
           if (stmt.use != null && stmt.use.contains(reg)) {
             curStmt = j;
@@ -244,19 +260,19 @@ public class allocator implements irVisitor {
   }
 
   private void spillReg() {
+    for (int i = 0; i < dom.cnt; ++i) {
+      phiIn.get(i).remove(reg);
+      for (int j = 0; j < liveStmt[i].size(); ++j) {
+        liveStmt[i].get(j).spReg(reg);
+      }
+    }
     regColor.addSpill(reg);
   }
-
+  vector<HashSet<String>> phiIn = new vector<>();
   private boolean spillPhi(int id) {
-    @SuppressWarnings("unchecked")
-    HashSet<String> out = (HashSet<String>) (liveStmt[id].get(0).in).clone();
+    HashSet<String> out = phiIn.get(id);
     // check if [id].[0].in is phi.out
-
     int sz = out.size();
-    for (var outReg : out) {
-      if (spilled(outReg))
-        --sz;
-    }
     if (sz > regColor.K) {
       spillReg();
       return true;
@@ -264,31 +280,46 @@ public class allocator implements irVisitor {
     return false;
   }
 
+  private vector<String> debug;
+
   public boolean spReg() {
     // spill phi
+    boolean allsat = true;
     for (int i = 0; i < dom.cnt; ++i)
-      if (spillPhi(i))
-        return true;
+      if (spillPhi(i)){
+        spillReg();
+        return false;
+      } else {
+        allsat &= phiIn.get(i).size() <= regColor.K;
+      }
     // spill normal stmt
+    
     for (int i = 0; i < dom.cnt; ++i) {
-      for (int j = liveStmt[i].size() - 1; j >= 0; --j) {
+      for (int j = 0; j < liveStmt[i].size(); ++j) {
         var stmt = liveStmt[i].get(j);
+        allsat &= stmt.sp.size() <= regColor.K;
         if (stmt.out.contains(reg)) {
-          int sz = stmt.out.size();
+          int sz = stmt.sp.size();
           if (sz <= regColor.K)
             continue;
-          for (var outReg : stmt.out) {
-            if (spilled(outReg))
-              --sz;
+          if (reg.equals("%f.3.5.for.cond4.0.0")) {
+            if (sz == 25) {
+              debug = new vector<String>();
+              for (var outReg : stmt.out) {
+                if (!spilled(outReg))
+                  debug.add(outReg);
+              }
+            }
+            System.err.println("Debug");
           }
           if (sz > regColor.K) {
             spillReg();
-            return true;
+            return false;
           }
         }
       }
     }
-    return false;
+    return allsat;
   }
 
   public void preColor(int blockId) {
@@ -313,12 +344,14 @@ public class allocator implements irVisitor {
     for (var phiuse : dom.id2B.get(blockId).getPhi().entrySet()) {
       var def = phiuse.getValue().getReg();
       if (out.contains(def)) {
+        if (def.equals(("%f.3.5.for.cond4.0.0")))
+          System.err.println(dom.id2B.get(blockId).toString());
         regColor.addReg(def, false);
       }
     }
-    // color simple stmt
-    if (dom.id2B.get(blockId).getLabel().equals("for.cond2.0.0"))
-      System.err.println("debug");
+    // // color simple stmt
+    // if (dom.id2B.get(blockId).getLabel().equals("for.cond2.0.0"))
+    // System.err.println("debug");
     for (var live : liveStmt[blockId]) {
       // erase use & not in liveout
       for (var uses : live.use)
@@ -337,22 +370,36 @@ public class allocator implements irVisitor {
     }
   }
 
+  @SuppressWarnings("unchecked")
   public void spill2Col(vector<String> args) {
     // spill the > k
     regColor = new regCol();
     regColor.argsId = (args.size());// notspilled count store
+    
+    /*  pre work !! */
+    
+    for(int i = 0; i < dom.cnt; ++i)
+      phiIn.add((HashSet<String>)(liveStmt[i].get(0).in.clone()));
     List<HashMap.Entry<String, Integer>> entryList = sortByCost();
     // reverse entryList
 
+    /*  pre work done !! */
+
     for (Map.Entry<String, Integer> entry : entryList) {
       reg = entry.getKey();
-      spReg();
+      System.err.println(reg);
+      if(spReg())
+        break;
     }
+
+    var spC = 0;
     for (int i = 0; i < dom.cnt; ++i) {
-      regColor.setSpillCount(liveStmt[i].get(0).in);
+      spC = Math.max(spC, regColor.getSpillCount(liveStmt[i].get(0).in));
       for (int j = 0; j < liveStmt[i].size(); ++j)
-        regColor.setSpillCount(liveStmt[i].get(j).out);
+        spC = Math.max(spC, regColor.getSpillCount(liveStmt[i].get(j).out));
     }
+    regColor.setSpillCount(spC);
+
     // col reg. dominate tree preorder.
     // recolor args
     int tmpcnt = 0;

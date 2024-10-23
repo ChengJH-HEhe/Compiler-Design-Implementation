@@ -62,8 +62,8 @@ public class domBuilder implements irVisitor {
 
       path = new vector<>();
       renameReg(0);
-
     }
+    System.err.println("Rename Reg done");
   }
 
   public void delPhi(irRoot root, allocator alloc) {

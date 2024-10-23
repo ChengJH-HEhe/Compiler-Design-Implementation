@@ -6,14 +6,18 @@ import java.util.HashSet;
 import juhuh.compiler.ir.irNode;
 
 public class live {
-  public HashSet<String> in, out, def, use;
+  public HashSet<String> in, out, def, use, sp;
   public irNode node;
   public live(irNode node) {
     in = new HashSet<String>();
     out = new HashSet<String>();
     def = new HashSet<String>();
     use = new HashSet<String>();
+    sp = new HashSet<String>();
     this.node = node;
+  }
+  void spReg(String ou) {
+    sp.remove(ou);
   }
   void Def(HashMap<String,Integer> reg, int dep, String d) {
     if(reg.containsKey(d)) {
@@ -35,6 +39,7 @@ public class live {
     if(out.contains(o)) 
       return false;
     out.add(o);
+    sp.add(o);
     return true;
   }
   boolean In(String i) {
