@@ -1034,8 +1034,8 @@ public class asmBuilder implements irVisitor {
       pr.st = regColor.getCol(ph.getOp2());
       pr.ed = regColor.getCol(ph.getRes());
       pr.num = edge.size();
-      if (curB.getLabel().equals("cond.end1"))
-        System.err.println("Debug");
+      // if (curB.getLabel().equals("cond.end1"))
+      //   System.err.println("Debug");
       if (pr.ed == null) {
         edge.add(null);
         continue;

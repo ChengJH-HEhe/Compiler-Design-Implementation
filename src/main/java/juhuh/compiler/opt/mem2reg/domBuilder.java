@@ -308,8 +308,8 @@ public class domBuilder implements irVisitor {
       // set this nxt's def
       var setPhi = id2B.get(nxt).getPhi();
       for (var entry : setPhi.entrySet()) {
-        if (block.getLabel().equals("log.end1") && entry.getKey().equals("%log.res1"))
-          System.err.println("Debug");
+        // if (block.getLabel().equals("log.end1") && entry.getKey().equals("%log.res1"))
+        //   System.err.println("Debug");
         var repl = replace(block, replacePtr(block, entry.getKey()));
         entry.getValue().getLabel2val().put(block.getLabel(), repl);
       }
@@ -460,8 +460,8 @@ public class domBuilder implements irVisitor {
         var nxt = id2B.get(Nxt);
         // nxt block's find this block's value should add 0 in this block
         for (var phiLhs : nxt.getPhi().entrySet()) {
-          if (phiLhs.getValue().getReg().equals("%.1.for.cond.1"))
-            System.err.println("debug");
+          // if (phiLhs.getValue().getReg().equals("%.1.for.cond.1"))
+          //   System.err.println("debug");
           if (alloc.exist(phiLhs.getValue().getReg())) {
             if (phiLhs.getValue().getLabel2val().get(block.getLabel()) != null) {
               block.getPhiDel().add(irBinary.builder()

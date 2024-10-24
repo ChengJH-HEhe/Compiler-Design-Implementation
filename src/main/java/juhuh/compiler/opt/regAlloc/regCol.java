@@ -158,11 +158,11 @@ private int anum(int num) {
     // livein del phidef
     for (var def : phidef)
       liveIn.remove(def);
-    for(var in : liveIn)
-      if(regs.get(in) != null) {
-        System.err.println(in + " a" + regs.get(in).id);
-      }
-    System.err.println();
+    // for(var in : liveIn)
+    //   if(regs.get(in) != null) {
+    //     System.err.println(in + " a" + regs.get(in).id);
+    //   }
+    // System.err.println();
     for (int i = 0; i < spillCount; ++i)
       spReg.set(i);
     for(int i = 0; i < K; ++i)
@@ -171,10 +171,10 @@ private int anum(int num) {
       if (regs.get(reg) != null) {
         var col = regs.get(reg);
         if (!col.spilled)
-          inUse.flip(col.id);
+          inUse.clear(col.id);
         else
           if(col.id != -114514)
-            spReg.flip(col.id);
+            spReg.clear(col.id);
       }
     }
   }
@@ -187,7 +187,7 @@ private int anum(int num) {
     if(res == -1) {
       throw new error("no more color");
     }
-    inUse.flip(res);
+    inUse.clear(res);
     return res;
   }
 
@@ -197,7 +197,7 @@ private int anum(int num) {
     if(res == -1) {
       throw new error("no more sp");
     }
-    spReg.flip(res);
+    spReg.clear(res);
     return res;
   }
 

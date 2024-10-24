@@ -351,7 +351,7 @@ public class allocator implements irVisitor {
       // erase use & not in liveout
       for (var uses : live.use)
         if (!live.out.contains(uses)) {
-          System.err.println(live.node.toString() + " erase " + " " + uses);
+          // System.err.println(live.node.toString() + " erase " + " " + uses);
           regColor.eraseReg(uses);
         }
       // color def
@@ -383,7 +383,7 @@ public class allocator implements irVisitor {
 
     for (Map.Entry<String, Integer> entry : entryList) {
       reg = entry.getKey();
-      System.err.println(reg);
+      // System.err.println(reg);
       if(spReg())
         break;
     }
