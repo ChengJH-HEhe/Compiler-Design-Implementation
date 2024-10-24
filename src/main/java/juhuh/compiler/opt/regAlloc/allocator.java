@@ -70,9 +70,12 @@ public class allocator implements irVisitor {
   // q: a stmt, choose the longest reg to spill reduce the probability to spill.
 
   void scanPhi(irBlock node) {
+    
     for (var stmt : node.getPhi().entrySet()) {
       var phi = stmt.getValue();
       for (var val : phi.getLabel2val().entrySet()) {
+        if(reg.equals("%_6"))
+          System.err.println("scan phi " + val.getValue());
         if (val.getValue() != null && val.getValue().equals(reg)) {
           scanBlock(dom.id.get(val.getKey()), val.getValue());
         }
@@ -88,13 +91,7 @@ public class allocator implements irVisitor {
     int tmp1 = curBlock, tmp2 = curStmt;
     curBlock = blockId;
     curStmt = liveStmt[curBlock].size() - 1;
-    assert (curStmt >= 0);
-    var def = liveStmt[curBlock].get(curStmt).def;
-
-    if (liveStmt[curBlock].get(curStmt).Out(reg))
-      if (!def.contains(reg)) {
-        scanIn();
-      }
+    scanOut();
     curBlock = tmp1;
     curStmt = tmp2;
   }
@@ -103,12 +100,12 @@ public class allocator implements irVisitor {
     assert (curStmt >= 0);
     if (curStmt == 0) {
       // no preceding
-      if (!liveStmt[curBlock].get(curStmt).In(reg))
+      if(!liveStmt[curBlock].get(curStmt).In(reg))
         return;
       var setPhi = dom.id2B.get(curBlock).getPhi();
       if (setPhi != null) {
         for (var phi : setPhi.entrySet()) {
-          // phi def reg?
+          // phi def use reg?
           if (phi.getValue() != null && phi.getValue().getReg().equals(reg)) {
             return;
           }
@@ -119,16 +116,19 @@ public class allocator implements irVisitor {
       }
     } else {
       // Code that may throw an exception
-      if (liveStmt[curBlock].get(curStmt).In(reg)) {
+      if(liveStmt[curBlock].get(curStmt).In(reg)){
         --curStmt;
-        assert (curStmt >= 0);
-        var def = liveStmt[curBlock].get(curStmt).def;
-
-        if (liveStmt[curBlock].get(curStmt).Out(reg))
-          if (!def.contains(reg)) {
-            scanIn();
-          }
+        scanOut();
       }
+    }
+  }
+  void scanOut() {
+    assert (curStmt >= 0);
+    var def = liveStmt[curBlock].get(curStmt).def;
+    
+    if(liveStmt[curBlock].get(curStmt).Out(reg))
+    if (!def.contains(reg)) {
+      scanIn();
     }
   }
 
@@ -217,20 +217,14 @@ public class allocator implements irVisitor {
     int num = 1;
     for (var reg1 : regs.keySet()) {
       reg = reg1;
-      System.err.println("scan " + (++num) + " " +  reg);
+      if(reg.equals("%_2"))
+        System.err.println("scan " + (++num) + " " +  reg);
       scanned.clear();
       for (int i = 0; i < dom.cnt; i++) {
         curBlock = i;
         var Node = dom.id2B.get(i);
         // scan use for phi
-        for (var stmt : Node.getPhi().entrySet()) {
-          var phi = stmt.getValue();
-          for (var val : phi.getLabel2val().entrySet()) {
-            if (val.getValue() != null && val.getValue().equals(reg)) {
-              scanBlock(dom.id.get(val.getKey()), val.getValue());
-            }
-          }
-        }
+        scanPhi(Node);
         // scan use for specified variable
         for (int j = 0; j < liveStmt[i].size(); j++) {
           var stmt = liveStmt[i].get(j);
@@ -287,7 +281,6 @@ public class allocator implements irVisitor {
     boolean allsat = true;
     for (int i = 0; i < dom.cnt; ++i)
       if (spillPhi(i)){
-        spillReg();
         return false;
       } else {
         allsat &= phiIn.get(i).size() <= regColor.K;
@@ -329,6 +322,7 @@ public class allocator implements irVisitor {
 
     @SuppressWarnings("unchecked")
     HashSet<String> in = (HashSet<String>) (liveStmt[blockId].get(0).in).clone();
+    System.err.println(dom.id2B.get(blockId).getLabel() + ":\n");
     regColor.orLiveIn(in, dom.id2B.get(blockId).getPhi().keySet());
 
     // phi def should be colored(if in [0]in)
@@ -337,6 +331,7 @@ public class allocator implements irVisitor {
       for (var reg : regSet.values())
         if (reg != null && !out.contains(reg)) {
           regColor.eraseReg(reg);
+          System.err.println(dom.id2B.get(blockId).getLabel() + " phi erase " + " " + reg);
         }
     }
 
@@ -356,6 +351,7 @@ public class allocator implements irVisitor {
       // erase use & not in liveout
       for (var uses : live.use)
         if (!live.out.contains(uses)) {
+          System.err.println(live.node.toString() + " erase " + " " + uses);
           regColor.eraseReg(uses);
         }
       // color def

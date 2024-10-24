@@ -158,7 +158,11 @@ private int anum(int num) {
     // livein del phidef
     for (var def : phidef)
       liveIn.remove(def);
-
+    for(var in : liveIn)
+      if(regs.get(in) != null) {
+        System.err.println(in + " a" + regs.get(in).id);
+      }
+    System.err.println();
     for (int i = 0; i < spillCount; ++i)
       spReg.set(i);
     for(int i = 0; i < K; ++i)
@@ -244,11 +248,13 @@ private int anum(int num) {
     } else {
       c.spilled = false;
       c.id = findCol();
+      System.err.println(reg + " a" + c.id);
     }
     regs.put(reg, c);
   }
 
   public void eraseReg(String reg) {
+  
     if (regs.get(reg) == null) {
       return;
     }

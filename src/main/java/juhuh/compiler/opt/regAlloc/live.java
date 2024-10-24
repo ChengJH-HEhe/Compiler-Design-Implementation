@@ -36,6 +36,8 @@ public class live {
     use.add(u);
   }
   boolean Out(String o) {
+    if(o.equals("%_2"))
+      System.err.println("debugggg %_2");
     if(out.contains(o)) 
       return false;
     out.add(o);
@@ -43,6 +45,7 @@ public class live {
     return true;
   }
   boolean In(String i) {
+    
     if(in.contains(i))
       return false; 
     in.add(i);

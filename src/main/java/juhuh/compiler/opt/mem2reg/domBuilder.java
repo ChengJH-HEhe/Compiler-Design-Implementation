@@ -611,6 +611,7 @@ public class domBuilder implements irVisitor {
   @Override
   public void visit(irSelect node) throws error {
     var block = path.getlst();
+    node.setCond(replace(block, node.getCond()));
     node.setVal1(replace(block, node.getVal1()));
     node.setVal2(replace(block, node.getVal2()));
   }

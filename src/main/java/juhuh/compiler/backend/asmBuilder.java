@@ -982,7 +982,7 @@ public class asmBuilder implements irVisitor {
     for (var pr : finalOrder) {
       var ph = phi.get(pr);
       curB.add(pseudo.builder()
-          .strs(new vector<String>("#phi_nonCircle"))
+          .strs(new vector<String>("#phi_nonCircle ", ph.getOp2(), ph.getRes()))
           .build());
       // same place don't move
       if (sameColor(ph.getOp2(), ph.getRes())) {
