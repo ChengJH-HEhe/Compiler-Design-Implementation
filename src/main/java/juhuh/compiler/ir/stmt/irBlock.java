@@ -49,6 +49,8 @@ public class irBlock extends irStmt{
       regs = new HashMap<>();
       mtp = new HashMap<>();
     }
+    if(ptr.equals("%countC.0.2.local"))
+      System.err.println("DBUG");
     regs.put(ptr, reg);
     mtp.put(ptr, tp);
   }

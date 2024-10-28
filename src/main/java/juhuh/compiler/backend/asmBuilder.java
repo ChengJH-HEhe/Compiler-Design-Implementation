@@ -291,6 +291,7 @@ public class asmBuilder implements irVisitor {
       } else {
         if (res == -114514191) {
           throw new error(name + "not colored");
+          // return "NOT COLORED";
         } else {
           curB.add(riscL.builder()
               .op("l" + tp)
@@ -819,7 +820,7 @@ public class asmBuilder implements irVisitor {
   @Override
   public void visit(irStore node) throws error {
     // store rs2.val to rs1.addr
-    if (status == true)
+    if (status == true || node.getRes() == null)
       return;
     curB.add(pseudo.builder()
         .strs(new vector<String>("#Store  "))

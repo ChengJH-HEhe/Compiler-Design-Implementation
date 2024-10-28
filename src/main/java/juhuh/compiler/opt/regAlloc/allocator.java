@@ -91,7 +91,13 @@ public class allocator implements irVisitor {
     int tmp1 = curBlock, tmp2 = curStmt;
     curBlock = blockId;
     curStmt = liveStmt[curBlock].size() - 1;
-    scanOut();
+    assert (curStmt >= 0);
+    var def = liveStmt[curBlock].get(curStmt).def;
+    
+    if(liveStmt[curBlock].get(curStmt).Out(reg))
+    if (!def.contains(reg)) {
+      scanIn();
+    }
     curBlock = tmp1;
     curStmt = tmp2;
   }
@@ -118,17 +124,14 @@ public class allocator implements irVisitor {
       // Code that may throw an exception
       if(liveStmt[curBlock].get(curStmt).In(reg)){
         --curStmt;
-        scanOut();
+        assert (curStmt >= 0);
+        var def = liveStmt[curBlock].get(curStmt).def;
+        
+        if(liveStmt[curBlock].get(curStmt).Out(reg))
+        if (!def.contains(reg)) {
+          scanIn();
+        }
       }
-    }
-  }
-  void scanOut() {
-    assert (curStmt >= 0);
-    var def = liveStmt[curBlock].get(curStmt).def;
-    
-    if(liveStmt[curBlock].get(curStmt).Out(reg))
-    if (!def.contains(reg)) {
-      scanIn();
     }
   }
 
@@ -187,7 +190,7 @@ public class allocator implements irVisitor {
   public void visit(irFuncDef node) throws error {
     regs = new HashMap<String, Integer>();
     // getRegs keyset.
-
+    System.err.println("begin live");
     visit(node.getEntry());
     var live = node.getEntry().getLive();
     for (var block : node.getBody()) {
@@ -198,7 +201,7 @@ public class allocator implements irVisitor {
     visit(node.getRet());
     for (var in : node.getRet().getLive().in)
       live.in.add(in);
-
+    System.err.println("end live");
     // phi def in regs, then phi use is all effective, should be added.
     findphiDef();
     // phi.def si?
@@ -235,7 +238,7 @@ public class allocator implements irVisitor {
         }
       }
     }
-
+    System.err.println("END scan");
   }
 
   private List<HashMap.Entry<String, Integer>> sortByCost() {

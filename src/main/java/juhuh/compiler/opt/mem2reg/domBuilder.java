@@ -31,11 +31,12 @@ public class domBuilder implements irVisitor {
 
   HashMap<Integer, Integer> loopHeader;
   public int[] loopBody;
-
+  private irFuncDef curFunc;
   private asmBuilder asm;
 
   public domBuilder(asmBuilder asm, cfgBuilder cfg, irFuncDef node) {
     this.asm = asm;
+    curFunc = node;
     // cnt only acccesible in this function
     // System.err.println("visit func " + node.getFName());
     initFunc(node);
@@ -245,7 +246,7 @@ public class domBuilder implements irVisitor {
   }
 
   vector<irBlock> path;
-
+  // alloca result.
   boolean isTmpName(String name) {
     return name.length() >= 2 && name.charAt(0) == ('%') && name.charAt(1) != ('_');
   }
@@ -270,7 +271,10 @@ public class domBuilder implements irVisitor {
     }
     path.rmlst();
   }
-
+  private boolean globalUnuse(String ptr) {
+    return !curFunc.getFName().equals("__init__") 
+      && ptr.charAt(0) == '@' && curFunc.unUsed(ptr);
+  }
   private void renameReg(int index) {
     // entry block has alloca need to neglect
     irBlock block = id2B.get(index);
@@ -282,13 +286,16 @@ public class domBuilder implements irVisitor {
     if (vecStmt != null) {
       for (int i = 0; i < vecStmt.size(); ++i) {
         var stmt = (irIns) (vecStmt.get(i));
-        if (stmt instanceof irAlloca)
+        if (stmt instanceof irAlloca || (stmt instanceof irLoad && globalUnuse(((irLoad) stmt).getPtr()))
+            || (stmt instanceof irStore && globalUnuse(((irStore) stmt).getPtr())))
           continue;
+        
         stmt.accept(this);
         if ((stmt instanceof irLoad && isTmpName(((irLoad) stmt).getPtr())) ||
             (stmt instanceof irStore && isTmpName(((irStore) stmt).getPtr()))) {
           continue;
         }
+      
         // distinguish from phi or from lastBlock?
         // stmt's val
         vec.add(stmt);
@@ -557,8 +564,8 @@ public class domBuilder implements irVisitor {
     // do nothing
   }
 
-  private String findPre(String Ptr) throws error {
-    for (int i = path.size() - 2; i >= 0; --i) {
+  private String findPre(String Ptr,int st) throws error {
+    for (int i = st-1; i >= 0; --i) {
       var res = path.get(i).findVal(Ptr);
       if (res != null)
         return res;
@@ -576,10 +583,16 @@ public class domBuilder implements irVisitor {
       var Block = path.get(i);
       var res = Block.findFirstLoad(oldReg);
       if (Block.findFirstLoad(oldReg) != null) {
+        if(oldReg.equals("%_38"))
+          System.err.println("Degbugdgads;gjk");
         if (Block.getPhi().containsKey(res))
           ans = res + "." + Block.getLabel(); // phi has contain the ptr name if needed
-        else
-          ans = findPre(res);
+        else {
+          ans = findPre(res, i);
+          if(ans == null && i == 0)
+            return null;
+          else return ans;
+        }
         return ans;
       }
     }
@@ -589,7 +602,7 @@ public class domBuilder implements irVisitor {
   private String replacePtr(irBlock block, String res) {
     String ans = block.findVal(res);
     if (ans == null) {
-      ans = findPre(res);
+      ans = findPre(res, path.size() - 1);
     }
     return ans;
   }
@@ -664,7 +677,6 @@ public class domBuilder implements irVisitor {
     var block = path.getlst();
     if (!isTmpName(node.getPtr()))
       node.setPtr(replace(block, node.getPtr()));
-    node.setRes(replace(block, node.getRes()));
   }
 
   @Override
@@ -674,6 +686,8 @@ public class domBuilder implements irVisitor {
     var block = path.getlst();
     if (!isTmpName(node.getPtr()))
       node.setPtr(replace(block, node.getPtr()));
+    if(node.getRes().equals("%_38"))
+      System.err.println("Dbug");
     node.setRes(replace(block, node.getRes()));
   }
 

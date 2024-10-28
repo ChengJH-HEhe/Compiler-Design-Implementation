@@ -1,5 +1,6 @@
 package juhuh.compiler.ir.def;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.ListIterator;
 
@@ -23,7 +24,17 @@ public class irFuncDef extends irDefNode {
   public irBlock curBlock;
 
   LinkedList<irBlock> body;
-
+  private HashMap<String, String> globalVar;
+  public boolean unUsed(String ptr) {
+    return globalVar == null || !globalVar.containsKey(ptr);
+  }
+  public void addGlobal(String ptr,String tp) {
+    
+    if(globalVar == null) {
+      globalVar = new HashMap<>();
+    }
+    globalVar.put(ptr, tp);
+  }
   public String tmprename() {
     return "%_" + (anonyNum++);
   }

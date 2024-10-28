@@ -1,8 +1,8 @@
 package juhuh.compiler.frontend;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Stack;
-
 
 import juhuh.compiler.ast.node.astNode;
 import juhuh.compiler.ast.node.astRoot;
@@ -270,6 +270,14 @@ public class irBuilder implements astVisitor<irNode> {
     astNode mainNode = null;
 
     builtinDef();
+    global = new HashMap<String, String>();
+    for (var globaldef : node.getDefs()) {
+      if (globaldef instanceof astVarDefNode) {
+        var Def = (astVarDefNode) globaldef;
+        var ptrName = curS.setNewVarPtr(Def.getName());
+        global.put(ptrName, tp(Def.getType().getInfo()));
+      }
+    }
     for (var def : node.getDefs()) {
       if (def instanceof astFuncDefNode) {
         if (((astFuncDefNode) def).getInfo().getName().equals("main")) {
@@ -287,7 +295,7 @@ public class irBuilder implements astVisitor<irNode> {
         // global var
         // String def
         var Def = (astVarDefNode) def;
-        var ptrName = curS.setNewVarPtr(Def.getName());
+        var ptrName = curS.getValPtr(Def.getName());
         curFunc = globalInit;
         enter(InitScope, 1, curS.sonN++);
         irGlobalDef globalvar = null;
@@ -313,7 +321,9 @@ public class irBuilder implements astVisitor<irNode> {
         }
         rt.add(globalvar);
         if ((Def).getUnit() != null) {
-          var init = (Def).getUnit().accept(this);
+          global2local = false;
+          var init = (Def).getUnit().accept(this); // Call? store? main not needed.
+          global2local = true;
           curFunc.curBlock.setVal(globalvar.getName(), init.toString(), globalvar.getType());
           add(irStore.builder()
               .tp(globalvar.getType())
@@ -332,6 +342,7 @@ public class irBuilder implements astVisitor<irNode> {
     // add global init call infront!
     var entry = main.getEntry();
     // getEntry SWITCH
+    // add global init?
     var entry1 = irBlock.builder()
         .label("entry")
         .stmts(new vector<irStmt>(irCall.builder()
@@ -341,6 +352,7 @@ public class irBuilder implements astVisitor<irNode> {
             .val(new vector<String>())
             .build()))
         .build();
+    // storeGlobalInit();
     for (var stmt : entry.getStmts()) {
       entry1.add(stmt);
     }
@@ -384,6 +396,7 @@ public class irBuilder implements astVisitor<irNode> {
     curFunc.curBlock = curFunc.getEntry();
     enter(node.getOrigin(), 1, curS.sonN++);
 
+    funcGlobalVarInit();
     if (!((FuncInfo) node.getInfo()).getRetType().equals(SemanticChecker.voidType)) {
       curFunc.getEntry().add(irAlloca.builder()
           .res("%ret.val")
@@ -455,6 +468,7 @@ public class irBuilder implements astVisitor<irNode> {
     if (((FuncInfo) node.getInfo()).getRetType().equals(SemanticChecker.voidType)) {
       curFunc.setRet(irBlock.builder()
           .label("return" + curFunc.getId())
+          .stmts(new vector<irStmt>())
           .endTerm(irRet.builder().tp("void").val("").build())
           .build());
     } else {
@@ -474,6 +488,8 @@ public class irBuilder implements astVisitor<irNode> {
       ret.setVal("%ret.val", result, tp(node.getInfo().getRetType()));
       curFunc.setRet(ret);
     }
+    curFunc.curBlock = curFunc.getRet();
+    funcGlobalVarRestore();
     exit();
     return curFunc;
   }
@@ -588,6 +604,7 @@ public class irBuilder implements astVisitor<irNode> {
     // a::a(ptr this) another funcdef
     enter(new Scope(curS, null, ScopeType.FUNC), curS.depth + 1, curS.sonN++);
     // change1 constructor name
+
     curFunc = irFuncDef.builder()
         .fName(node.getClassName() + "." + node.getClassName())
         .retType("void")
@@ -600,12 +617,15 @@ public class irBuilder implements astVisitor<irNode> {
             .build())
         .ret(irBlock.builder()
             .label("return" + funCount)
+            .stmts(new vector<irStmt>())
             .endTerm(irRet.builder().tp("void").val("").build())
             .build())
         .body(new LinkedList<irBlock>())
         .build();
     ++funCount;
     curFunc.curBlock = curFunc.getEntry();
+    funcGlobalVarInit();
+    // construct func
 
     curFunc.getEntry().add(irAlloca.builder()
         .res("%this.addr")
@@ -626,8 +646,12 @@ public class irBuilder implements astVisitor<irNode> {
       (node.getBlock()).accept(this);
     if (curFunc.curBlock != curFunc.getEntry())
       curFunc.add(curFunc.curBlock);
+    // last but 1
     curFunc.checkRet(irJump.builder()
-        .dest("return" + curFunc.getId()).build());
+    .dest("return" + curFunc.getId()).build());
+
+    curFunc.setCurBlock(curFunc.getRet());
+    funcGlobalVarRestore();
     exit();
     return curFunc;
 
@@ -671,7 +695,7 @@ public class irBuilder implements astVisitor<irNode> {
         .ptr("%." + i)
         .build());
     curFunc.curBlock.setVal("%." + i, "0", "i32");
-    
+
     var resCond = curFunc.tmprename(); // load i
     var brCond = curFunc.tmprename(); // determine i <= size
 
@@ -825,11 +849,100 @@ public class irBuilder implements astVisitor<irNode> {
   }
 
   // node.getFunc.name correct
+  private boolean global2local = true;
+
+  void funcGlobalVarInit() {
+    if (!global2local)
+      return;
+      // all global var? not so much! 
+      // the ones used in the function is enough
+    for (var gv : global.entrySet()) {
+      var tmp = "%" + gv.getKey().substring(1) + ".local";
+      add(irAlloca.builder()
+          .tp(gv.getValue())
+          .res(tmp)
+          .build());
+      var tmpLoad = curFunc.tmprename();
+      var tp = gv.getValue();
+      curFunc.getEntry().add(irLoad.builder()
+          .tp(tp)
+          .res(tmpLoad)
+          .ptr(gv.getKey())
+          .build());
+      // unused.
+      // if (tmp.equals("%countC.0.2.local"))
+      //   System.err.println("233");
+      curFunc.getEntry().setVal(tmp, tmpLoad, tp);
+    }
+  }
+  private boolean added = true;
+  void funcGlobalVarRestore() {
+    if (!global2local)
+      return;
+    for (var gvE : global.entrySet()) {
+      var tmp = "%" + gvE.getKey().substring(1) + ".local";
+      // load from tmp, store to gv;
+      var tp = gvE.getValue();
+      var reg = register.builder().ptr(tmp).build();
+      // added = false;
+      LoadLvalue(reg, tp);
+      added = true;
+      curFunc.curBlock.add(irStore.builder()
+          .tp(tp)
+          .res(reg.toString())
+          .ptr(gvE.getKey())
+          .build());
+    }
+  }
+  // current unUsed not always unUsed.
+  private void storeGlobal() {
+    if (!global2local)
+      return;
+    for (var gvE : global.entrySet()) {
+      var tmp = "%" + gvE.getKey().substring(1) + ".local";
+      // load from tmp, store to gv;
+      var reg = register.builder()
+          .ptr(tmp)
+          .build();
+      // added = false;
+      LoadLvalue(reg, gvE.getValue());
+      added = true;
+      add(irStore.builder()
+          .tp(gvE.getValue())
+          .res(reg.getName())
+          .ptr(gvE.getKey())
+          .build());
+
+    }
+  }
+
+  private void loadGlobal() {
+    if (!global2local)
+      return;
+    for (var gvE : global.entrySet()) {
+      var tmpLoad = curFunc.tmprename();
+      var tp = gvE.getValue();
+      var tmp = "%" + gvE.getKey().substring(1) + ".local";
+      add(irLoad.builder()
+          .tp(tp)
+          .res(tmpLoad)
+          .ptr(gvE.getKey())
+          .build());
+      add(irStore.builder()
+          .tp(tp)
+          .res(tmpLoad)
+          .ptr(tmp)
+          .build());
+      curFunc.curBlock.setVal(tmp, tmpLoad, tp);
+    }
+  }
+
   @Override
   public irNode visit(astCallExprNode node) throws error {
     // call func manage expr add to curFunc.curBlock
     entity caller = null;
     // consider str call this str.substring
+    storeGlobal();
     if (node.getFunc() instanceof astMemberExprNode) {
       // add caller
       // caller.method
@@ -892,7 +1005,7 @@ public class irBuilder implements astVisitor<irNode> {
 
     add(callnode);
     // return val
-
+    loadGlobal();
     return register.builder()
         .name(callnode.getRes())
         .build();
@@ -1154,8 +1267,10 @@ public class irBuilder implements astVisitor<irNode> {
         .build();
 
   }
+
   // TODO select: cond marked;
   private String cond;
+
   @Override
   public irNode visit(astBinaryExprNode node) throws error {
     // calc the res to the curFunc.curBlock & return the res to a register node
@@ -1169,8 +1284,8 @@ public class irBuilder implements astVisitor<irNode> {
           .tp("i1")
           .build());
 
-      String[] label = { "log.rhs" + (binaryCount), "log.lhs" + (binaryCount),"log.end" + (binaryCount),
-           "log.cond" + (binaryCount)};
+      String[] label = { "log.rhs" + (binaryCount), "log.lhs" + (binaryCount), "log.end" + (binaryCount),
+          "log.cond" + (binaryCount) };
       binaryCount++;
       // iftrue -> res1赋值
       // iffalse 跳过res2赋值
@@ -1194,7 +1309,7 @@ public class irBuilder implements astVisitor<irNode> {
       // 3 m -> 同一级
       lhs.setVal(cond, res1.toString(), "i1");
       lhs.add(irStore.builder().res(res1.toString()).ptr(cond).tp("i1").build());
-      
+
       var rhs = (irBlock.builder().label(label[0]).stmts(new vector<irStmt>()).build());
       joinBlock(rhs, curBTerm);
       // 3 m -> 同一级
@@ -1212,10 +1327,10 @@ public class irBuilder implements astVisitor<irNode> {
       String resul = curFunc.tmprename();
       endB.setFirstLoad(cond, resul);
       endB.add(irLoad.builder()
-        .res(resul)
-        .ptr(cond)
-        .tp("i1")
-      .build());
+          .res(resul)
+          .ptr(cond)
+          .tp("i1")
+          .build());
       return register.builder()
           .name(resul)
           .build();
@@ -1384,11 +1499,27 @@ public class irBuilder implements astVisitor<irNode> {
    * block ptr is unique add in funcdef block
    * add global init a unique func,
    */
+
+  private HashMap<String, String> global;
+
   private void LoadLvalue(register reg, String tp) {
     // curB ptr -> reg;
     // var res = curFunc.curBlock.findVal(reg.getPtr());
-    if (defStatus)
+
+    if (reg.getPtr().charAt(0) == '@') {
+      // global -> % name + .local
+      if(added)
+        curFunc.addGlobal(reg.getPtr(), tp);
+      if(global2local) 
+      // first load?
+        reg.setPtr("%" + reg.getPtr().substring(1) + ".local");
+    }
+
+    if (defStatus) {
       return;
+    }
+
+    // decide? cur Func exist global variable
     var name = curFunc.curBlock.findVal(reg.getPtr());
     if (name != null) {
       reg.setName(name);
@@ -1396,20 +1527,13 @@ public class irBuilder implements astVisitor<irNode> {
     }
     // first load
     reg.setName(curFunc.tmprename());
-    curFunc.curBlock.setFirstLoad(reg.getPtr(), reg.getName());
     add(irLoad.builder()
         .res(reg.getName())
         .tp(tp)
         .ptr(reg.getPtr())
         .build());
+    curFunc.curBlock.setFirstLoad(reg.getPtr(), reg.getName());
     curFunc.curBlock.setVal(reg.getPtr(), reg.getName(), tp);
-    // if(defStatus) { // % = const
-    // tmpS.setVal(reg.getPtr(), reg.getName());
-    // } else {
-    // reg.setName(tmpS.findVal(reg.getPtr()));
-    // if(reg.getName() == null ) {
-    // }
-    // }
   }
 
   @Override
@@ -1449,6 +1573,8 @@ public class irBuilder implements astVisitor<irNode> {
             .build());
       } else {
         // only consider lhs is directly alloca's result
+        // or global varName. -> %varName.local, if global appears, it must occur here!
+        // so store those occurred, delete those haven't used.
         LoadLvalue(reg, tp((typeinfo) node.getType()));
       }
       return reg;
