@@ -15,4 +15,8 @@ public class astBreakStmtNode extends astStmtNode {
     public <T> T accept(astVisitor<T> visitor) throws error {
         return visitor.visit(this);
     }
+    @Override
+    public boolean hasCall() {
+        return false;
+    }
 }

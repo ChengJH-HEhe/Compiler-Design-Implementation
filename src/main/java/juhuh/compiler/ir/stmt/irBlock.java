@@ -98,14 +98,18 @@ public class irBlock extends irStmt{
     }
     if(phi != null)
       for(var p : phi.values()){
-        s.append("  " + p.toString() + "\n");
+        var r = (p.toString());
+        if(r != null)
+        s.append(indent + r + "\n");
       }
     if(stmts != null)
     for(var stmt : stmts){
       if(stmt instanceof irBlock)
         s.append(stmt.toString() + "\n");
-      else
-        s.append(super.toString() + stmt.toString() + "\n");
+      else {
+        if(!stmt.useless)
+          s.append(super.toString() + stmt.toString() + "\n");
+      }
     }
     if(terminalstmt != null){
       s.append(super.toString() + terminalstmt.toString() + "\n");

@@ -321,9 +321,10 @@ public class irBuilder implements astVisitor<irNode> {
         }
         rt.add(globalvar);
         if ((Def).getUnit() != null) {
+          var tmp = global2local;
           global2local = false;
           var init = (Def).getUnit().accept(this); // Call? store? main not needed.
-          global2local = true;
+          global2local = tmp;
           curFunc.curBlock.setVal(globalvar.getName(), init.toString(), globalvar.getType());
           add(irStore.builder()
               .tp(globalvar.getType())
@@ -369,7 +370,6 @@ public class irBuilder implements astVisitor<irNode> {
     // System.err.print(main.toString());
     return rt;
   }
-
   @Override
   public irNode visit(astFuncDefNode node) throws error {
     // get irFuncDef cond -> findfor with only depth as the effective info
@@ -395,7 +395,7 @@ public class irBuilder implements astVisitor<irNode> {
 
     curFunc.curBlock = curFunc.getEntry();
     enter(node.getOrigin(), 1, curS.sonN++);
-
+    global2local = (!(node.hasCall()));
     funcGlobalVarInit();
     if (!((FuncInfo) node.getInfo()).getRetType().equals(SemanticChecker.voidType)) {
       curFunc.getEntry().add(irAlloca.builder()
@@ -624,6 +624,7 @@ public class irBuilder implements astVisitor<irNode> {
         .build();
     ++funCount;
     curFunc.curBlock = curFunc.getEntry();
+    global2local = (!(node.hasCall()));
     funcGlobalVarInit();
     // construct func
 
@@ -884,7 +885,7 @@ public class irBuilder implements astVisitor<irNode> {
       // load from tmp, store to gv;
       var tp = gvE.getValue();
       var reg = register.builder().ptr(tmp).build();
-      // added = false;
+      added = false;
       LoadLvalue(reg, tp);
       added = true;
       curFunc.curBlock.add(irStore.builder()
@@ -904,15 +905,12 @@ public class irBuilder implements astVisitor<irNode> {
       var reg = register.builder()
           .ptr(tmp)
           .build();
-      // added = false;
       LoadLvalue(reg, gvE.getValue());
-      added = true;
       add(irStore.builder()
           .tp(gvE.getValue())
           .res(reg.getName())
           .ptr(gvE.getKey())
           .build());
-
     }
   }
 
@@ -1505,7 +1503,6 @@ public class irBuilder implements astVisitor<irNode> {
   private void LoadLvalue(register reg, String tp) {
     // curB ptr -> reg;
     // var res = curFunc.curBlock.findVal(reg.getPtr());
-
     if (reg.getPtr().charAt(0) == '@') {
       // global -> % name + .local
       if(added)
@@ -1532,6 +1529,7 @@ public class irBuilder implements astVisitor<irNode> {
         .tp(tp)
         .ptr(reg.getPtr())
         .build());
+    
     curFunc.curBlock.setFirstLoad(reg.getPtr(), reg.getName());
     curFunc.curBlock.setVal(reg.getPtr(), reg.getName(), tp);
   }

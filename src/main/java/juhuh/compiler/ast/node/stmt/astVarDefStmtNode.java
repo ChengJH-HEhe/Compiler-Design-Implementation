@@ -19,4 +19,11 @@ public class astVarDefStmtNode extends astStmtNode{
     public <T> T accept(astVisitor<T> visitor) throws error {
         return visitor.visit(this);
     }
+    @Override
+    public boolean hasCall() {
+        for(var array : array){
+            if(array.hasCall()) return true;
+        }
+        return false;
+    }
 }

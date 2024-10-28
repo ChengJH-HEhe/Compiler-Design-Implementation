@@ -8,7 +8,7 @@ import juhuh.compiler.util.error.error;
 @lombok.Getter
 @lombok.Setter
 
-public class astNode {
+public abstract class astNode {
   protected astNode parent;
   protected position pos;
   public astNode() {
@@ -18,6 +18,7 @@ public class astNode {
     this.pos = pos;
   }
 
+  public abstract boolean hasCall();
   public <T> T accept(astVisitor<T> visitor) throws error {
     return visitor.visit(this);
   }

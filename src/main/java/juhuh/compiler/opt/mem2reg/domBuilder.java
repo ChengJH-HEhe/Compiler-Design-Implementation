@@ -1,6 +1,7 @@
 package juhuh.compiler.opt.mem2reg;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -25,7 +26,7 @@ public class domBuilder implements irVisitor {
   public int cnt = 0;
   public vector<Integer>[] preds, ch;
   private vector<Integer>[] dom;
-  private vector<Integer> postRev;
+  public vector<Integer> postRev;
   BitSet[] domFlag;
   boolean mem2reg = true;
 
@@ -258,14 +259,23 @@ public class domBuilder implements irVisitor {
   public void renameRegs(int index) {
     irBlock block = id2B.get(index);
     path.add(block);
-    if (block.getRegs() != null)
+    var erase = new HashSet<String>();
+    if (block.getRegs() != null) {
+
       for (var entry : block.getRegs().entrySet()) {
-        if (entry.getValue() != null)
-          if (!isConst(entry.getValue()) && block.findFirstLoad(entry.getValue()) != null) {
+        if (!local2globalUnuse(entry.getKey())) {
+          if(entry.getValue() != null && !isConst(entry.getValue()) && block.findFirstLoad(entry.getValue()) != null) {
             // lastdef = firstdef
             entry.setValue(replace(block, entry.getValue()));
           }
+        } else {
+          erase.add(entry.getKey());
+        }
       }
+      for(var unUsedGlobal : erase) {
+        block.getRegs().remove(unUsedGlobal);
+      }
+    }
     for (var child : ch[index]) {
       renameRegs(child);
     }
@@ -310,6 +320,9 @@ public class domBuilder implements irVisitor {
     block.setTerminalstmt(stmt);
     // ENSURE: regs correct(lstdef)
     // upd CFG's nxt Phi's rhs using findVal
+    
+    // del unUsed phidef.
+
 
     for (var nxt : outCnt[index]) {
       // set this nxt's def
@@ -327,7 +340,9 @@ public class domBuilder implements irVisitor {
     }
     path.rmlst();
   }
-
+  private boolean local2globalUnuse(String localPtr) {
+    return localPtr.endsWith(".local") && globalUnuse("@" + localPtr.substring(1, localPtr.length() - 6));
+  }
   private void placePhi() {
     // upd this' lst-def -> domF's prePhi,
     // add phi only, lhs & blockname is it really helpful? add phi
@@ -374,7 +389,7 @@ public class domBuilder implements irVisitor {
     if (block.getRegs() != null)
       for (var entry : block.getRegs().entrySet()) {
         // fix: entry's reg not first load
-        if (entry.getValue() != null
+        if (!local2globalUnuse(entry.getKey()) && entry.getValue() != null
             && (isConst(entry.getValue()) || !entry.getKey().equals(block.findFirstLoad(entry.getValue())))) {
           // new irPhi
           // upd: lhs only local variables
@@ -431,8 +446,9 @@ public class domBuilder implements irVisitor {
           if (phiLhs.getValue().getLabel2val().get(id2B.get(i).getLabel()) != null &&
               alloc.exist(phiLhs.getValue().getReg())) {
             used = true;
+            phiLhs.getValue().used = true; // used = false iff alloc !exist
             break;
-          }
+          } else phiLhs.getValue().getLabel2val().put(id2B.get(i).getLabel(), null);
         if (used)
           break;
       }
@@ -479,7 +495,7 @@ public class domBuilder implements irVisitor {
                   .tp(phiLhs.getValue().getTp())
                   .build());
             }
-          }
+          } 
         }
       }
       if (!inOnly[i]) {
@@ -511,6 +527,7 @@ public class domBuilder implements irVisitor {
     // delphi
     delPhi(node, alloc);
     // asm rewrite
+    
     asm.setCol(alloc.regColor);
     asm.visit(node);
   }
@@ -582,16 +599,14 @@ public class domBuilder implements irVisitor {
     for (int i = path.size() - 1; i >= 0; --i) {
       var Block = path.get(i);
       var res = Block.findFirstLoad(oldReg);
+      if(res != null && res.equals("%Mod.0.0.local"))
+        System.err.println("DEBUGGGG");
       if (Block.findFirstLoad(oldReg) != null) {
-        if(oldReg.equals("%_38"))
-          System.err.println("Degbugdgads;gjk");
         if (Block.getPhi().containsKey(res))
           ans = res + "." + Block.getLabel(); // phi has contain the ptr name if needed
         else {
           ans = findPre(res, i);
-          if(ans == null && i == 0)
-            return null;
-          else return ans;
+          return ans;
         }
         return ans;
       }

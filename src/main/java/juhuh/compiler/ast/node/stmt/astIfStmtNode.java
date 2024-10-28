@@ -21,4 +21,8 @@ public class astIfStmtNode extends astStmtNode implements scopeStmt{
     public <T> T accept(astVisitor<T> visitor) throws error {
         return visitor.visit(this);
     }
+    @Override
+    public boolean hasCall() {
+        return (thenStmt != null && thenStmt.hasCall()) || (elseStmt != null && elseStmt.hasCall()) || cond.hasCall();
+    }
 }

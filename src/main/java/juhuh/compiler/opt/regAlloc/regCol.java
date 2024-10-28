@@ -53,10 +53,10 @@ public class regCol {
 String[] arg = {
   "a0","a1","a2", "a3","a4",
   "t0","t1","t2","t3","t4",
-  "s0","s1","s2",
-  "a7","a6","a5",
   "s3","s4","s5","s6",
   "s7","s8","s9","s10","s11",
+  "s0","s1","s2",
+  "a7","a6","a5",
 };
   
 private int anum(int num) {
@@ -202,6 +202,7 @@ private int anum(int num) {
   }
 
   // spill or color after spill (determine with isSpilled)
+  
   public void addSpill(String reg) {
     color c = new color();
     c.spilled = true;

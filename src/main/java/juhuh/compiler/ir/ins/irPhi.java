@@ -11,7 +11,7 @@ import juhuh.compiler.util.error.error;
 public class irPhi extends irIns {
   String res, labl, tp;
   private HashMap<String, String> label2val;
-  
+  public boolean used;
 
   public String getReg() {
     return res + "." + labl;
@@ -19,6 +19,7 @@ public class irPhi extends irIns {
 
   @Override
   public String toString() {
+    // if(!used) return null;
     String s = getReg() + " = phi " + tp;
     String tpDefault;
     switch (tp) {

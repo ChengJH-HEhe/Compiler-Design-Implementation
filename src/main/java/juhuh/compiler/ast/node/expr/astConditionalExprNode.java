@@ -30,4 +30,8 @@ public class astConditionalExprNode extends astExprNode implements repExpr{
             throw new error("replace expression not exist");
         }
     }
+    @Override
+    public boolean hasCall() {
+        return cond.hasCall() || lhs.hasCall() || rhs.hasCall();
+    }
 }

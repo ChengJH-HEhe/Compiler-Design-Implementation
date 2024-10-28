@@ -25,4 +25,8 @@ public class astFStrExpr extends astExprNode {
       s += vecStr.getlst().toString();
       return s;
     }
+  @Override
+  public boolean hasCall() {
+    return true;
+  }
 }

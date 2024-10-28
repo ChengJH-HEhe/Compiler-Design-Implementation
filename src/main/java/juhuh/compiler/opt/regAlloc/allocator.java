@@ -220,10 +220,9 @@ public class allocator implements irVisitor {
     int num = 1;
     for (var reg1 : regs.keySet()) {
       reg = reg1;
-      if(reg.equals("%_2"))
-        System.err.println("scan " + (++num) + " " +  reg);
       scanned.clear();
-      for (int i = 0; i < dom.cnt; i++) {
+      // postRevOrder.
+      for (int i: dom.postRev) {
         curBlock = i;
         var Node = dom.id2B.get(i);
         // scan use for phi
@@ -383,12 +382,16 @@ public class allocator implements irVisitor {
     // reverse entryList
 
     /*  pre work done !! */
-
+    System.err.println(entryList.size());
+    int sz = 0;
     for (Map.Entry<String, Integer> entry : entryList) {
       reg = entry.getKey();
       // System.err.println(reg);
-      if(spReg())
+      ++sz;
+      if(spReg()) {
+        System.err.println(sz);
         break;
+      }
     }
 
     var spC = 0;

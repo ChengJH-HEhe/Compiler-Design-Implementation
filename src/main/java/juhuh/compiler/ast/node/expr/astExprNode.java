@@ -24,4 +24,7 @@ public class astExprNode extends astNode{
       return visitor.visit(this);
     }
   // add info below
+  public boolean hasCall() {
+    return false;
+  }
 }

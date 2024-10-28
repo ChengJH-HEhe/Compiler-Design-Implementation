@@ -27,5 +27,8 @@ public class astArrayExprNode extends astExprNode implements repExpr{
             throw new error("replace expression error");
         }
     }
-    
+    @Override
+    public boolean hasCall() {
+        return array.hasCall() || sub.hasCall();
+    }
 }

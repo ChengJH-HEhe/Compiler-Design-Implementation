@@ -32,4 +32,8 @@ public class astFuncDefNode extends astDefNode implements scopeStmt{
   public <T> T accept(astVisitor<T> visitor) throws error {
     return visitor.visit(this);
   }
+  @Override
+  public boolean hasCall() {
+    return block != null && block.hasCall();
+  }
 }

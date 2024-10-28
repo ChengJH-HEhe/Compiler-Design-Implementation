@@ -28,5 +28,11 @@ public class astBlockStmtNode extends astStmtNode implements scopeStmt{
     public <T> T accept(astVisitor<T> visitor) throws error {
         return visitor.visit(this);
     }
-    
+    @Override
+    public boolean hasCall() {
+        for (astStmtNode stmt : stmts) {
+            if(stmt.hasCall()) return true;
+        }
+        return false;
+    }
 }

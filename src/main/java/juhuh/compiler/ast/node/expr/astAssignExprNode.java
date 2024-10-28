@@ -31,4 +31,8 @@ public class astAssignExprNode extends astExprNode implements repExpr{
             throw new error("Cannot replace expression that does not exist in this node");
         }
     }
+    @Override
+    public boolean hasCall() {
+        return lhs.hasCall() || rhs.hasCall();
+    }
 }

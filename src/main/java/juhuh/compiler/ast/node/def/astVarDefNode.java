@@ -26,4 +26,8 @@ public class astVarDefNode extends astDefNode implements repExpr{
     public <T> T accept(astVisitor<T> visitor) throws error {
       return visitor.visit(this);
     }
+    @Override
+    public boolean hasCall() {
+        return unit != null && unit.hasCall();
+    }
 }

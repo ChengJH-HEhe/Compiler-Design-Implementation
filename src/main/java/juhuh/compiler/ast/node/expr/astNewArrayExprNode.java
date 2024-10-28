@@ -39,4 +39,8 @@ public class astNewArrayExprNode extends astExprNode implements repExpr{
         }
         throw new error("replace expression not exist");
     }
+    @Override
+    public boolean hasCall() {
+        return true;
+    }
 }

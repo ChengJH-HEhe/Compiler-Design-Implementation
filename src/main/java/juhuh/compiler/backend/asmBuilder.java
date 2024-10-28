@@ -820,8 +820,11 @@ public class asmBuilder implements irVisitor {
   @Override
   public void visit(irStore node) throws error {
     // store rs2.val to rs1.addr
-    if (status == true || node.getRes() == null)
+    if (status == true)
       return;
+    if (node.getRes() == null) {
+      return;
+    }
     curB.add(pseudo.builder()
         .strs(new vector<String>("#Store  "))
         .build());
@@ -866,7 +869,7 @@ public class asmBuilder implements irVisitor {
                 .strs(new vector<String>("mv", "t6", rd))
                 .build());
             rd = "t6";
-          }
+          } 
         } else {
           // rd.ptr point to->args.val
           // spill in stack.
