@@ -1,5 +1,7 @@
 package juhuh.compiler.ir.ins;
 
+import java.util.HashSet;
+
 import juhuh.compiler.frontend.irVisitor;
 import juhuh.compiler.util.error.error;
 
@@ -15,5 +17,13 @@ public class irJump extends irIns{
   @Override
   public void accept(irVisitor visitor) throws error{
     visitor.visit(this);
+  }
+  @Override
+  public String getDef(){
+    return null;
+  }
+  @Override
+  public HashSet<String> getUse(){
+    return null;
   }
 }

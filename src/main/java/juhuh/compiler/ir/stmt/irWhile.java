@@ -1,5 +1,7 @@
 package juhuh.compiler.ir.stmt;
 
+import java.util.HashSet;
+
 import juhuh.compiler.frontend.irVisitor;
 import juhuh.compiler.util.error.error;
 
@@ -24,5 +26,13 @@ public class irWhile extends irStmt{
   @Override
   public void accept(irVisitor visitor) throws error{
     visitor.visit(this);
+  }
+  @Override
+  public HashSet<String> getUse() {
+    return null;
+  }
+  @Override
+  public String getDef() {
+    return null;
   }
 }

@@ -15,4 +15,12 @@ public class irStore extends irIns{
   public void accept(irVisitor visitor) throws error{
     visitor.visit(this);
   }
+  @Override
+  public java.util.HashSet<String> getUse() {
+    return new java.util.HashSet<String>(java.util.Arrays.asList(res, ptr));
+  }
+  @Override
+  public String getDef() {
+    return null;
+  }
 }

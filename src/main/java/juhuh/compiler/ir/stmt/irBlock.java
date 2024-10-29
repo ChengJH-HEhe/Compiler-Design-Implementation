@@ -1,6 +1,7 @@
 package juhuh.compiler.ir.stmt;
 
 import java.util.HashMap;
+import java.util.HashSet;
 
 import juhuh.compiler.frontend.irVisitor;
 import juhuh.compiler.ir.ins.*;
@@ -57,7 +58,7 @@ public class irBlock extends irStmt{
   // TODO acquire each irIns useless or not.
   private boolean phiEmpty() {
     for(var p : phi.values())
-      if(!p.useless)
+      if(p.used)
         return false;
     return true;
   }
@@ -66,7 +67,7 @@ public class irBlock extends irStmt{
       return false;
     if(stmts != null)
       for(var stmt : stmts)
-        if(!stmt.isUseless())
+        if(stmt.isUseful())
           return false;
     return true;
   }
@@ -107,7 +108,7 @@ public class irBlock extends irStmt{
       if(stmt instanceof irBlock)
         s.append(stmt.toString() + "\n");
       else {
-        if(!stmt.useless)
+        if(stmt.useful)
           s.append(super.toString() + stmt.toString() + "\n");
       }
     }
@@ -122,5 +123,13 @@ public class irBlock extends irStmt{
   @Override
   public void accept(irVisitor visitor) throws error{
     visitor.visit(this);
+  }
+  @Override
+  public HashSet<String> getUse() {
+    return null;
+  }
+  @Override
+  public String getDef() {
+    return null;
   }
 }

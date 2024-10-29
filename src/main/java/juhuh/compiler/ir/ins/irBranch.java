@@ -1,5 +1,8 @@
 package juhuh.compiler.ir.ins;
 
+import java.util.Arrays;
+import java.util.HashSet;
+
 import juhuh.compiler.frontend.irVisitor;
 import juhuh.compiler.util.error.error;
 @lombok.experimental.SuperBuilder
@@ -16,5 +19,9 @@ public class irBranch extends irIns{
   @Override
   public void accept(irVisitor visitor) throws error{
     visitor.visit(this);
+  }
+  @Override
+  public HashSet<String> getUse() {
+    return new HashSet<String>(Arrays.asList(cond));
   }
 } 

@@ -16,4 +16,12 @@ public class irSelect extends irIns{
   public void accept(irVisitor visitor) throws error{
     visitor.visit(this);
   }
+  @Override
+  public java.util.HashSet<String> getUse() {
+    return new java.util.HashSet<String>(java.util.Arrays.asList(cond, val1, val2));
+  }
+  @Override
+  public String getDef() {
+    return res;
+  }
 }

@@ -1,5 +1,7 @@
 package juhuh.compiler.ir.ins;
 
+import java.util.HashSet;
+
 import juhuh.compiler.frontend.irVisitor;
 import juhuh.compiler.util.error.error;
 @lombok.experimental.SuperBuilder
@@ -14,5 +16,13 @@ public class irAlloca extends irIns{
   @Override
   public void accept(irVisitor visitor) throws error{
     visitor.visit(this);
+  }
+  @Override
+  public String getDef() {
+    return res;
+  }
+  @Override
+  public HashSet<String> getUse() {
+    return null;
   }
 }

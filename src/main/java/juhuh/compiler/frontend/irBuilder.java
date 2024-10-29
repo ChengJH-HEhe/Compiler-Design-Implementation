@@ -870,6 +870,11 @@ public class irBuilder implements astVisitor<irNode> {
           .res(tmpLoad)
           .ptr(gv.getKey())
           .build());
+      curFunc.getEntry().add(irStore.builder()
+        .res(tmpLoad)
+        .ptr(tmp)
+        .tp(tp)
+      .build());
       // unused.
       // if (tmp.equals("%countC.0.2.local"))
       //   System.err.println("233");

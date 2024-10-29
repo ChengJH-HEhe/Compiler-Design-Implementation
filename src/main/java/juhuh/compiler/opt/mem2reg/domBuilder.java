@@ -35,6 +35,9 @@ public class domBuilder implements irVisitor {
   private irFuncDef curFunc;
   private asmBuilder asm;
 
+  private boolean isGlobalName(String name) {
+    return name != null && name.charAt(0) == ('@');
+  }
   public domBuilder(asmBuilder asm, cfgBuilder cfg, irFuncDef node) {
     this.asm = asm;
     curFunc = node;
@@ -49,11 +52,149 @@ public class domBuilder implements irVisitor {
 
     // build dominator tree using postReverseOrder
     // reverse postRev
-
-    getDom();
-    System.err.println("dom Build done");
     // place PHI cmd
+  }
+
+  public HashMap<String, HashSet<irStmt>> useIns;
+  public HashMap<String, irStmt> defIns;
+
+  public void DCE() {
+    collectDef();
+    // getUse; 
+    Queue<irStmt> q = new LinkedList<>();
+    for(var inS : defIns.values()) {
+      q.offer(inS);
+      inS.useful = true;
+    }
+    // Call branch store
+    for(var i : postRev) {
+      var block = id2B.get(i);
+      if(block.isUnreachable())
+        continue;
+
+      var endT = block.getTerminalstmt();
+      if(endT == null) {
+        endT = block.getEndTerm();
+        block.setTerminalstmt(endT);
+      }
+      if(endT instanceof irBranch)
+        q.offer(endT);
+      endT.useful = true;
+
+      for(var stmt : block.getStmts()) {
+        if(stmt instanceof irCall || stmt instanceof irBranch || stmt instanceof irStore) {
+          if(!stmt.isUseful()) {
+            q.offer(stmt);
+            stmt.useful = true;
+          }
+        }
+      }
+    }
+    //rebuild block.findVal;
+
+    while(!q.isEmpty()) {
+      var cur = q.poll();
+      var use = cur.getUse();
+      if(use != null)
+      for(var ptr : use) {
+        if(defIns.containsKey(ptr)) {
+          var def = defIns.get(ptr);
+          if(!def.isUseful()) {
+            def.useful = true;
+            q.offer(def);
+          }
+        }
+      }
+    }
+    
+    // reOrder stmt;
+    for(var i : postRev) {
+      var block = id2B.get(i);
+      if(block.isUnreachable())
+        continue;
+      var vec = new vector<irStmt>();
+      for(var stmt : block.getStmts()) {
+        if(stmt.isUseful())
+          vec.add(stmt);
+      }
+      block.setStmts(vec);
+    }
+    //findFirstLoad;
+    //setLastDef;
+    setLoadDef();
+  }
+  private void collectUnitUse(irStmt stmt) {
+    if(stmt.getUse() != null)
+    for (var use : stmt.getUse()) {
+      if (!useIns.containsKey(use)) {
+        useIns.put(use, new HashSet<>());
+      }
+      useIns.get(use).add(stmt);
+    }
+  }
+  public void collectUse() {
+    // curFunc;;
+    useIns = new HashMap<>();
+    for (var i : postRev) {
+      var block = id2B.get(i);
+      if(block.isUnreachable())
+        continue;
+      collectUnitUse(block.getTerminalstmt());
+      for (var stmt : block.getStmts()) {
+        collectUnitUse(stmt);
+      }
+    }
+  }
+
+  public void collectDef() {
+    defIns = new HashMap<>();
+    for (var i : postRev) {
+      var block = id2B.get(i);
+      if(block.isUnreachable())
+        continue;
+      for (var stmt : block.getStmts()) {
+        var def = stmt.getDef();
+        if(def != null) {
+          defIns.put(def, stmt);
+        }
+      }
+    }
+  }
+
+  public void setLoadDef() {
+    for (var i : postRev) {
+      var block = id2B.get(i);
+      block.setPtr2reg(new HashMap<>());
+      block.setRegs(new HashMap<>());
+      block.setMtp(new HashMap<>());
+      if(block.isUnreachable())
+        continue;
+      for (var stmt : block.getStmts()) {
+        if(stmt instanceof irLoad) {
+          var pt = ((irLoad) stmt).getPtr();
+          if((isGlobalName(pt) || isTmpName(pt)) && block.findVal(pt) == null) {
+            block.setFirstLoad(pt, stmt.getDef());
+            block.setVal(pt, stmt.getDef(), ((irLoad) stmt).getTp());
+          }
+        } else if(stmt instanceof irStore) {
+          var pt = ((irStore) stmt).getPtr();
+          if(pt.startsWith("@"))
+            System.err.println("debug");
+          if((isGlobalName(pt) || isTmpName(pt))) {
+            block.setVal(pt, ((irStore)stmt).getRes(), ((irStore) stmt).getTp());
+          }
+        }
+      }
+      
+    }
+  }
+
+
+  public void mem2reg() {
     if (mem2reg) {
+      getDom();
+      System.err.println("dom Build done");
+      System.err.println("Rename reg begin");
       placePhi(); // phi Def
 
       // firstLoad -> phiDef
@@ -64,8 +205,8 @@ public class domBuilder implements irVisitor {
 
       path = new vector<>();
       renameReg(0);
+      System.err.println("Rename Reg done");
     }
-    System.err.println("Rename Reg done");
   }
 
   public void delPhi(irRoot root, allocator alloc) {
@@ -247,6 +388,7 @@ public class domBuilder implements irVisitor {
   }
 
   vector<irBlock> path;
+
   // alloca result.
   boolean isTmpName(String name) {
     return name.length() >= 2 && name.charAt(0) == ('%') && name.charAt(1) != ('_');
@@ -264,7 +406,7 @@ public class domBuilder implements irVisitor {
 
       for (var entry : block.getRegs().entrySet()) {
         if (!local2globalUnuse(entry.getKey())) {
-          if(entry.getValue() != null && !isConst(entry.getValue()) && block.findFirstLoad(entry.getValue()) != null) {
+          if (entry.getValue() != null && !isConst(entry.getValue()) && block.findFirstLoad(entry.getValue()) != null) {
             // lastdef = firstdef
             entry.setValue(replace(block, entry.getValue()));
           }
@@ -272,7 +414,7 @@ public class domBuilder implements irVisitor {
           erase.add(entry.getKey());
         }
       }
-      for(var unUsedGlobal : erase) {
+      for (var unUsedGlobal : erase) {
         block.getRegs().remove(unUsedGlobal);
       }
     }
@@ -281,10 +423,12 @@ public class domBuilder implements irVisitor {
     }
     path.rmlst();
   }
+
   private boolean globalUnuse(String ptr) {
-    return !curFunc.getFName().equals("__init__") 
-      && ptr.charAt(0) == '@' && curFunc.unUsed(ptr);
+    return !curFunc.getFName().equals("__init__")
+        && ptr.charAt(0) == '@' && curFunc.unUsed(ptr);
   }
+
   private void renameReg(int index) {
     // entry block has alloca need to neglect
     irBlock block = id2B.get(index);
@@ -299,13 +443,13 @@ public class domBuilder implements irVisitor {
         if (stmt instanceof irAlloca || (stmt instanceof irLoad && globalUnuse(((irLoad) stmt).getPtr()))
             || (stmt instanceof irStore && globalUnuse(((irStore) stmt).getPtr())))
           continue;
-        
+
         stmt.accept(this);
         if ((stmt instanceof irLoad && isTmpName(((irLoad) stmt).getPtr())) ||
             (stmt instanceof irStore && isTmpName(((irStore) stmt).getPtr()))) {
           continue;
         }
-      
+
         // distinguish from phi or from lastBlock?
         // stmt's val
         vec.add(stmt);
@@ -320,16 +464,16 @@ public class domBuilder implements irVisitor {
     block.setTerminalstmt(stmt);
     // ENSURE: regs correct(lstdef)
     // upd CFG's nxt Phi's rhs using findVal
-    
-    // del unUsed phidef.
 
+    // del unUsed phidef.
 
     for (var nxt : outCnt[index]) {
       // set this nxt's def
       var setPhi = id2B.get(nxt).getPhi();
       for (var entry : setPhi.entrySet()) {
-        // if (block.getLabel().equals("log.end1") && entry.getKey().equals("%log.res1"))
-        //   System.err.println("Debug");
+        // if (block.getLabel().equals("log.end1") &&
+        // entry.getKey().equals("%log.res1"))
+        // System.err.println("Debug");
         var repl = replace(block, replacePtr(block, entry.getKey()));
         entry.getValue().getLabel2val().put(block.getLabel(), repl);
       }
@@ -340,9 +484,11 @@ public class domBuilder implements irVisitor {
     }
     path.rmlst();
   }
+
   private boolean local2globalUnuse(String localPtr) {
     return localPtr.endsWith(".local") && globalUnuse("@" + localPtr.substring(1, localPtr.length() - 6));
   }
+
   private void placePhi() {
     // upd this' lst-def -> domF's prePhi,
     // add phi only, lhs & blockname is it really helpful? add phi
@@ -448,7 +594,8 @@ public class domBuilder implements irVisitor {
             used = true;
             phiLhs.getValue().used = true; // used = false iff alloc !exist
             break;
-          } else phiLhs.getValue().getLabel2val().put(id2B.get(i).getLabel(), null);
+          } else
+            phiLhs.getValue().getLabel2val().put(id2B.get(i).getLabel(), null);
         if (used)
           break;
       }
@@ -484,7 +631,7 @@ public class domBuilder implements irVisitor {
         // nxt block's find this block's value should add 0 in this block
         for (var phiLhs : nxt.getPhi().entrySet()) {
           // if (phiLhs.getValue().getReg().equals("%.1.for.cond.1"))
-          //   System.err.println("debug");
+          // System.err.println("debug");
           if (alloc.exist(phiLhs.getValue().getReg())) {
             if (phiLhs.getValue().getLabel2val().get(block.getLabel()) != null) {
               block.getPhiDel().add(irBinary.builder()
@@ -495,7 +642,7 @@ public class domBuilder implements irVisitor {
                   .tp(phiLhs.getValue().getTp())
                   .build());
             }
-          } 
+          }
         }
       }
       if (!inOnly[i]) {
@@ -527,7 +674,7 @@ public class domBuilder implements irVisitor {
     // delphi
     delPhi(node, alloc);
     // asm rewrite
-    
+
     asm.setCol(alloc.regColor);
     asm.visit(node);
   }
@@ -581,8 +728,8 @@ public class domBuilder implements irVisitor {
     // do nothing
   }
 
-  private String findPre(String Ptr,int st) throws error {
-    for (int i = st-1; i >= 0; --i) {
+  private String findPre(String Ptr, int st) throws error {
+    for (int i = st - 1; i >= 0; --i) {
       var res = path.get(i).findVal(Ptr);
       if (res != null)
         return res;
@@ -594,12 +741,12 @@ public class domBuilder implements irVisitor {
   private String replace(irBlock block, String oldReg) {
     String ans = oldReg;
     // if(oldReg.equals("_26")) {
-    //   System.err.println("233333");
+    // System.err.println("233333");
     // }
     for (int i = path.size() - 1; i >= 0; --i) {
       var Block = path.get(i);
       var res = Block.findFirstLoad(oldReg);
-      if(res != null && res.equals("%Mod.0.0.local"))
+      if (res != null && res.equals("%Mod.0.0.local"))
         System.err.println("DEBUGGGG");
       if (Block.findFirstLoad(oldReg) != null) {
         if (Block.getPhi().containsKey(res))
@@ -701,7 +848,7 @@ public class domBuilder implements irVisitor {
     var block = path.getlst();
     if (!isTmpName(node.getPtr()))
       node.setPtr(replace(block, node.getPtr()));
-    if(node.getRes().equals("%_38"))
+    if (node.getRes().equals("%_38"))
       System.err.println("Dbug");
     node.setRes(replace(block, node.getRes()));
   }

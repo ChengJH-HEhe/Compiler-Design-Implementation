@@ -21,15 +21,17 @@ public class optBuilder {
       // mem2reg.
       var cfg = new cfgBuilder();
       domFunc.add(new domBuilder(asmRt, cfg, irt.getFDef().get(i)));
+      // domFunc.get(i).DCE();
     }
 
+
     // output the final asm Code; ir2Asm;
+    asmRt.visit(irt);// globalDef
 
-    // jump elim;
-
-    asmRt.visit(irt);
     for(int i = 0; i < irt.getFDef().size(); ++i) {
-      domFunc.get(i).visit(irt.getFDef().get(i));
+      domFunc.get(i).mem2reg(); // renameReg;
+      domFunc.get(i).visit(irt.getFDef().get(i)); // regalloc;
+
     }
   }
 }

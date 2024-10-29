@@ -1,5 +1,7 @@
 package juhuh.compiler.ir.ins;
 
+import java.util.HashSet;
+
 import juhuh.compiler.frontend.irBuilder;
 import juhuh.compiler.frontend.irVisitor;
 import juhuh.compiler.util.vector;
@@ -38,5 +40,12 @@ public class irCall extends irIns{
   public void accept(irVisitor visitor) throws error{
     visitor.visit(this);
   }
-  
+  @Override
+  public HashSet<String> getUse() {
+    return new HashSet<String>(val);
+  }
+  @Override
+  public String getDef() {
+    return res.equals("")? null : res;
+  }
 }

@@ -1,5 +1,8 @@
 package juhuh.compiler.ir.ins;
 
+import java.util.Arrays;
+import java.util.HashSet;
+
 import juhuh.compiler.frontend.irVisitor;
 import juhuh.compiler.util.error.error;
 
@@ -39,5 +42,13 @@ public class irBinary extends irIns{
   @Override
   public void accept(irVisitor visitor) throws error{
     visitor.visit(this);
+  }
+  @Override
+  public HashSet<String> getUse() {
+    return new HashSet<String>(Arrays.asList(op1, op2));
+  }
+  @Override
+  public String getDef() {
+    return res;
   }
 }

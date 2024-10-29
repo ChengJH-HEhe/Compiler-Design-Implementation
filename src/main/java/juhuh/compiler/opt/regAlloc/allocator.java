@@ -74,8 +74,6 @@ public class allocator implements irVisitor {
     for (var stmt : node.getPhi().entrySet()) {
       var phi = stmt.getValue();
       for (var val : phi.getLabel2val().entrySet()) {
-        if(reg.equals("%_6"))
-          System.err.println("scan phi " + val.getValue());
         if (val.getValue() != null && val.getValue().equals(reg)) {
           scanBlock(dom.id.get(val.getKey()), val.getValue());
         }
@@ -213,11 +211,11 @@ public class allocator implements irVisitor {
 
     // phi use -> phi def effective.
     System.err.println("begin scan");
+    dom.collectUse();
     // scan
     scanned = new BitSet(dom.cnt);
     // begin ssa liveness analysis
     // initialization
-    int num = 1;
     for (var reg1 : regs.keySet()) {
       reg = reg1;
       scanned.clear();
@@ -227,15 +225,25 @@ public class allocator implements irVisitor {
         var Node = dom.id2B.get(i);
         // scan use for phi
         scanPhi(Node);
-        // scan use for specified variable
-        for (int j = 0; j < liveStmt[i].size(); j++) {
-          var stmt = liveStmt[i].get(j);
-          if (stmt.use != null && stmt.use.contains(reg)) {
-            curStmt = j;
-            scanIn();
-          }
-        }
       }
+      if(dom.useIns.get(reg) != null)
+      for(var stmt : dom.useIns.get(reg)) {
+        curBlock = stmt.getBlock();
+        curStmt = stmt.getStmt();
+        scanIn();
+      }
+    //   for (int i: dom.postRev) {
+    //     curBlock = i;
+    //     // scan use for specified variable
+    //     for (int j = 0; j < liveStmt[i].size(); j++) {
+    //       var stmt = liveStmt[i].get(j);
+    //       if (stmt.use != null && stmt.use.contains(reg)) {
+    //         //assert(.contains(dom.id2B.get(i).getStmts().get(j)));
+    //         curStmt = j;
+    //         scanIn();
+    //       }
+    //     }
+    //   }
     }
     System.err.println("END scan");
   }
@@ -443,8 +451,9 @@ public class allocator implements irVisitor {
     }
   }
 
-  live NewLive(irNode node) {
+  live NewLive(irStmt node) {
     var livee = new live(node);
+    node.setB2S(curBlock, liveStmt[curBlock].size());
     node.setLive(livee);
     return livee;
   }
