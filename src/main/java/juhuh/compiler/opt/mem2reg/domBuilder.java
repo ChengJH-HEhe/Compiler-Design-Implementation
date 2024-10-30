@@ -39,6 +39,7 @@ public class domBuilder implements irVisitor {
     return name != null && name.charAt(0) == ('@');
   }
   public domBuilder(asmBuilder asm, cfgBuilder cfg, irFuncDef node) {
+    if(!mem2reg) return;
     this.asm = asm;
     curFunc = node;
     // cnt only acccesible in this function
@@ -169,11 +170,12 @@ public class domBuilder implements irVisitor {
       block.setMtp(new HashMap<>());
       if(block.isUnreachable())
         continue;
-      for (var stmt : block.getStmts()) {
+       for (var stmt : block.getStmts()) {
         if(stmt instanceof irLoad) {
           var pt = ((irLoad) stmt).getPtr();
-          if((isGlobalName(pt) || isTmpName(pt)) && block.findVal(pt) == null) {
-            block.setFirstLoad(pt, stmt.getDef());
+          if((isGlobalName(pt) || isTmpName(pt))) {
+            if(block.findFirstLoad(pt) == null)
+              block.setFirstLoad(pt, stmt.getDef());
             block.setVal(pt, stmt.getDef(), ((irLoad) stmt).getTp());
           }
         } else if(stmt instanceof irStore) {
@@ -406,8 +408,15 @@ public class domBuilder implements irVisitor {
 
       for (var entry : block.getRegs().entrySet()) {
         if (!local2globalUnuse(entry.getKey())) {
-          if (entry.getValue() != null && !isConst(entry.getValue()) && block.findFirstLoad(entry.getValue()) != null) {
+          // entry getvalue is firstLoad? then replace the entry.getValue.
+          if (entry.getValue() != null && !isConst(entry.getValue()))
+            if(block.findFirstLoad(entry.getValue()) != null) {
             // lastdef = firstdef
+            if(entry.getValue().equals("%_1283")) {
+              System.err.println("233333");
+            }
+            if(block.getLabel().equals("log.rhs0"))
+              System.err.println("rename Regs in " + block.getLabel());
             entry.setValue(replace(block, entry.getValue()));
           }
         } else {
@@ -457,10 +466,12 @@ public class domBuilder implements irVisitor {
         // if from lastBlock then replace it by lastBlock's lastDef
       }
     }
+    
+    block.setStmts(vec);
+    
     var stmt = block.getTerminalstmt() == null ? block.getEndTerm() : block.getTerminalstmt();
     stmt.accept(this);
     // upd block's lastdef equals firstload
-    block.setStmts(vec);
     block.setTerminalstmt(stmt);
     // ENSURE: regs correct(lstdef)
     // upd CFG's nxt Phi's rhs using findVal
@@ -471,9 +482,8 @@ public class domBuilder implements irVisitor {
       // set this nxt's def
       var setPhi = id2B.get(nxt).getPhi();
       for (var entry : setPhi.entrySet()) {
-        // if (block.getLabel().equals("log.end1") &&
-        // entry.getKey().equals("%log.res1"))
-        // System.err.println("Debug");
+        if (entry.getValue().getReg().equals("%log.res299.log.end1")) 
+          System.err.println("block " + block.getLabel());
         var repl = replace(block, replacePtr(block, entry.getKey()));
         entry.getValue().getLabel2val().put(block.getLabel(), repl);
       }
@@ -667,8 +677,9 @@ public class domBuilder implements irVisitor {
     // spill cost calc
     // first step: loop header, loop body classify
     defLoop();
-    // spill use & color
 
+
+    // spill use & color
     alloc = new allocator(this, node);
 
     // delphi
@@ -727,12 +738,18 @@ public class domBuilder implements irVisitor {
   public void visit(irStrDef node) throws error {
     // do nothing
   }
-
+  public HashMap<String, String> firstLoad2Phi = new HashMap<>();
+  String f2P(String reg) {
+    if(firstLoad2Phi.containsKey(reg))
+      return firstLoad2Phi.get(reg);
+    else return reg;
+  }
+  // find Ptr's def. setVal.
   private String findPre(String Ptr, int st) throws error {
     for (int i = st - 1; i >= 0; --i) {
       var res = path.get(i).findVal(Ptr);
       if (res != null)
-        return res;
+        return f2P(res);
     }
     // System.err.println("**** there is no pre-Def for " + Ptr + " !!!!");
     return null;
@@ -740,27 +757,30 @@ public class domBuilder implements irVisitor {
 
   private String replace(irBlock block, String oldReg) {
     String ans = oldReg;
-    // if(oldReg.equals("_26")) {
-    // System.err.println("233333");
-    // }
+    if(oldReg != null && oldReg.equals("%_1283")) {
+      System.err.println("233333");
+    }
     for (int i = path.size() - 1; i >= 0; --i) {
       var Block = path.get(i);
       var res = Block.findFirstLoad(oldReg);
-      if (res != null && res.equals("%Mod.0.0.local"))
-        System.err.println("DEBUGGGG");
       if (Block.findFirstLoad(oldReg) != null) {
-        if (Block.getPhi().containsKey(res))
+        // this firstLoad -> dom preds's firstload.
+        if (Block.getPhi().containsKey(res)) {
+          firstLoad2Phi.put(oldReg, res + "." + Block.getLabel());
           ans = res + "." + Block.getLabel(); // phi has contain the ptr name if needed
-        else {
-          ans = findPre(res, i);
           return ans;
         }
-        return ans;
+        else {
+          ans = findPre(res, i);
+          if(ans == null && i == 0)
+            return oldReg;
+          return ans;
+        }
       }
     }
     return ans;
   }
-
+  // res is ptr.
   private String replacePtr(irBlock block, String res) {
     String ans = block.findVal(res);
     if (ans == null) {
@@ -772,6 +792,8 @@ public class domBuilder implements irVisitor {
   @Override
   public void visit(irBinary node) throws error {
     var block = path.getlst();
+    if(node.getOp().equals("div"))
+      System.err.println("Debug");
     node.setOp1(replace(block, node.getOp1()));
     node.setOp2(replace(block, node.getOp2()));
   }

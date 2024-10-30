@@ -50,7 +50,6 @@ public class allocator implements irVisitor {
     }
     visit(func);
     spill2Col(func.getParavaluelist());
-
   }
 
   // liveout livein add
@@ -69,15 +68,11 @@ public class allocator implements irVisitor {
   HashMap<String, Integer> regs;
   // q: a stmt, choose the longest reg to spill reduce the probability to spill.
 
-  void scanPhi(irBlock node) {
-    
-    for (var stmt : node.getPhi().entrySet()) {
-      var phi = stmt.getValue();
+  void scanPhi(irPhi phi) {
       for (var val : phi.getLabel2val().entrySet()) {
         if (val.getValue() != null && val.getValue().equals(reg)) {
           scanBlock(dom.id.get(val.getKey()), val.getValue());
         }
-      }
     }
   }
 
@@ -91,10 +86,14 @@ public class allocator implements irVisitor {
     curStmt = liveStmt[curBlock].size() - 1;
     assert (curStmt >= 0);
     var def = liveStmt[curBlock].get(curStmt).def;
-    
-    if(liveStmt[curBlock].get(curStmt).Out(reg))
-    if (!def.contains(reg)) {
-      scanIn();
+
+    if (liveStmt[curBlock].get(curStmt).Out(reg)) {
+      if(liveReg.get(reg) == null)
+        liveReg.put(reg, new vector<live>());
+      liveReg.get(reg).add(liveStmt[curBlock].get(curStmt));
+      if (!def.contains(reg)) {
+        scanIn();
+      }
     }
     curBlock = tmp1;
     curStmt = tmp2;
@@ -104,7 +103,7 @@ public class allocator implements irVisitor {
     assert (curStmt >= 0);
     if (curStmt == 0) {
       // no preceding
-      if(!liveStmt[curBlock].get(curStmt).In(reg))
+      if (!liveStmt[curBlock].get(curStmt).In(reg))
         return;
       var setPhi = dom.id2B.get(curBlock).getPhi();
       if (setPhi != null) {
@@ -120,20 +119,25 @@ public class allocator implements irVisitor {
       }
     } else {
       // Code that may throw an exception
-      if(liveStmt[curBlock].get(curStmt).In(reg)){
+      if (liveStmt[curBlock].get(curStmt).In(reg)) {
         --curStmt;
         assert (curStmt >= 0);
         var def = liveStmt[curBlock].get(curStmt).def;
-        
-        if(liveStmt[curBlock].get(curStmt).Out(reg))
-        if (!def.contains(reg)) {
-          scanIn();
+
+        if (liveStmt[curBlock].get(curStmt).Out(reg)) {
+          if(liveReg.get(reg) == null)
+            liveReg.put(reg, new vector<live>());
+          liveReg.get(reg).add(liveStmt[curBlock].get(curStmt));
+          if (!def.contains(reg)) {
+            scanIn();
+          }
         }
       }
     }
   }
 
   private HashMap<String, Integer> phi2blckId = new HashMap<>();
+
   // private HashMap<String, vector<Integer>> useB = new HashMap<>();
   void findphiDef() {
     for (int i = 0; i < dom.cnt; i++) {
@@ -184,6 +188,31 @@ public class allocator implements irVisitor {
     }
   }
 
+  HashMap<String, vector<irPhi>> scanPhiReg = new HashMap<>(); //
+  
+  void preScanWork() {
+    for (int i = 0; i < dom.cnt; i++) {
+      for (var stmt : dom.id2B.get(i).getPhi().entrySet()) {
+        var phi = stmt.getValue();
+        for (var val : phi.getLabel2val().entrySet()) {
+          if (val.getValue() != null) {
+            var reg2 = val.getValue();
+            if (scanPhiReg.get(reg2) == null) {
+              scanPhiReg.put(reg2, new vector<irPhi>());
+            }
+            scanPhiReg.get(reg2).add(phi);
+          }
+        }
+      }
+    }
+  }
+
+  HashMap<String, vector<live>> liveReg = new HashMap<>();
+
+  void preSpillReg() {
+    // done;
+  }
+
   @Override
   public void visit(irFuncDef node) throws error {
     regs = new HashMap<String, Integer>();
@@ -205,10 +234,11 @@ public class allocator implements irVisitor {
     // phi.def si?
     addphiDef(live, node.getEntry());
     addphiDef(live, node.getRet());
-
     for (var block : node.getBody())
       addphiDef(live, block);
+    // pre scan phi; out phi.
 
+    preScanWork();
     // phi use -> phi def effective.
     System.err.println("begin scan");
     dom.collectUse();
@@ -216,34 +246,23 @@ public class allocator implements irVisitor {
     scanned = new BitSet(dom.cnt);
     // begin ssa liveness analysis
     // initialization
+    preSpillReg();
     for (var reg1 : regs.keySet()) {
       reg = reg1;
       scanned.clear();
       // postRevOrder.
-      for (int i: dom.postRev) {
-        curBlock = i;
-        var Node = dom.id2B.get(i);
-        // scan use for phi
-        scanPhi(Node);
-      }
-      if(dom.useIns.get(reg) != null)
-      for(var stmt : dom.useIns.get(reg)) {
-        curBlock = stmt.getBlock();
-        curStmt = stmt.getStmt();
-        scanIn();
-      }
-    //   for (int i: dom.postRev) {
-    //     curBlock = i;
-    //     // scan use for specified variable
-    //     for (int j = 0; j < liveStmt[i].size(); j++) {
-    //       var stmt = liveStmt[i].get(j);
-    //       if (stmt.use != null && stmt.use.contains(reg)) {
-    //         //assert(.contains(dom.id2B.get(i).getStmts().get(j)));
-    //         curStmt = j;
-    //         scanIn();
-    //       }
-    //     }
-    //   }
+      if (scanPhiReg.get(reg) != null)
+        for (var i : scanPhiReg.get(reg)) {
+          curBlock = i.getBlock();
+          // scan use for phi
+          scanPhi(i);
+        }
+      if (dom.useIns.get(reg) != null)
+        for (var stmt : dom.useIns.get(reg)) {
+          curBlock = stmt.getBlock();
+          curStmt = stmt.getStmt();
+          scanIn();
+        }
     }
     System.err.println("END scan");
   }
@@ -264,20 +283,26 @@ public class allocator implements irVisitor {
   }
 
   private void spillReg() {
-    for (int i = 0; i < dom.cnt; ++i) {
-      phiIn.get(i).remove(reg);
-      for (int j = 0; j < liveStmt[i].size(); ++j) {
-        liveStmt[i].get(j).spReg(reg);
+    vector<live> stmts = liveReg.get(reg);
+    vector<irPhi> phiv = scanPhiReg.get(reg);
+    if (stmts != null)
+      for (var stmt : stmts) {
+        stmt.spReg(reg);
       }
-    }
+    if (phiv != null)
+      for (var phi : phiv) {
+        phiIn.get(phi.getBlock()).remove(reg);
+      }
     regColor.addSpill(reg);
   }
+
   vector<HashSet<String>> phiIn = new vector<>();
+
   private boolean spillPhi(int id) {
     HashSet<String> out = phiIn.get(id);
     // check if [id].[0].in is phi.out
     int sz = out.size();
-    if (sz > regColor.K) {
+    if (out.contains(reg) && sz > regColor.K) {
       spillReg();
       return true;
     }
@@ -288,41 +313,23 @@ public class allocator implements irVisitor {
 
   public boolean spReg() {
     // spill phi
-    boolean allsat = true;
-    for (int i = 0; i < dom.cnt; ++i)
-      if (spillPhi(i)){
-        return false;
-      } else {
-        allsat &= phiIn.get(i).size() <= regColor.K;
-      }
+    if (scanPhiReg.get(reg) != null)
+      for (var i : scanPhiReg.get(reg))
+        if (spillPhi(i.getBlock())) {
+          return true;
+        }
     // spill normal stmt
-    
-    for (int i = 0; i < dom.cnt; ++i) {
-      for (int j = 0; j < liveStmt[i].size(); ++j) {
-        var stmt = liveStmt[i].get(j);
-        allsat &= stmt.sp.size() <= regColor.K;
-        if (stmt.out.contains(reg)) {
-          int sz = stmt.sp.size();
-          if (sz <= regColor.K)
-            continue;
-          if (reg.equals("%f.3.5.for.cond4.0.0")) {
-            if (sz == 25) {
-              debug = new vector<String>();
-              for (var outReg : stmt.out) {
-                if (!spilled(outReg))
-                  debug.add(outReg);
-              }
-            }
-            System.err.println("Debug");
-          }
-          if (sz > regColor.K) {
-            spillReg();
-            return false;
-          }
+    if (liveReg.get(reg) != null)
+      for (var stmt : liveReg.get(reg)) {
+        int sz = stmt.sp.size();
+        if (sz <= regColor.K)
+          continue;
+       if (sz > regColor.K) {
+          spillReg();
+          return true;
         }
       }
-    }
-    return allsat;
+    return false;
   }
 
   public void preColor(int blockId) {
@@ -341,7 +348,6 @@ public class allocator implements irVisitor {
       for (var reg : regSet.values())
         if (reg != null && !out.contains(reg)) {
           regColor.eraseReg(reg);
-          System.err.println(dom.id2B.get(blockId).getLabel() + " phi erase " + " " + reg);
         }
     }
 
@@ -349,8 +355,6 @@ public class allocator implements irVisitor {
     for (var phiuse : dom.id2B.get(blockId).getPhi().entrySet()) {
       var def = phiuse.getValue().getReg();
       if (out.contains(def)) {
-        if (def.equals(("%f.3.5.for.cond4.0.0")))
-          System.err.println(dom.id2B.get(blockId).toString());
         regColor.addReg(def, false);
       }
     }
@@ -376,30 +380,30 @@ public class allocator implements irVisitor {
     }
   }
 
+  HashMap<String, HashSet<Integer>> reg2Phi = new HashMap<>();
+
   @SuppressWarnings("unchecked")
   public void spill2Col(vector<String> args) {
     // spill the > k
     regColor = new regCol();
     regColor.argsId = (args.size());// notspilled count store
-    
-    /*  pre work !! */
-    
-    for(int i = 0; i < dom.cnt; ++i)
-      phiIn.add((HashSet<String>)(liveStmt[i].get(0).in.clone()));
+
+    /* pre work !! */
+    for (int i = 0; i < dom.cnt; ++i) {
+      phiIn.add((HashSet<String>) (liveStmt[i].get(0).in.clone()));
+    }
     List<HashMap.Entry<String, Integer>> entryList = sortByCost();
     // reverse entryList
 
-    /*  pre work done !! */
+    /* pre work done !! */
     System.err.println(entryList.size());
     int sz = 0;
     for (Map.Entry<String, Integer> entry : entryList) {
       reg = entry.getKey();
       // System.err.println(reg);
-      ++sz;
-      if(spReg()) {
-        System.err.println(sz);
-        break;
-      }
+      System.err.println(++sz);
+      if(spReg())
+        System.err.println(reg);
     }
 
     var spC = 0;
@@ -407,6 +411,7 @@ public class allocator implements irVisitor {
       spC = Math.max(spC, regColor.getSpillCount(liveStmt[i].get(0).in));
       for (int j = 0; j < liveStmt[i].size(); ++j)
         spC = Math.max(spC, regColor.getSpillCount(liveStmt[i].get(j).out));
+      
     }
     regColor.setSpillCount(spC);
 
@@ -453,7 +458,6 @@ public class allocator implements irVisitor {
 
   live NewLive(irStmt node) {
     var livee = new live(node);
-    node.setB2S(curBlock, liveStmt[curBlock].size());
     node.setLive(livee);
     return livee;
   }
@@ -563,7 +567,11 @@ public class allocator implements irVisitor {
 
   @Override
   public void visit(irBlock node) throws error {
-    //
+    // irphi setblock curBlock
+    for (var phi : node.getPhi().entrySet()) {
+      phi.getValue().setBlock(curBlock);
+    }
+
     if (node.getStmts() != null)
       for (curStmt = 0; curStmt < node.getStmts().size(); curStmt++) {
         var stmt = node.getStmts().get(curStmt);

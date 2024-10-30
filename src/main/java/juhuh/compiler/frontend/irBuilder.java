@@ -1329,6 +1329,7 @@ public class irBuilder implements astVisitor<irNode> {
 
       String resul = curFunc.tmprename();
       endB.setFirstLoad(cond, resul);
+      endB.setVal(cond, resul,"i1");
       endB.add(irLoad.builder()
           .res(resul)
           .ptr(cond)
@@ -1529,7 +1530,7 @@ public class irBuilder implements astVisitor<irNode> {
     }
     // first load
     reg.setName(curFunc.tmprename());
-    add(irLoad.builder()
+    curFunc.curBlock.add(irLoad.builder()
         .res(reg.getName())
         .tp(tp)
         .ptr(reg.getPtr())

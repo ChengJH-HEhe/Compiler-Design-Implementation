@@ -50,6 +50,8 @@ public class irBlock extends irStmt{
       regs = new HashMap<>();
       mtp = new HashMap<>();
     }
+    if(reg.equals("%_1283"))
+      System.err.println(getLabel());
     if(ptr.equals("%countC.0.2.local"))
       System.err.println("DBUG");
     regs.put(ptr, reg);
@@ -108,7 +110,7 @@ public class irBlock extends irStmt{
       if(stmt instanceof irBlock)
         s.append(stmt.toString() + "\n");
       else {
-        if(stmt.useful)
+        
           s.append(super.toString() + stmt.toString() + "\n");
       }
     }

@@ -36,6 +36,8 @@ public class irFuncDef extends irDefNode {
     globalVar.put(ptr, tp);
   }
   public String tmprename() {
+    if(anonyNum == 1283)
+      System.err.println("debug");
     return "%_" + (anonyNum++);
   }
 

@@ -13,11 +13,6 @@ import juhuh.compiler.util.error.error;
 public abstract class irStmt extends irNode{
   String indent;
   public boolean useful;
-  public int bid, sid;
-  public void setB2S(int b, int s) {
-    bid = b;
-    sid = s;
-  }
   @Override
   public String toString() {
     return indent;

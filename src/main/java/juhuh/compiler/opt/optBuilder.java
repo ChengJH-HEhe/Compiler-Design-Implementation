@@ -21,7 +21,7 @@ public class optBuilder {
       // mem2reg.
       var cfg = new cfgBuilder();
       domFunc.add(new domBuilder(asmRt, cfg, irt.getFDef().get(i)));
-      // domFunc.get(i).DCE();
+      domFunc.get(i).DCE();
     }
 
 
